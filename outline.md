@@ -63,6 +63,10 @@
 
 ## II. LITERATURE REVIEW
 
+**SCOPE NOTE:** This section focuses on **global context, theories, and definitions** to establish conceptual foundations (e.g., What is stigma? Global prevalence of non-adherence? Theoretical frameworks?). Iraq-specific and MENA-specific synthesized evidence is presented in Section IV (Key Findings from Literature).
+
+---
+
 ### A. Mental Health Stigma: Global to Local Context
 
 #### 1. **Theoretical Framework of Mental Health Stigma**
@@ -431,6 +435,10 @@
 ---
 
 ## IV. KEY FINDINGS FROM LITERATURE
+
+**SCOPE NOTE:** This section presents **synthesized evidence exclusively from Iraq & MENA studies** with specific data, rates, and findings (e.g., Specific rates in Baghdad, medication availability in Iraqi hospitals, regional comparisons). Global theories and definitions are covered in Section II (Literature Review).
+
+---
 
 ### A. Overview of Reviewed Literature
 **Purpose:** Provide summary of sources reviewed.
@@ -1134,25 +1142,17 @@
 
 ## APPENDICES
 
-### Appendix A: Survey Instruments
-- Demographic questionnaire
-- Medication attitudes scale
-- Stigma assessment tool
-- Adherence measure
+### Appendix A: Supplementary Tables and Figures
+- Extended tables synthesizing findings across studies
+- Comparative analyses by region (Iraq vs. MENA vs. International)
+- Detailed medication listings and classifications
+- Visual summaries of key themes from literature
 
-### Appendix B: Ethical Approval Documentation
-- IRB approval letter
-- Informed consent forms (English and Arabic)
-
-### Appendix C: Supplementary Tables and Figures
-- Extended demographic tables
-- Additional statistical analyses
-- Detailed medication listings
-
-### Appendix D: Glossary of Terms
+### Appendix B: Glossary of Terms
 - Iraqi healthcare system terminology
-- Medication names (generic and trade)
+- Medication names (generic and trade names used in Iraq)
 - Arabic mental health terms with English translations
+- Key acronyms and abbreviations used in the review
 
 ---
 
