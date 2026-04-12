@@ -1,7 +1,7 @@
 # Research Paper Outline: Psychiatric Medication Use and Public Acceptance in Iraq
 
 **Title:** Psychiatric Medication Use and Public Acceptance in Iraq  
-**Type:** Comprehensive Literature Review  
+**Type:** Original Cross-Sectional Research Study  
 **Author:** [Student Name]  
 **Institution:** College of Pharmacy, University of [Institution Name], Iraq  
 **Year:** 2026
@@ -1224,38 +1224,11 @@
 
 ---
 
-## NOTES FOR WRITING THE LITERATURE REVIEW PAPER
-
-### Writing Guidelines for Literature Review:
-1. **Tone:** Professional but accessible to non-native English speakers
-2. **Language:** Clear, avoiding archaic or overly complex vocabulary (see custom instructions)
-3. **Synthesis Over Summary:** Don't just summarize sources - synthesize, compare, and analyze findings across studies
-4. **Critical Analysis:** Evaluate quality and relevance of sources, identify consistencies and contradictions
-5. **Context:** Always ground findings in Iraqi reality (Ministry of Health guidelines, Baghdad vs. rural, societal views)
-6. **No AI Words:** Avoid "delve," "landscape," "tapestry," "realm," "crucial," "paramount," "underscore," "foster"
-7. **Structure:** Use cohesive paragraphs, NO bullet points in body text
-8. **Specificity:** Cite specific statistics from reviewed sources, compare findings across studies
-
-### Source Usage Protocol for Literature Review:
-1. Only use sources mapped to each section in this outline
-2. Web-check permitted only for fact verification, not content replacement
-3. Integrate and compare data from Iraqi, MENA, and international sources
-4. Prioritize Iraq-specific sources, supplement with regional/international evidence for comparison
-5. When synthesizing: identify patterns, contradictions, and gaps across sources
-6. Use phrases like "Evidence from multiple studies suggests..." or "Iraqi research indicates... while regional studies show..."
-
-### Formatting Specifications:
-- Font: Times New Roman, 14pt body text
-- Line Spacing: 1.5
-- Margins: 3cm binding edge, 2cm others
-- Paragraphs: First line indent, no empty lines between paragraphs
-- Headers: H1 for major sections, H2 for subsections
-
-### Section-Specific Notes for Literature Review:
-- **Introduction:** Establish rationale for review, explain scope, and outline objectives
+### Section-Specific Notes for Original Research:
+- **Introduction:** Establish rationale for the study, explain scope, and outline objectives
 - **Literature Review:** Organize thematically, synthesize across sources, identify themes and patterns
-- **Methodology:** Describe search strategy, inclusion/exclusion criteria, quality assessment clearly
-- **Key Findings:** Present synthesized evidence organized by themes, not individual study summaries
-- **Discussion:** Interpret patterns across literature, explain implications, identify gaps, compare contexts
-- **Recommendations:** Base on synthesized evidence, acknowledge limitations of current literature
-- **Conclusion:** Emphasize what the body of literature collectively tells us and what still needs research
+- **Methodology:** Describe study design, survey participants, data collection instrument, and statistical analysis
+- **Results:** Present the statistical findings exclusively from our survey data (survey_data_results.md)
+- **Discussion:** Interpret survey results, compare them with literature, explain implications, identify gaps
+- **Recommendations:** Base on synthesized evidence and survey findings, acknowledge limitations of the study
+- **Conclusion:** Emphasize what the primary data and body of literature collectively tell us and what still needs research
