@@ -31,6 +31,7 @@ def normalize_text(value):
 
 def main():
     raw_df = pd.read_excel(RAW_XLSX, dtype=object)
+    raw_df = raw_df.rename(columns=lambda c: str(c).replace(".", "_"))
     question_labels = raw_df.iloc[0].to_dict()
     df = raw_df.drop(index=0).reset_index(drop=True)
 
@@ -70,7 +71,7 @@ def main():
 
     likert_cols = ["Q11", "Q12", "Q13", "Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]
     yes_no_unsure_cols = ["Q6", "Q7", "Q8", "Q9"]
-    yes_no_cols = ["Q31", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31.1", "Q32"]
+    yes_no_cols = ["Q31", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31_1", "Q32"]
 
     for col, mapping in demographic_maps.items():
         if col in df.columns:

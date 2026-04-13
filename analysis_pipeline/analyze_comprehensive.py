@@ -151,7 +151,7 @@ def main():
     yes_no_unsure_cols = ["Q6", "Q7", "Q8", "Q9"]
     likert_all = ["Q11", "Q12", "Q13"]
     likert_user = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]
-    yes_no_user = ["Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31.1", "Q32"]
+    yes_no_user = ["Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31_1", "Q32"]
 
     demographics_order = {
         "Q1": [1, 2, 3, 4, 5],
@@ -393,7 +393,7 @@ def main():
     lines.append("")
     lines.append("### 4.2 Skip-Pattern and Instrument Consistency")
     lines.append("")
-    user_section_cols = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31.1", "Q32"]
+    user_section_cols = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31_1", "Q32"]
     non_user_non_missing = int(non_users[user_section_cols].notna().sum(axis=1).gt(0).sum())
     user_all_missing = int(users[user_section_cols].notna().sum(axis=1).eq(0).sum())
     lines.append(f"- Non-users with any user-section response filled: **{non_user_non_missing}**")
