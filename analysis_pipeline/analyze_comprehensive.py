@@ -456,7 +456,7 @@ def main():
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
-            ci_low, ci_high = extract_multinomial_ci(conf, outcome_col, term)
+            ci_low, ci_high = extract_multinomial_ci(conf, mapped_outcome, term)
             rrr = safe_exp(beta)
             low = safe_exp(ci_low)
             high = safe_exp(ci_high)
