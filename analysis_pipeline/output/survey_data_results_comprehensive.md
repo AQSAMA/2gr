@@ -96,19 +96,8 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 | 2 | 232 | 2.694 | 4.250 | 3.720 |
 | 3 | 223 | 4.359 | 4.291 | 2.610 |
 
-## 5) Exploratory Mediation (Associational): Q31 -> Q6 -> Q8
-
-- Analysis sample (Q31/Q6/Q8 coded as binary Yes/No only): **n=522**
-- a-path (Q31 -> Q6) log-odds coefficient: **0.9173**
-- b-path (Q6 -> Q8, adjusted for Q31) log-odds coefficient: **2.2925**
-- Direct effect c' (Q31 -> Q8 controlling mediator): **0.1897**
-- Total effect c (Q31 -> Q8 without mediator): **0.5646**
-- Indirect effect a*b (log-odds scale): **2.1029**
-- Bootstrap 95% CI for indirect effect: **1.0194 to 3.4509** (successful resamples=1500)
-- Interpretation note: this cross-sectional mediation is exploratory and should not be interpreted as causal.
-
-## 6) Notes for Manuscript Positioning
+## 5) Notes for Manuscript Positioning
 
 - Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.
-- K-means profiling and mediation should be presented as exploratory secondary analyses.
+- K-means profiling should be presented as an exploratory secondary analysis.
 - For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.
