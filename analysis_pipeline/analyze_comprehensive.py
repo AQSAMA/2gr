@@ -25,6 +25,7 @@ RADAR_REPORT_PATH = "analysis_pipeline/output/user_experience_radar.png"
 MAX_LOGIT_PARAM_ABS = 8
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
+CLUSTER_RANGE = [2, 3, 4]
 
 
 def fmt_p(p):
@@ -288,7 +289,7 @@ def profile_clustering(df):
 
     scores = []
     models = {}
-    for k in [2, 3, 4]:
+    for k in CLUSTER_RANGE:
         km = KMeans(n_clusters=k, n_init=KMEANS_N_INIT, random_state=KMEANS_RANDOM_STATE)
         labels = km.fit_predict(xs)
         sil = silhouette_score(xs, labels)
@@ -481,7 +482,8 @@ def main():
     except Exception:
         conf = None
     for outcome_col in mn_model.params.columns:
-        mapped_outcome = non_ref_categories[int(outcome_col)] if int(outcome_col) < len(non_ref_categories) else outcome_col
+        outcome_idx = int(outcome_col)
+        mapped_outcome = non_ref_categories[outcome_idx] if outcome_idx < len(non_ref_categories) else outcome_col
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
