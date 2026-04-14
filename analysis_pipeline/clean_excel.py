@@ -156,6 +156,7 @@ def main():
             report_lines.append(f"- {col}: {values}")
     else:
         report_lines.append("- None. All mapped fields are numeric.")
+    report_lines.append("- Instrument note: Q28 and Q29 have duplicate Arabic wording in the source questionnaire header row.")
 
     CLEANING_REPORT_MD.write_text("\n".join(report_lines), encoding="utf-8")
 

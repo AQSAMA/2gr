@@ -29,6 +29,9 @@ KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
 # Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
 CLUSTER_RANGE = [2, 3, 4]
+# English render labels are used only for report text so final outputs remain English-only.
+# Source Arabic labels are preserved in question_labels.json from the raw survey header row.
+# Translation mapping here follows direct item-level wording from that source header.
 ENGLISH_QUESTION_LABELS = {
     "Q1": "Age",
     "Q2": "Gender",

@@ -43,3 +43,4 @@
 ## Unmapped Text Values
 
 - None. All mapped fields are numeric.
+- Instrument note: Q28 and Q29 have duplicate Arabic wording in the source questionnaire header row.
