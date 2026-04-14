@@ -265,7 +265,7 @@ def contact_hypothesis(df):
         nvals = d[d["Q31"] == 0][col]
 
         if len(uvals) == 0 or len(nvals) == 0:
-            results.append((col, np.nan, np.nan, np.nan, np.nan))
+            results.append((col, np.nan, np.nan, np.nan, np.nan, np.nan, int(len(d)), np.nan, np.nan))
             continue
 
         u_stat, p_u = mannwhitneyu(uvals, nvals, alternative="two-sided")
@@ -481,9 +481,8 @@ def main():
         conf = mn_model.conf_int()
     except Exception:
         conf = None
-    for outcome_col in mn_model.params.columns:
-        outcome_idx = int(outcome_col)
-        mapped_outcome = non_ref_categories[outcome_idx] if outcome_idx < len(non_ref_categories) else outcome_col
+    for equation_idx, outcome_col in enumerate(mn_model.params.columns):
+        mapped_outcome = non_ref_categories[equation_idx] if equation_idx < len(non_ref_categories) else outcome_col
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
