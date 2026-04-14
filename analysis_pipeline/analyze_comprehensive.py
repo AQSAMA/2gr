@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-from matplotlib import pyplot as plt
 from scipy.stats import chi2_contingency, mannwhitneyu
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -21,10 +20,6 @@ CLEAN_CSV = OUTPUT_DIR / "cleaned_survey_data_utf8.csv"
 QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
-RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
-RADAR_REPORT_PATH = "analysis_pipeline/output/user_experience_radar.png"
-# Absolute log-odds values above this threshold are treated as unstable for this survey model pipeline.
-MAX_LOGIT_PARAM_ABS = 8
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
 # Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
@@ -132,75 +127,23 @@ def as_binary(series, yes=1, no=0):
     return np.where(series == yes, 1, np.where(series == no, 0, np.nan))
 
 
-def add_grouped_demographics(df):
+def add_binary_demographics(df):
     d = df.copy()
-    d["Age_Group3"] = np.select(
-        [d["Q1"].isin([1, 2]), d["Q1"].isin([3, 4]), d["Q1"] == 5],
-        [1, 2, 3],
-        default=np.nan,
-    )
-    d["Edu_Group3"] = np.select(
-        [d["Q4"].isin([1, 2, 3]), d["Q4"] == 4, d["Q4"].isin([5, 6])],
-        [1, 2, 3],
-        default=np.nan,
-    )
-    d["Marital_Group2"] = np.select(
-        [d["Q5"] == 1, d["Q5"].isin([2, 3, 4])],
-        [1, 2],
-        default=np.nan,
-    )
-    return d
-
-
-def collapse_sparse_levels(df, col, min_n=15):
-    """Collapse sparse category levels to sentinel -1 to stabilize regression estimation."""
-    d = df.copy()
-    counts = d[col].value_counts(dropna=True)
-    rare_levels = counts[counts < min_n].index
-    if len(rare_levels) > 0:
-        d[col] = d[col].where(~d[col].isin(rare_levels), -1)
+    d["Age_Binary"] = np.where(d["Q1"] == 1, 1, np.where(d["Q1"] > 1, 0, np.nan))
+    d["Edu_Binary"] = np.where(d["Q4"] >= 5, 1, np.where(d["Q4"] < 5, 0, np.nan))
+    d["Married_Binary"] = np.where(d["Q5"] >= 2, 1, np.where(d["Q5"] == 1, 0, np.nan))
+    d["Gender_Binary"] = np.where(d["Q2"] == 2, 1, np.where(d["Q2"] == 1, 0, np.nan))
     return d
 
 
 def safe_logit_fit(formula, data, maxiter=500):
-    """Fit logit with MLE first, then fall back to regularized fit when unstable."""
-    try:
-        mle_model = smf.logit(formula, data=data).fit(disp=0, maxiter=maxiter)
-        params = getattr(mle_model, "params", pd.Series(dtype=float))
-        pr2 = getattr(mle_model, "prsquared", np.nan)
-        converged = getattr(mle_model, "mle_retvals", {}).get("converged", True)
-        unstable = (
-            params.empty
-            or (not np.isfinite(params).all())
-            or (float(np.max(np.abs(params))) > MAX_LOGIT_PARAM_ABS)
-            or pd.isna(pr2)
-            or (not np.isfinite(pr2))
-            or (not converged)
-        )
-        if not unstable:
-            return mle_model, "mle"
-    except Exception:
-        pass
-    return smf.logit(formula, data=data).fit_regularized(disp=0), "regularized"
+    mle_model = smf.logit(formula, data=data).fit(disp=0, maxiter=maxiter)
+    return mle_model, "mle"
 
 
 def safe_mnlogit_fit(y, X, maxiter=500):
-    try:
-        mle_model = sm.MNLogit(y, X).fit(disp=0, maxiter=maxiter)
-        params = getattr(mle_model, "params", pd.DataFrame())
-        llf = getattr(mle_model, "llf", np.nan)
-        unstable = (
-            params.empty
-            or (not np.isfinite(params.to_numpy()).all())
-            or (float(np.max(np.abs(params.to_numpy()))) > MAX_LOGIT_PARAM_ABS)
-            or pd.isna(llf)
-            or (not np.isfinite(llf))
-        )
-        if not unstable:
-            return mle_model, "mle"
-    except Exception:
-        pass
-    return sm.MNLogit(y, X).fit_regularized(disp=0), "regularized"
+    mle_model = sm.MNLogit(y, X).fit(disp=0, maxiter=maxiter)
+    return mle_model, "mle"
 
 
 def extract_multinomial_ci(conf, outcome_col, term):
@@ -236,16 +179,22 @@ def summarize_logit(model):
         pvals = pd.Series(np.nan, index=params.index)
     rows = []
     for term in params.index:
+        low_beta = np.nan
+        high_beta = np.nan
+        if term in conf.index and conf.shape[1] >= 2:
+            ci_row = conf.loc[term]
+            low_beta = ci_row.iloc[0]
+            high_beta = ci_row.iloc[1]
         or_val = safe_exp(params[term])
-        low = safe_exp(conf.loc[term, 0]) if term in conf.index else np.nan
-        high = safe_exp(conf.loc[term, 1]) if term in conf.index else np.nan
+        low = safe_exp(low_beta)
+        high = safe_exp(high_beta)
         p = float(pvals[term]) if term in pvals.index else np.nan
         rows.append((term, or_val, low, high, p))
     return rows
 
 
 def fit_hierarchical_models(df):
-    work = add_grouped_demographics(df.copy())
+    work = add_binary_demographics(df.copy())
     work["Recommend_Binary"] = as_binary(work["Q8"], yes=1, no=0)
     work["PriorUse_Binary"] = as_binary(work["Q31"], yes=1, no=0)
     work["Fear_Binary"] = as_binary(work["Q9"], yes=1, no=0)
@@ -253,10 +202,10 @@ def fit_hierarchical_models(df):
     # Primary model set avoids proximal tautology with Q6/Q7.
     base_cols = [
         "Recommend_Binary",
-        "Age_Group3",
-        "Q2",
-        "Edu_Group3",
-        "Marital_Group2",
+        "Age_Binary",
+        "Gender_Binary",
+        "Edu_Binary",
+        "Married_Binary",
         "PriorUse_Binary",
         "Q11",
         "Q12",
@@ -264,13 +213,11 @@ def fit_hierarchical_models(df):
         "Fear_Binary",
     ]
     d = work[base_cols].dropna().copy()
-    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
-        d = collapse_sparse_levels(d, c, min_n=15)
 
     formulas = [
-        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)",
-        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary",
-        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
+        "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary",
+        "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary",
+        "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
     ]
 
     fitted = []
@@ -283,10 +230,10 @@ def fit_hierarchical_models(df):
     work["Acceptable_Binary"] = as_binary(work["Q7"], yes=1, no=0)
     sens_cols = [
         "Recommend_Binary",
-        "Age_Group3",
-        "Q2",
-        "Edu_Group3",
-        "Marital_Group2",
+        "Age_Binary",
+        "Gender_Binary",
+        "Edu_Binary",
+        "Married_Binary",
         "PriorUse_Binary",
         "Q11",
         "Q12",
@@ -296,10 +243,8 @@ def fit_hierarchical_models(df):
         "Acceptable_Binary",
     ]
     ds = work[sens_cols].dropna().copy()
-    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
-        ds = collapse_sparse_levels(ds, c, min_n=15)
     sens_formula = (
-        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + "
+        "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + "
         "Q11 + Q12 + Q13 + Fear_Binary + Safe_Binary + Acceptable_Binary"
     )
     sens_model, sens_fit_type = safe_logit_fit(sens_formula, ds, maxiter=500)
@@ -308,19 +253,13 @@ def fit_hierarchical_models(df):
 
 
 def fit_multinomial_q8(df):
-    work = add_grouped_demographics(df.copy())
-    cols = ["Q8", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31", "Q11", "Q12", "Q13"]
+    work = add_binary_demographics(df.copy())
+    work["PriorUse_Binary"] = as_binary(work["Q31"], yes=1, no=0)
+    cols = ["Q8", "Age_Binary", "Gender_Binary", "Edu_Binary", "Married_Binary", "PriorUse_Binary", "Q11", "Q12", "Q13"]
     d = work[cols].dropna().copy()
     d = d[d["Q8"].isin([0, 1, 2])]
 
-    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
-        d = collapse_sparse_levels(d, c, min_n=15)
-    X = pd.get_dummies(
-        d[["Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31"]].astype(int).astype(str),
-        drop_first=True,
-        dtype=float,
-    )
-    X[["Q11", "Q12", "Q13"]] = d[["Q11", "Q12", "Q13"]].astype(float)
+    X = d[["Age_Binary", "Gender_Binary", "Edu_Binary", "Married_Binary", "PriorUse_Binary", "Q11", "Q12", "Q13"]].astype(float)
     X = sm.add_constant(X, has_constant="add")
     X = X.astype(float)
     y = d["Q8"].astype(int)
@@ -391,21 +330,17 @@ def profile_clustering(df):
 def mediation_bootstrap(df, n_boot=1500, seed=42):
     rng = np.random.default_rng(seed)
 
-    work = add_grouped_demographics(df.copy())
+    work = add_binary_demographics(df.copy())
     work["X_prior_use"] = as_binary(work["Q31"], yes=1, no=0)
     work["M_safe"] = as_binary(work["Q6"], yes=1, no=0)
     work["Y_recommend"] = as_binary(work["Q8"], yes=1, no=0)
 
-    cols = ["X_prior_use", "M_safe", "Y_recommend", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2"]
+    cols = ["X_prior_use", "M_safe", "Y_recommend", "Age_Binary", "Gender_Binary", "Edu_Binary", "Married_Binary"]
     d = work[cols].dropna().copy()
 
-    f_a = "M_safe ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
-    f_b = "Y_recommend ~ X_prior_use + M_safe + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
-    f_c = "Y_recommend ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
-
-    d = collapse_sparse_levels(d, "Age_Group3", min_n=15)
-    d = collapse_sparse_levels(d, "Edu_Group3", min_n=15)
-    d = collapse_sparse_levels(d, "Marital_Group2", min_n=15)
+    f_a = "M_safe ~ X_prior_use + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
+    f_b = "Y_recommend ~ X_prior_use + M_safe + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
+    f_c = "Y_recommend ~ X_prior_use + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
 
     m_a, _ = safe_logit_fit(f_a, d, maxiter=500)
     m_b, _ = safe_logit_fit(f_b, d, maxiter=500)
@@ -448,45 +383,6 @@ def mediation_bootstrap(df, n_boot=1500, seed=42):
     }
 
 
-def make_user_radar(users):
-    cols = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]
-    d = users[cols].dropna(how="all")
-    means = d.mean(skipna=True)
-
-    labels = [
-        "Necessary",
-        "Stability",
-        "Worse w/o meds",
-        "Side effects",
-        "Dependence worry",
-        "Long-term harm worry",
-    ]
-
-    vals = means.values.astype(float)
-    if len(vals) == 0 or np.all(np.isnan(vals)):
-        return None
-
-    vals = np.nan_to_num(vals, nan=np.nanmean(vals))
-    vals_pct = (vals - 1) / 4 * 100
-
-    angles = np.linspace(0, 2 * np.pi, len(vals_pct), endpoint=False)
-    vals_cycle = np.r_[vals_pct, vals_pct[0]]
-    angles_cycle = np.r_[angles, angles[0]]
-
-    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
-    ax.plot(angles_cycle, vals_cycle, linewidth=2)
-    ax.fill(angles_cycle, vals_cycle, alpha=0.25)
-    ax.set_xticks(angles)
-    ax.set_xticklabels(labels)
-    ax.set_ylim(0, 100)
-    ax.set_yticks([20, 40, 60, 80, 100])
-    ax.set_title("User Experience Profile (Q15-Q20, normalized 0-100)")
-    fig.tight_layout()
-    fig.savefig(RADAR_PNG, dpi=220)
-    plt.close(fig)
-    return means
-
-
 def main():
     if not CLEAN_CSV.exists():
         raise FileNotFoundError(f"Cleaned CSV not found: {CLEAN_CSV}")
@@ -496,8 +392,6 @@ def main():
         qlabels = json.load(f)
 
     n_total = len(df)
-    users = df[df["Q31"] == 1].copy()
-    non_users = df[df["Q31"] == 0].copy()
 
     lines = []
     lines.append(f"# Psychiatric Medication Use and Public Acceptance in Iraq — Unified Survey Analysis (N={n_total})")
@@ -562,7 +456,7 @@ def main():
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
-            ci_low, ci_high = extract_multinomial_ci(conf, outcome_col, term)
+            ci_low, ci_high = extract_multinomial_ci(conf, mapped_outcome, term)
             rrr = safe_exp(beta)
             low = safe_exp(ci_low)
             high = safe_exp(ci_high)
@@ -625,24 +519,8 @@ def main():
         )
     lines.append("- Interpretation note: this cross-sectional mediation is exploratory and should not be interpreted as causal.")
 
-    # 6) Radar chart
     lines.append("")
-    lines.append("## 6) User-Subset Visual Profile")
-    lines.append("")
-    means = make_user_radar(users)
-    if means is None:
-        lines.append("- Radar chart was not generated because user subset had insufficient data.")
-    else:
-        lines.append(f"- Radar chart saved to: `{RADAR_REPORT_PATH}`")
-        lines.append("- Mean raw item values used for radar chart:")
-        lines.append("")
-        lines.append("| Item | Mean (1-5) |")
-        lines.append("|---|---:|")
-        for col, val in means.items():
-            lines.append(f"| {col} ({english_question_label(col, qlabels)}) | {val:.3f} |")
-
-    lines.append("")
-    lines.append("## 7) Notes for Manuscript Positioning")
+    lines.append("## 6) Notes for Manuscript Positioning")
     lines.append("")
     lines.append("- Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.")
     lines.append("- K-means profiling and mediation should be presented as exploratory secondary analyses.")
@@ -653,8 +531,6 @@ def main():
     ROOT_ANALYSIS_MD.write_text(output_text, encoding="utf-8")
     print(f"Unified analysis written to: {ANALYSIS_MD}")
     print(f"Root analysis file updated: {ROOT_ANALYSIS_MD}")
-    if RADAR_PNG.exists():
-        print(f"Radar figure written to: {RADAR_PNG}")
 
 
 if __name__ == "__main__":

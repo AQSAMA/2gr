@@ -10,25 +10,24 @@ This script now provides a single unified output with main/clean models and clea
 
 | Model block | Formula summary | McFadden pseudo R² | LLR p-value |
 |---|---|---:|---:|
-| Block 1 (regularized) | `Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)` | 0.0050 | 0.5264 |
-| Block 2 (regularized) | `Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary` | 0.0127 | 0.1020 |
-| Block 3 (regularized) | `Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary` | 0.0698 | <0.0001 |
+| Block 1 (mle) | `Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary` | 0.0040 | 0.5037 |
+| Block 2 (mle) | `Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary` | 0.0116 | 0.0847 |
+| Block 3 (mle) | `Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary` | 0.0686 | <0.0001 |
 
 ### Final Primary Block (Block 3) — Adjusted Odds Ratios
 
 | Predictor | Adjusted OR (95% CI) | p-value |
 |---|---:|---:|
-| Intercept | NA | 0.9996 |
-| C(Age_Group3)[T.1.0] | NA | 0.9996 |
-| C(Age_Group3)[T.2.0] | NA | 0.9996 |
-| C(Q2)[T.2.0] | 1.505 (1.039 to 2.181) | 0.0307 |
-| C(Edu_Group3)[T.3.0] | 1.385 (0.754 to 2.542) | 0.2936 |
-| C(Marital_Group2)[T.2.0] | 1.056 (0.653 to 1.710) | 0.8231 |
-| PriorUse_Binary | 1.343 (0.800 to 2.254) | 0.2649 |
-| Q11 | 0.830 (0.695 to 0.990) | 0.0386 |
-| Q12 | 0.869 (0.701 to 1.078) | 0.2029 |
-| Q13 | 1.506 (1.245 to 1.820) | <0.0001 |
-| Fear_Binary | 0.502 (0.356 to 0.708) | <0.0001 |
+| Intercept | 1.128 (0.298 to 4.273) | 0.8597 |
+| Age_Binary | 0.961 (0.583 to 1.582) | 0.8752 |
+| Gender_Binary | 1.516 (1.043 to 2.205) | 0.0294 |
+| Edu_Binary | 1.381 (0.750 to 2.542) | 0.3005 |
+| Married_Binary | 1.075 (0.632 to 1.827) | 0.7904 |
+| PriorUse_Binary | 1.342 (0.800 to 2.252) | 0.2645 |
+| Q11 | 0.830 (0.696 to 0.991) | 0.0396 |
+| Q12 | 0.869 (0.701 to 1.078) | 0.2008 |
+| Q13 | 1.507 (1.248 to 1.820) | <0.0001 |
+| Fear_Binary | 0.504 (0.358 to 0.711) | <0.0001 |
 
 ### Sensitivity Model Adding Proximal Beliefs (Q6/Q7)
 
@@ -40,33 +39,31 @@ This script now provides a single unified output with main/clean models and clea
 ## 2) Multinomial Logistic Regression Preserving Hesitation (Q8 = No / Yes / Not sure)
 
 - Complete-case n: **837**
-- Model log-likelihood: **-748.073**
-- Fit type: **regularized**
+- Model log-likelihood: **-748.910**
+- Fit type: **mle**
 
 Reference outcome in statsmodels is the lowest coded category; coefficients are shown for non-reference outcome equations.
 
 | Outcome equation | Predictor | Relative risk ratio (95% CI) | p-value |
 |---|---|---:|---:|
-| Q8=1 vs ref | const | NA | 0.9995 |
-| Q8=1 vs ref | Age_Group3_1 | NA | 0.9995 |
-| Q8=1 vs ref | Age_Group3_2 | NA | 0.9995 |
-| Q8=1 vs ref | Q2_2 | NA | 0.0136 |
-| Q8=1 vs ref | Edu_Group3_3 | NA | 0.5632 |
-| Q8=1 vs ref | Marital_Group2_2 | NA | 0.8410 |
-| Q8=1 vs ref | Q31_1 | NA | 0.1749 |
-| Q8=1 vs ref | Q11 | NA | 0.1003 |
-| Q8=1 vs ref | Q12 | NA | 0.0245 |
-| Q8=1 vs ref | Q13 | NA | <0.0001 |
-| Q8=2 vs ref | const | NA | 1.0000 |
-| Q8=2 vs ref | Age_Group3_1 | NA | 1.0000 |
-| Q8=2 vs ref | Age_Group3_2 | NA | 1.0000 |
-| Q8=2 vs ref | Q2_2 | NA | 0.0092 |
-| Q8=2 vs ref | Edu_Group3_3 | NA | 0.5992 |
-| Q8=2 vs ref | Marital_Group2_2 | NA | 0.0630 |
-| Q8=2 vs ref | Q31_1 | NA | 0.3343 |
-| Q8=2 vs ref | Q11 | NA | 0.1852 |
-| Q8=2 vs ref | Q12 | NA | 0.4262 |
-| Q8=2 vs ref | Q13 | NA | 0.6637 |
+| Q8=1 vs ref | const | 0.936 (0.264 to 3.317) | 0.9189 |
+| Q8=1 vs ref | Age_Binary | 0.947 (0.599 to 1.496) | 0.8139 |
+| Q8=1 vs ref | Gender_Binary | 1.558 (1.097 to 2.214) | 0.0133 |
+| Q8=1 vs ref | Edu_Binary | 1.177 (0.661 to 2.095) | 0.5797 |
+| Q8=1 vs ref | Married_Binary | 0.967 (0.598 to 1.563) | 0.8903 |
+| Q8=1 vs ref | PriorUse_Binary | 1.387 (0.863 to 2.229) | 0.1763 |
+| Q8=1 vs ref | Q11 | 0.873 (0.742 to 1.028) | 0.1028 |
+| Q8=1 vs ref | Q12 | 0.794 (0.651 to 0.970) | 0.0239 |
+| Q8=1 vs ref | Q13 | 1.585 (1.328 to 1.892) | <0.0001 |
+| Q8=2 vs ref | const | 0.304 (0.046 to 2.013) | 0.2170 |
+| Q8=2 vs ref | Age_Binary | 1.094 (0.549 to 2.180) | 0.7983 |
+| Q8=2 vs ref | Gender_Binary | 2.171 (1.211 to 3.894) | 0.0093 |
+| Q8=2 vs ref | Edu_Binary | 1.300 (0.526 to 3.211) | 0.5692 |
+| Q8=2 vs ref | Married_Binary | 1.713 (0.863 to 3.399) | 0.1237 |
+| Q8=2 vs ref | PriorUse_Binary | 1.401 (0.704 to 2.789) | 0.3373 |
+| Q8=2 vs ref | Q11 | 0.846 (0.662 to 1.080) | 0.1799 |
+| Q8=2 vs ref | Q12 | 0.890 (0.660 to 1.199) | 0.4438 |
+| Q8=2 vs ref | Q13 | 1.064 (0.820 to 1.381) | 0.6404 |
 
 ## Exploratory Analysis (Clearly Labeled)
 
@@ -102,29 +99,15 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 ## 5) Exploratory Mediation (Associational): Q31 -> Q6 -> Q8
 
 - Analysis sample (Q31/Q6/Q8 coded as binary Yes/No only): **n=522**
-- a-path (Q31 -> Q6) log-odds coefficient: **0.9254**
-- b-path (Q6 -> Q8, adjusted for Q31) log-odds coefficient: **2.2889**
-- Direct effect c' (Q31 -> Q8 controlling mediator): **0.1838**
-- Total effect c (Q31 -> Q8 without mediator): **0.5621**
-- Indirect effect a*b (log-odds scale): **2.1181**
-- Bootstrap 95% CI for indirect effect: **1.0314 to 3.4909** (successful resamples=1500)
+- a-path (Q31 -> Q6) log-odds coefficient: **0.9173**
+- b-path (Q6 -> Q8, adjusted for Q31) log-odds coefficient: **2.2925**
+- Direct effect c' (Q31 -> Q8 controlling mediator): **0.1897**
+- Total effect c (Q31 -> Q8 without mediator): **0.5646**
+- Indirect effect a*b (log-odds scale): **2.1029**
+- Bootstrap 95% CI for indirect effect: **1.0194 to 3.4509** (successful resamples=1500)
 - Interpretation note: this cross-sectional mediation is exploratory and should not be interpreted as causal.
 
-## 6) User-Subset Visual Profile
-
-- Radar chart saved to: `analysis_pipeline/output/user_experience_radar.png`
-- Mean raw item values used for radar chart:
-
-| Item | Mean (1-5) |
-|---|---:|
-| Q15 (I believe psychiatric medications are necessary for my health) | 3.411 |
-| Q16 (Psychiatric medications keep me stable) | 3.234 |
-| Q17 (Without psychiatric medications, my condition would worsen) | 2.786 |
-| Q18 (Psychiatric medications cause bothersome side effects) | 4.161 |
-| Q19 (I worry about habituation or addiction to psychiatric medications) | 3.901 |
-| Q20 (Psychiatric medications may harm my health in the long term) | 3.928 |
-
-## 7) Notes for Manuscript Positioning
+## 6) Notes for Manuscript Positioning
 
 - Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.
 - K-means profiling and mediation should be presented as exploratory secondary analyses.
