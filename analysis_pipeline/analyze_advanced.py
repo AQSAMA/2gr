@@ -23,11 +23,24 @@ RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
 
 
 def fmt_p(p):
+    if p is None or pd.isna(p):
+        return "NA"
     return "<0.0001" if p < 0.0001 else f"{p:.4f}"
 
 
 def fmt_or(or_val, ci_low, ci_high):
+    if any(pd.isna(v) for v in [or_val, ci_low, ci_high]):
+        return "NA"
+    if any(np.isinf(v) for v in [or_val, ci_low, ci_high]):
+        return "NA"
     return f"{or_val:.3f} ({ci_low:.3f} to {ci_high:.3f})"
+
+
+def safe_exp(x, clip=20):
+    if pd.isna(x):
+        return np.nan
+    x = float(np.clip(x, -clip, clip))
+    return float(np.exp(x))
 
 
 def cramers_v_from_ct(ct: pd.DataFrame):
@@ -57,64 +70,141 @@ def as_binary(series, yes=1, no=0):
     return np.where(series == yes, 1, np.where(series == no, 0, np.nan))
 
 
+def add_grouped_demographics(df):
+    d = df.copy()
+    d["Age_Group3"] = np.select(
+        [d["Q1"].isin([1, 2]), d["Q1"].isin([3, 4]), d["Q1"] == 5],
+        [1, 2, 3],
+        default=np.nan,
+    )
+    d["Edu_Group3"] = np.select(
+        [d["Q4"].isin([1, 2, 3]), d["Q4"] == 4, d["Q4"].isin([5, 6])],
+        [1, 2, 3],
+        default=np.nan,
+    )
+    d["Marital_Group2"] = np.select(
+        [d["Q5"] == 1, d["Q5"].isin([2, 3, 4])],
+        [1, 2],
+        default=np.nan,
+    )
+    return d
+
+
+def collapse_sparse_levels(df, col, min_n=15):
+    d = df.copy()
+    counts = d[col].value_counts(dropna=True)
+    rare_levels = counts[counts < min_n].index
+    if len(rare_levels) > 0:
+        d[col] = d[col].where(~d[col].isin(rare_levels), -1)
+    return d
+
+
+def safe_logit_fit(formula, data, maxiter=500):
+    try:
+        return smf.logit(formula, data=data).fit(disp=0, maxiter=maxiter), "mle"
+    except Exception:
+        return smf.logit(formula, data=data).fit_regularized(disp=0), "regularized"
+
+
 def summarize_logit(model):
     params = model.params
-    conf = model.conf_int()
-    pvals = model.pvalues
+    try:
+        conf = model.conf_int()
+    except Exception:
+        conf = pd.DataFrame({0: params - np.nan, 1: params + np.nan})
+    try:
+        pvals = model.pvalues
+    except Exception:
+        pvals = pd.Series(np.nan, index=params.index)
     rows = []
     for term in params.index:
-        or_val = float(np.exp(params[term]))
-        low = float(np.exp(conf.loc[term, 0]))
-        high = float(np.exp(conf.loc[term, 1]))
-        rows.append((term, or_val, low, high, float(pvals[term])))
+        or_val = safe_exp(params[term])
+        low = safe_exp(conf.loc[term, 0]) if term in conf.index else np.nan
+        high = safe_exp(conf.loc[term, 1]) if term in conf.index else np.nan
+        p = float(pvals[term]) if term in pvals.index else np.nan
+        rows.append((term, or_val, low, high, p))
     return rows
 
 
 def fit_hierarchical_models(df):
-    work = df.copy()
+    work = add_grouped_demographics(df.copy())
     work["Recommend_Binary"] = as_binary(work["Q8"], yes=1, no=0)
     work["PriorUse_Binary"] = as_binary(work["Q31"], yes=1, no=0)
     work["Fear_Binary"] = as_binary(work["Q9"], yes=1, no=0)
 
     # Primary model set avoids proximal tautology with Q6/Q7.
-    base_cols = ["Recommend_Binary", "Q1", "Q2", "Q4", "Q5", "PriorUse_Binary", "Q11", "Q12", "Q13", "Fear_Binary"]
+    base_cols = [
+        "Recommend_Binary",
+        "Age_Group3",
+        "Q2",
+        "Edu_Group3",
+        "Marital_Group2",
+        "PriorUse_Binary",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Fear_Binary",
+    ]
     d = work[base_cols].dropna().copy()
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        d = collapse_sparse_levels(d, c, min_n=15)
 
     formulas = [
-        "Recommend_Binary ~ C(Q1) + C(Q2) + C(Q4) + C(Q5)",
-        "Recommend_Binary ~ C(Q1) + C(Q2) + C(Q4) + C(Q5) + PriorUse_Binary",
-        "Recommend_Binary ~ C(Q1) + C(Q2) + C(Q4) + C(Q5) + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)",
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary",
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
     ]
 
     fitted = []
     for i, f in enumerate(formulas, start=1):
-        model = smf.logit(f, data=d).fit(disp=0, maxiter=500)
-        fitted.append((f"Block {i}", model, f))
+        model, fit_type = safe_logit_fit(f, d, maxiter=500)
+        fitted.append((f"Block {i}", model, f, fit_type))
 
     # Sensitivity model with proximal beliefs Q6/Q7 added.
     work["Safe_Binary"] = as_binary(work["Q6"], yes=1, no=0)
     work["Acceptable_Binary"] = as_binary(work["Q7"], yes=1, no=0)
     sens_cols = [
-        "Recommend_Binary", "Q1", "Q2", "Q4", "Q5", "PriorUse_Binary", "Q11", "Q12", "Q13", "Fear_Binary", "Safe_Binary", "Acceptable_Binary"
+        "Recommend_Binary",
+        "Age_Group3",
+        "Q2",
+        "Edu_Group3",
+        "Marital_Group2",
+        "PriorUse_Binary",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Fear_Binary",
+        "Safe_Binary",
+        "Acceptable_Binary",
     ]
     ds = work[sens_cols].dropna().copy()
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        ds = collapse_sparse_levels(ds, c, min_n=15)
     sens_formula = (
-        "Recommend_Binary ~ C(Q1) + C(Q2) + C(Q4) + C(Q5) + PriorUse_Binary + "
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + "
         "Q11 + Q12 + Q13 + Fear_Binary + Safe_Binary + Acceptable_Binary"
     )
-    sens_model = smf.logit(sens_formula, data=ds).fit(disp=0, maxiter=500)
+    sens_model, sens_fit_type = safe_logit_fit(sens_formula, ds, maxiter=500)
 
-    return d, fitted, ds, sens_model
+    return d, fitted, ds, sens_model, sens_fit_type
 
 
 def fit_multinomial_q8(df):
-    cols = ["Q8", "Q1", "Q2", "Q4", "Q5", "Q31", "Q11", "Q12", "Q13"]
-    d = df[cols].dropna().copy()
+    work = add_grouped_demographics(df.copy())
+    cols = ["Q8", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31", "Q11", "Q12", "Q13"]
+    d = work[cols].dropna().copy()
     d = d[d["Q8"].isin([0, 1, 2])]
 
-    X = pd.get_dummies(d[["Q1", "Q2", "Q4", "Q5", "Q31"]].astype(int).astype(str), drop_first=True)
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        d = collapse_sparse_levels(d, c, min_n=15)
+    X = pd.get_dummies(
+        d[["Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31"]].astype(int).astype(str),
+        drop_first=True,
+        dtype=float,
+    )
     X[["Q11", "Q12", "Q13"]] = d[["Q11", "Q12", "Q13"]].astype(float)
     X = sm.add_constant(X, has_constant="add")
+    X = X.astype(float)
     y = d["Q8"].astype(int)
 
     model = sm.MNLogit(y, X).fit(disp=0, maxiter=500)
@@ -183,21 +273,25 @@ def profile_clustering(df):
 def mediation_bootstrap(df, n_boot=1500, seed=42):
     rng = np.random.default_rng(seed)
 
-    work = df.copy()
+    work = add_grouped_demographics(df.copy())
     work["X_prior_use"] = as_binary(work["Q31"], yes=1, no=0)
     work["M_safe"] = as_binary(work["Q6"], yes=1, no=0)
     work["Y_recommend"] = as_binary(work["Q8"], yes=1, no=0)
 
-    cols = ["X_prior_use", "M_safe", "Y_recommend", "Q1", "Q2", "Q4", "Q5"]
+    cols = ["X_prior_use", "M_safe", "Y_recommend", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2"]
     d = work[cols].dropna().copy()
 
-    f_a = "M_safe ~ X_prior_use + C(Q1) + C(Q2) + C(Q4) + C(Q5)"
-    f_b = "Y_recommend ~ X_prior_use + M_safe + C(Q1) + C(Q2) + C(Q4) + C(Q5)"
-    f_c = "Y_recommend ~ X_prior_use + C(Q1) + C(Q2) + C(Q4) + C(Q5)"
+    f_a = "M_safe ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
+    f_b = "Y_recommend ~ X_prior_use + M_safe + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
+    f_c = "Y_recommend ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
 
-    m_a = smf.logit(f_a, data=d).fit(disp=0, maxiter=500)
-    m_b = smf.logit(f_b, data=d).fit(disp=0, maxiter=500)
-    m_c = smf.logit(f_c, data=d).fit(disp=0, maxiter=500)
+    d = collapse_sparse_levels(d, "Age_Group3", min_n=15)
+    d = collapse_sparse_levels(d, "Edu_Group3", min_n=15)
+    d = collapse_sparse_levels(d, "Marital_Group2", min_n=15)
+
+    m_a, _ = safe_logit_fit(f_a, d, maxiter=500)
+    m_b, _ = safe_logit_fit(f_b, d, maxiter=500)
+    m_c, _ = safe_logit_fit(f_c, d, maxiter=500)
 
     a_hat = float(m_a.params["X_prior_use"])
     b_hat = float(m_b.params["M_safe"])
@@ -211,8 +305,8 @@ def mediation_bootstrap(df, n_boot=1500, seed=42):
         sample_idx = rng.choice(idx, size=len(idx), replace=True)
         bdf = d.iloc[sample_idx]
         try:
-            ba = smf.logit(f_a, data=bdf).fit(disp=0, maxiter=300)
-            bb = smf.logit(f_b, data=bdf).fit(disp=0, maxiter=300)
+            ba, _ = safe_logit_fit(f_a, bdf, maxiter=300)
+            bb, _ = safe_logit_fit(f_b, bdf, maxiter=300)
             boot_vals.append(float(ba.params["X_prior_use"] * bb.params["M_safe"]))
         except Exception:
             continue
@@ -296,13 +390,15 @@ def main():
     # 1) Hierarchical block logistic regression
     lines.append("## 1) Hierarchical Block Logistic Regression (Outcome: Q8 Yes vs No)")
     lines.append("")
-    d_block, blocks, d_sens, sens_model = fit_hierarchical_models(df)
+    d_block, blocks, d_sens, sens_model, sens_fit_type = fit_hierarchical_models(df)
     lines.append(f"- Complete-case n (primary hierarchical models): **{len(d_block)}**")
     lines.append("")
     lines.append("| Model block | Formula summary | McFadden pseudo R² | LLR p-value |")
     lines.append("|---|---|---:|---:|")
-    for name, m, formula in blocks:
-        lines.append(f"| {name} | `{formula}` | {m.prsquared:.4f} | {fmt_p(m.llr_pvalue)} |")
+    for name, m, formula, fit_type in blocks:
+        prsquared = getattr(m, "prsquared", np.nan)
+        llr_pvalue = getattr(m, "llr_pvalue", np.nan)
+        lines.append(f"| {name} ({fit_type}) | `{formula}` | {prsquared:.4f} | {fmt_p(llr_pvalue)} |")
 
     lines.append("")
     lines.append("### Final Primary Block (Block 3) — Adjusted Odds Ratios")
@@ -316,7 +412,9 @@ def main():
     lines.append("### Sensitivity Model Adding Proximal Beliefs (Q6/Q7)")
     lines.append("")
     lines.append(f"- Complete-case n (sensitivity model): **{len(d_sens)}**")
-    lines.append(f"- McFadden pseudo R²: **{sens_model.prsquared:.4f}**")
+    sens_pr2 = getattr(sens_model, "prsquared", np.nan)
+    lines.append(f"- McFadden pseudo R²: **{sens_pr2:.4f}**")
+    lines.append(f"- Fit type: **{sens_fit_type}**")
     lines.append("- This sensitivity model is reported separately because Q6 and Q7 are conceptually close to Q8 and can dominate explanatory variance.")
 
     # 2) Multinomial logistic retaining Not sure
@@ -324,6 +422,8 @@ def main():
     lines.append("## 2) Multinomial Logistic Regression Preserving Hesitation (Q8 = No / Yes / Not sure)")
     lines.append("")
     d_mn, mn_model = fit_multinomial_q8(df)
+    mn_categories = sorted(d_mn["Q8"].astype(int).unique().tolist())
+    non_ref_categories = mn_categories[1:]
     lines.append(f"- Complete-case n: **{len(d_mn)}**")
     lines.append(f"- Model log-likelihood: **{mn_model.llf:.3f}**")
     lines.append("")
@@ -333,14 +433,25 @@ def main():
     lines.append("|---|---|---:|---:|")
     conf = mn_model.conf_int()
     for outcome_col in mn_model.params.columns:
+        mapped_outcome = non_ref_categories[int(outcome_col)] if int(outcome_col) < len(non_ref_categories) else outcome_col
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
-            ci_low, ci_high = conf.loc[(str(outcome_col), term)]
-            rrr = float(np.exp(beta))
-            low = float(np.exp(ci_low))
-            high = float(np.exp(ci_high))
-            lines.append(f"| Q8={outcome_col} vs ref | {term} | {fmt_or(rrr, low, high)} | {fmt_p(float(p))} |")
+            if isinstance(conf.index, pd.MultiIndex):
+                try:
+                    ci_row = conf.loc[(str(mapped_outcome), term)]
+                except KeyError:
+                    ci_row = conf.loc[(mapped_outcome, term)] if (mapped_outcome, term) in conf.index else pd.Series({"lower": np.nan, "upper": np.nan})
+                ci_low = ci_row.get("lower", np.nan)
+                ci_high = ci_row.get("upper", np.nan)
+            else:
+                ci_row = conf.loc[term]
+                ci_low = ci_row.get("lower", np.nan) if hasattr(ci_row, "get") else ci_row[0]
+                ci_high = ci_row.get("upper", np.nan) if hasattr(ci_row, "get") else ci_row[1]
+            rrr = safe_exp(beta)
+            low = safe_exp(ci_low)
+            high = safe_exp(ci_high)
+            lines.append(f"| Q8={mapped_outcome} vs ref | {term} | {fmt_or(rrr, low, high)} | {fmt_p(float(p))} |")
 
     # 3) Contact hypothesis
     lines.append("")
