@@ -22,9 +22,11 @@ ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
 RADAR_REPORT_PATH = "analysis_pipeline/output/user_experience_radar.png"
+# Values above this absolute log-odds size usually indicate separation/instability in these survey models.
 MAX_LOGIT_PARAM_ABS = 8
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
+# Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
 CLUSTER_RANGE = [2, 3, 4]
 
 
@@ -101,6 +103,7 @@ def add_grouped_demographics(df):
 
 
 def collapse_sparse_levels(df, col, min_n=15):
+    """Collapse sparse category levels to sentinel -1 to stabilize regression estimation."""
     d = df.copy()
     counts = d[col].value_counts(dropna=True)
     rare_levels = counts[counts < min_n].index
@@ -110,6 +113,7 @@ def collapse_sparse_levels(df, col, min_n=15):
 
 
 def safe_logit_fit(formula, data, maxiter=500):
+    """Fit logit with MLE first, then fall back to regularized fit when unstable."""
     try:
         mle_model = smf.logit(formula, data=data).fit(disp=0, maxiter=maxiter)
         params = getattr(mle_model, "params", pd.Series(dtype=float))
@@ -147,6 +151,23 @@ def safe_mnlogit_fit(y, X, maxiter=500):
     except Exception:
         pass
     return sm.MNLogit(y, X).fit_regularized(disp=0), "regularized"
+
+
+def extract_multinomial_ci(conf, outcome_col, term):
+    if conf is None:
+        return np.nan, np.nan
+    if isinstance(conf.index, pd.MultiIndex):
+        for key in (outcome_col, str(outcome_col)):
+            try:
+                ci_row = conf.loc[(key, term)]
+                return ci_row.get("lower", np.nan), ci_row.get("upper", np.nan)
+            except KeyError:
+                continue
+        return np.nan, np.nan
+    ci_row = conf.loc[term]
+    low = ci_row.get("lower", np.nan) if hasattr(ci_row, "get") else ci_row[0]
+    high = ci_row.get("upper", np.nan) if hasattr(ci_row, "get") else ci_row[1]
+    return low, high
 
 
 def summarize_logit(model):
@@ -486,23 +507,7 @@ def main():
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
-            if conf is None:
-                ci_low = np.nan
-                ci_high = np.nan
-            elif isinstance(conf.index, pd.MultiIndex):
-                try:
-                    ci_row = conf.loc[(outcome_col, term)]
-                except KeyError:
-                    try:
-                        ci_row = conf.loc[(str(outcome_col), term)]
-                    except KeyError:
-                        ci_row = pd.Series({"lower": np.nan, "upper": np.nan})
-                ci_low = ci_row.get("lower", np.nan)
-                ci_high = ci_row.get("upper", np.nan)
-            else:
-                ci_row = conf.loc[term]
-                ci_low = ci_row.get("lower", np.nan) if hasattr(ci_row, "get") else ci_row[0]
-                ci_high = ci_row.get("upper", np.nan) if hasattr(ci_row, "get") else ci_row[1]
+            ci_low, ci_high = extract_multinomial_ci(conf, outcome_col, term)
             rrr = safe_exp(beta)
             low = safe_exp(ci_low)
             high = safe_exp(ci_high)
