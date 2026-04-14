@@ -78,9 +78,9 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 
 | Item | User median | Non-user median | Mann-Whitney U p-value | Cliff's delta | Chi-square p-value | Cramer's V | N used |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Q11 (الأطباء يصفون الأدوية أكثر مما يجب) | 3.00 | 4.00 | 0.0428 | -0.108 | 0.1170 | 0.094 | 843 |
-| Q12 (معظم الأدوية تسبب اعتمادًا نفسيًا أو جسديًا) | 4.00 | 4.00 | 0.0317 | -0.112 | 0.0428 | 0.108 | 840 |
-| Q13 (الأدوية الحديثة أكثر أمانًا من القديمة) | 4.00 | 3.00 | 0.0002 | 0.198 | 0.0027 | 0.139 | 842 |
+| Q11 (Doctors prescribe medications more than necessary) | 3.00 | 4.00 | 0.0428 | -0.108 | 0.1170 | 0.094 | 843 |
+| Q12 (Most medications cause psychological or physical dependence) | 4.00 | 4.00 | 0.0317 | -0.112 | 0.0428 | 0.108 | 840 |
+| Q13 (Modern medications are safer than older ones) | 4.00 | 3.00 | 0.0002 | 0.198 | 0.0027 | 0.139 | 842 |
 
 ## 4) Exploratory Stigma Phenotypes (K-Means on Standardized Q11-Q13)
 
@@ -117,12 +117,12 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 
 | Item | Mean (1-5) |
 |---|---:|
-| Q15 (أعتقد أن الأدوية النفسية ضرورية لصحتي) | 3.411 |
-| Q16 (الأدوية النفسية تحافظ على استقراري) | 3.234 |
-| Q17 (بدون الأدوية النفسية ستتدهور حالتي) | 2.786 |
-| Q18 (الأدوية النفسية تسبب آثارًا جانبية مزعجة) | 4.161 |
-| Q19 (أشعر بالقلق من التعود أو الإدمان على الأدوية النفسية) | 3.901 |
-| Q20 (الأدوية النفسية قد تضر بصحتي على المدى الطويل) | 3.928 |
+| Q15 (I believe psychiatric medications are necessary for my health) | 3.411 |
+| Q16 (Psychiatric medications keep me stable) | 3.234 |
+| Q17 (Without psychiatric medications, my condition would worsen) | 2.786 |
+| Q18 (Psychiatric medications cause bothersome side effects) | 4.161 |
+| Q19 (I worry about habituation or addiction to psychiatric medications) | 3.901 |
+| Q20 (Psychiatric medications may harm my health in the long term) | 3.928 |
 
 ## 7) Notes for Manuscript Positioning
 
