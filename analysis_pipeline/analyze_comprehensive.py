@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -28,6 +29,37 @@ KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
 # Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
 CLUSTER_RANGE = [2, 3, 4]
+ENGLISH_QUESTION_LABELS = {
+    "Q1": "Age",
+    "Q2": "Gender",
+    "Q4": "Educational level",
+    "Q5": "Marital status",
+    "Q6": "Do you think psychiatric medications are safe?",
+    "Q7": "Do you see their use as acceptable like hypertension and diabetes medications?",
+    "Q8": "Would you recommend psychiatric medications to someone close if needed?",
+    "Q9": "Do you have concerns about interacting with a person taking psychiatric medications?",
+    "Q11": "Doctors prescribe medications more than necessary",
+    "Q12": "Most medications cause psychological or physical dependence",
+    "Q13": "Modern medications are safer than older ones",
+    "Q15": "I believe psychiatric medications are necessary for my health",
+    "Q16": "Psychiatric medications keep me stable",
+    "Q17": "Without psychiatric medications, my condition would worsen",
+    "Q18": "Psychiatric medications cause bothersome side effects",
+    "Q19": "I worry about habituation or addiction to psychiatric medications",
+    "Q20": "Psychiatric medications may harm my health in the long term",
+    "Q22": "I feel better when using psychiatric medications",
+    "Q23": "Medications make me lose control of my life",
+    "Q24": "Medications help me be more normal",
+    "Q25": "Medications cause problems for me",
+    "Q26": "Medications make me confident in my ability to recover",
+    "Q27": "Using medications makes me feel afraid",
+    "Q28": "Psychiatric medications help me be in a better state",
+    "Q29": "Psychiatric medications help me be in a better state",
+    "Q30": "Medications make my life worse",
+    "Q31": "Do you currently use or have you ever used a psychiatric medication?",
+    "Q31_1": "I feel psychiatric medications are necessary for me",
+    "Q32": "Medications cause me worry about their effects",
+}
 
 
 def fmt_p(p):
@@ -53,6 +85,21 @@ def safe_exp(x, clip=20):
         return np.nan
     x = float(np.clip(x, -clip, clip))
     return float(np.exp(x))
+
+
+def has_arabic(text):
+    if text is None:
+        return False
+    return bool(re.search(r"[\u0600-\u06FF]", str(text)))
+
+
+def english_question_label(col, qlabels):
+    if col in ENGLISH_QUESTION_LABELS:
+        return ENGLISH_QUESTION_LABELS[col]
+    raw = qlabels.get(col, "")
+    if has_arabic(raw):
+        return ""
+    return str(raw)
 
 
 def cramers_v_from_ct(ct: pd.DataFrame):
@@ -534,7 +581,7 @@ def main():
     lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
     for col, u_stat, p_u, delta, p_c, cv, n_used, med_u, med_n in contact:
         lines.append(
-            f"| {col} ({qlabels.get(col, '')}) | {med_u:.2f} | {med_n:.2f} | {fmt_p(p_u)} | {delta:.3f} | {fmt_p(p_c)} | {cv:.3f} | {n_used} |"
+            f"| {col} ({english_question_label(col, qlabels)}) | {med_u:.2f} | {med_n:.2f} | {fmt_p(p_u)} | {delta:.3f} | {fmt_p(p_c)} | {cv:.3f} | {n_used} |"
         )
 
     # 4) Exploratory stigma profiles
@@ -589,7 +636,7 @@ def main():
         lines.append("| Item | Mean (1-5) |")
         lines.append("|---|---:|")
         for col, val in means.items():
-            lines.append(f"| {col} ({qlabels.get(col, '')}) | {val:.3f} |")
+            lines.append(f"| {col} ({english_question_label(col, qlabels)}) | {val:.3f} |")
 
     lines.append("")
     lines.append("## 7) Notes for Manuscript Positioning")
