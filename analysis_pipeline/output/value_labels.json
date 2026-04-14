@@ -1,0 +1,43 @@
+{
+  "Q1": {
+    "1": "18-25",
+    "2": "26-35",
+    "3": "36-45",
+    "4": "46-60",
+    "5": ">60"
+  },
+  "Q2": {
+    "1": "Male",
+    "2": "Female"
+  },
+  "Q4": {
+    "1": "Primary",
+    "2": "Middle School",
+    "3": "High School",
+    "4": "Institute/Diploma",
+    "5": "University",
+    "6": "Postgraduate"
+  },
+  "Q5": {
+    "1": "Single",
+    "2": "Married",
+    "3": "Divorced",
+    "4": "Widowed"
+  },
+  "LIKERT": {
+    "1": "Strongly disagree",
+    "2": "Disagree",
+    "3": "Neutral",
+    "4": "Agree",
+    "5": "Strongly agree"
+  },
+  "YES_NO_UNSURE": {
+    "0": "No",
+    "1": "Yes",
+    "2": "Not sure"
+  },
+  "YES_NO": {
+    "0": "No",
+    "1": "Yes"
+  }
+}
