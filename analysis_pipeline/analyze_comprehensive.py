@@ -1,11 +1,15 @@
 import json
-from itertools import combinations
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency, fisher_exact, mannwhitneyu, spearmanr
+import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from matplotlib import pyplot as plt
+from scipy.stats import chi2_contingency, mannwhitneyu
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.preprocessing import StandardScaler
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -16,124 +20,391 @@ CLEAN_CSV = OUTPUT_DIR / "cleaned_survey_data_utf8.csv"
 QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
+RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
 
 
-def cronbach_alpha(frame: pd.DataFrame):
-    x = frame.dropna()
-    if x.empty or x.shape[1] < 2:
-        return np.nan, len(x)
-    k = x.shape[1]
-    variance_sum = x.var(axis=0, ddof=1).sum()
-    total_var = x.sum(axis=1).var(ddof=1)
-    if total_var == 0:
-        return np.nan, len(x)
-    alpha = (k / (k - 1)) * (1 - (variance_sum / total_var))
-    return float(alpha), len(x)
+def fmt_p(p):
+    if p is None or pd.isna(p):
+        return "NA"
+    return "<0.0001" if p < 0.0001 else f"{p:.4f}"
 
 
-def wilson_ci(k, n, z=1.96):
-    if n == 0:
-        return np.nan, np.nan
-    p = k / n
-    denom = 1 + z**2 / n
-    center = (p + z**2 / (2 * n)) / denom
-    half = z * np.sqrt((p * (1 - p) + z**2 / (4 * n)) / n) / denom
-    return max(0, center - half), min(1, center + half)
+def fmt_or(or_val, ci_low, ci_high):
+    if any(pd.isna(v) for v in [or_val, ci_low, ci_high]):
+        return "NA"
+    if any(np.isinf(v) for v in [or_val, ci_low, ci_high]):
+        return "NA"
+    if any(v <= 0 for v in [or_val, ci_low, ci_high]):
+        return "NA"
+    if any(v > 1e4 for v in [or_val, ci_low, ci_high]):
+        return "NA"
+    return f"{or_val:.3f} ({ci_low:.3f} to {ci_high:.3f})"
 
 
-def fmt_count_pct(k, n):
-    if n == 0:
-        return "0 (0.0%)"
-    return f"{int(k)} ({100 * k / n:.1f}%)"
-
-
-def yes_no_unsure_table(df, col):
-    valid = df[col].dropna()
-    n = len(valid)
-    yes = int((valid == 1).sum())
-    no = int((valid == 0).sum())
-    unsure = int((valid == 2).sum())
-    return n, fmt_count_pct(yes, n), fmt_count_pct(no, n), fmt_count_pct(unsure, n)
-
-
-def yes_no_table(df, col):
-    valid = df[col].dropna()
-    n = len(valid)
-    yes = int((valid == 1).sum())
-    no = int((valid == 0).sum())
-    return n, fmt_count_pct(yes, n), fmt_count_pct(no, n)
-
-
-def likert_grouped(df, col):
-    valid = df[col].dropna()
-    n = len(valid)
-    agree = int(valid.isin([4, 5]).sum())
-    neutral = int((valid == 3).sum())
-    disagree = int(valid.isin([1, 2]).sum())
-    return n, fmt_count_pct(agree, n), fmt_count_pct(neutral, n), fmt_count_pct(disagree, n)
-
-
-def likert_full_counts(df, col):
-    valid = df[col].dropna()
-    n = len(valid)
-    out = {}
-    for code in [1, 2, 3, 4, 5]:
-        out[code] = fmt_count_pct(int((valid == code).sum()), n)
-    return n, out
-
-
-def cramers_v(ct):
-    chi2, _, _, _ = chi2_contingency(ct)
-    n = ct.to_numpy().sum()
-    r, k = ct.shape
-    if n == 0 or min(r, k) <= 1:
+def safe_exp(x, clip=20):
+    if pd.isna(x):
         return np.nan
-    return np.sqrt(chi2 / (n * (min(r, k) - 1)))
+    x = float(np.clip(x, -clip, clip))
+    return float(np.exp(x))
 
 
-def chi_square_result(df, x, y):
-    d = df[[x, y]].dropna()
-    if d.empty:
-        return np.nan, np.nan, 0, np.nan
-    ct = pd.crosstab(d[x], d[y])
+def cramers_v_from_ct(ct: pd.DataFrame):
     if ct.shape[0] < 2 or ct.shape[1] < 2:
-        return np.nan, np.nan, len(d), np.nan
-    chi2, p, _, _ = chi2_contingency(ct)
-    cv = cramers_v(ct)
-    return chi2, p, len(d), cv
+        return np.nan
+    chi2, _, _, _ = chi2_contingency(ct)
+    n = ct.values.sum()
+    if n == 0:
+        return np.nan
+    return np.sqrt(chi2 / (n * (min(ct.shape) - 1)))
 
 
-def fisher_or_ci(df, exposure_col, outcome_col, exposure_yes=1, outcome_yes=1):
-    d = df[[exposure_col, outcome_col]].dropna().copy()
-    if d.empty:
-        return np.nan, np.nan, np.nan, np.nan, 0
-    d[exposure_col] = (d[exposure_col] == exposure_yes).astype(int)
-    d[outcome_col] = (d[outcome_col] == outcome_yes).astype(int)
-    ct = pd.crosstab(d[exposure_col], d[outcome_col])
-    for i in [0, 1]:
-        for j in [0, 1]:
-            if i not in ct.index:
-                ct.loc[i] = 0
-            if j not in ct.columns:
-                ct[j] = 0
-    ct = ct.sort_index().reindex(columns=[0, 1])
-    a = ct.loc[1, 1]
-    b = ct.loc[1, 0]
-    c = ct.loc[0, 1]
-    d0 = ct.loc[0, 0]
-    _, p = fisher_exact([[a, b], [c, d0]])
+def cliffs_delta(x, y):
+    x = np.asarray(x)
+    y = np.asarray(y)
+    if len(x) == 0 or len(y) == 0:
+        return np.nan
+    gt = 0
+    lt = 0
+    for xv in x:
+        gt += np.sum(xv > y)
+        lt += np.sum(xv < y)
+    return (gt - lt) / (len(x) * len(y))
 
-    aa, bb, cc, dd = a, b, c, d0
-    if min(aa, bb, cc, dd) == 0:
-        aa += 0.5
-        bb += 0.5
-        cc += 0.5
-        dd += 0.5
-    or_est = (aa * dd) / (bb * cc)
-    se = np.sqrt(1 / aa + 1 / bb + 1 / cc + 1 / dd)
-    lcl = np.exp(np.log(or_est) - 1.96 * se)
-    ucl = np.exp(np.log(or_est) + 1.96 * se)
-    return or_est, p, lcl, ucl, int(len(d))
+
+def as_binary(series, yes=1, no=0):
+    return np.where(series == yes, 1, np.where(series == no, 0, np.nan))
+
+
+def add_grouped_demographics(df):
+    d = df.copy()
+    d["Age_Group3"] = np.select(
+        [d["Q1"].isin([1, 2]), d["Q1"].isin([3, 4]), d["Q1"] == 5],
+        [1, 2, 3],
+        default=np.nan,
+    )
+    d["Edu_Group3"] = np.select(
+        [d["Q4"].isin([1, 2, 3]), d["Q4"] == 4, d["Q4"].isin([5, 6])],
+        [1, 2, 3],
+        default=np.nan,
+    )
+    d["Marital_Group2"] = np.select(
+        [d["Q5"] == 1, d["Q5"].isin([2, 3, 4])],
+        [1, 2],
+        default=np.nan,
+    )
+    return d
+
+
+def collapse_sparse_levels(df, col, min_n=15):
+    d = df.copy()
+    counts = d[col].value_counts(dropna=True)
+    rare_levels = counts[counts < min_n].index
+    if len(rare_levels) > 0:
+        d[col] = d[col].where(~d[col].isin(rare_levels), -1)
+    return d
+
+
+def safe_logit_fit(formula, data, maxiter=500):
+    try:
+        mle_model = smf.logit(formula, data=data).fit(disp=0, maxiter=maxiter)
+        params = getattr(mle_model, "params", pd.Series(dtype=float))
+        pr2 = getattr(mle_model, "prsquared", np.nan)
+        converged = getattr(mle_model, "mle_retvals", {}).get("converged", True)
+        unstable = (
+            params.empty
+            or (not np.isfinite(params).all())
+            or (float(np.max(np.abs(params))) > 8)
+            or pd.isna(pr2)
+            or (not np.isfinite(pr2))
+            or (not converged)
+        )
+        if not unstable:
+            return mle_model, "mle"
+    except Exception:
+        pass
+    return smf.logit(formula, data=data).fit_regularized(disp=0), "regularized"
+
+
+def safe_mnlogit_fit(y, X, maxiter=500):
+    try:
+        mle_model = sm.MNLogit(y, X).fit(disp=0, maxiter=maxiter)
+        params = getattr(mle_model, "params", pd.DataFrame())
+        llf = getattr(mle_model, "llf", np.nan)
+        unstable = (
+            params.empty
+            or (not np.isfinite(params.to_numpy()).all())
+            or (float(np.max(np.abs(params.to_numpy()))) > 8)
+            or pd.isna(llf)
+            or (not np.isfinite(llf))
+        )
+        if not unstable:
+            return mle_model, "mle"
+    except Exception:
+        pass
+    return sm.MNLogit(y, X).fit_regularized(disp=0), "regularized"
+
+
+def summarize_logit(model):
+    params = model.params
+    try:
+        conf = model.conf_int()
+    except Exception:
+        conf = pd.DataFrame({0: params - np.nan, 1: params + np.nan})
+    try:
+        pvals = model.pvalues
+    except Exception:
+        pvals = pd.Series(np.nan, index=params.index)
+    rows = []
+    for term in params.index:
+        or_val = safe_exp(params[term])
+        low = safe_exp(conf.loc[term, 0]) if term in conf.index else np.nan
+        high = safe_exp(conf.loc[term, 1]) if term in conf.index else np.nan
+        p = float(pvals[term]) if term in pvals.index else np.nan
+        rows.append((term, or_val, low, high, p))
+    return rows
+
+
+def fit_hierarchical_models(df):
+    work = add_grouped_demographics(df.copy())
+    work["Recommend_Binary"] = as_binary(work["Q8"], yes=1, no=0)
+    work["PriorUse_Binary"] = as_binary(work["Q31"], yes=1, no=0)
+    work["Fear_Binary"] = as_binary(work["Q9"], yes=1, no=0)
+
+    # Primary model set avoids proximal tautology with Q6/Q7.
+    base_cols = [
+        "Recommend_Binary",
+        "Age_Group3",
+        "Q2",
+        "Edu_Group3",
+        "Marital_Group2",
+        "PriorUse_Binary",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Fear_Binary",
+    ]
+    d = work[base_cols].dropna().copy()
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        d = collapse_sparse_levels(d, c, min_n=15)
+
+    formulas = [
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)",
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary",
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
+    ]
+
+    fitted = []
+    for i, f in enumerate(formulas, start=1):
+        model, fit_type = safe_logit_fit(f, d, maxiter=500)
+        fitted.append((f"Block {i}", model, f, fit_type))
+
+    # Sensitivity model with proximal beliefs Q6/Q7 added.
+    work["Safe_Binary"] = as_binary(work["Q6"], yes=1, no=0)
+    work["Acceptable_Binary"] = as_binary(work["Q7"], yes=1, no=0)
+    sens_cols = [
+        "Recommend_Binary",
+        "Age_Group3",
+        "Q2",
+        "Edu_Group3",
+        "Marital_Group2",
+        "PriorUse_Binary",
+        "Q11",
+        "Q12",
+        "Q13",
+        "Fear_Binary",
+        "Safe_Binary",
+        "Acceptable_Binary",
+    ]
+    ds = work[sens_cols].dropna().copy()
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        ds = collapse_sparse_levels(ds, c, min_n=15)
+    sens_formula = (
+        "Recommend_Binary ~ C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2) + PriorUse_Binary + "
+        "Q11 + Q12 + Q13 + Fear_Binary + Safe_Binary + Acceptable_Binary"
+    )
+    sens_model, sens_fit_type = safe_logit_fit(sens_formula, ds, maxiter=500)
+
+    return d, fitted, ds, sens_model, sens_fit_type
+
+
+def fit_multinomial_q8(df):
+    work = add_grouped_demographics(df.copy())
+    cols = ["Q8", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31", "Q11", "Q12", "Q13"]
+    d = work[cols].dropna().copy()
+    d = d[d["Q8"].isin([0, 1, 2])]
+
+    for c in ["Age_Group3", "Edu_Group3", "Marital_Group2"]:
+        d = collapse_sparse_levels(d, c, min_n=15)
+    X = pd.get_dummies(
+        d[["Age_Group3", "Q2", "Edu_Group3", "Marital_Group2", "Q31"]].astype(int).astype(str),
+        drop_first=True,
+        dtype=float,
+    )
+    X[["Q11", "Q12", "Q13"]] = d[["Q11", "Q12", "Q13"]].astype(float)
+    X = sm.add_constant(X, has_constant="add")
+    X = X.astype(float)
+    y = d["Q8"].astype(int)
+
+    model, fit_type = safe_mnlogit_fit(y, X, maxiter=500)
+    return d, model, fit_type
+
+
+def contact_hypothesis(df):
+    users = df[df["Q31"] == 1].copy()
+    non_users = df[df["Q31"] == 0].copy()
+
+    results = []
+    for col in ["Q11", "Q12", "Q13"]:
+        d = df[["Q31", col]].dropna().copy()
+        uvals = d[d["Q31"] == 1][col]
+        nvals = d[d["Q31"] == 0][col]
+
+        if len(uvals) == 0 or len(nvals) == 0:
+            results.append((col, np.nan, np.nan, np.nan, np.nan))
+            continue
+
+        u_stat, p_u = mannwhitneyu(uvals, nvals, alternative="two-sided")
+        delta = cliffs_delta(uvals.values, nvals.values)
+
+        ct = pd.crosstab(d["Q31"], d[col])
+        chi2, p_c, _, _ = chi2_contingency(ct)
+        cv = cramers_v_from_ct(ct)
+        results.append((col, float(u_stat), float(p_u), float(delta), float(p_c), float(cv), int(len(d)), float(uvals.median()), float(nvals.median())))
+
+    return users, non_users, results
+
+
+def profile_clustering(df):
+    features = ["Q11", "Q12", "Q13"]
+    d = df[features].dropna().copy()
+    x = d.values.astype(float)
+
+    scaler = StandardScaler()
+    xs = scaler.fit_transform(x)
+
+    scores = []
+    models = {}
+    for k in [2, 3, 4]:
+        km = KMeans(n_clusters=k, n_init=50, random_state=42)
+        labels = km.fit_predict(xs)
+        sil = silhouette_score(xs, labels)
+        scores.append((k, float(sil)))
+        models[k] = (km, labels)
+
+    best_k = max(scores, key=lambda t: t[1])[0]
+    _, labels = models[best_k]
+    d = d.copy()
+    d["Profile"] = labels
+
+    profile_table = (
+        d.groupby("Profile")[features]
+        .mean()
+        .round(3)
+        .reset_index()
+        .sort_values("Profile")
+    )
+    sizes = d["Profile"].value_counts().sort_index()
+
+    return d, scores, best_k, profile_table, sizes
+
+
+def mediation_bootstrap(df, n_boot=1500, seed=42):
+    rng = np.random.default_rng(seed)
+
+    work = add_grouped_demographics(df.copy())
+    work["X_prior_use"] = as_binary(work["Q31"], yes=1, no=0)
+    work["M_safe"] = as_binary(work["Q6"], yes=1, no=0)
+    work["Y_recommend"] = as_binary(work["Q8"], yes=1, no=0)
+
+    cols = ["X_prior_use", "M_safe", "Y_recommend", "Age_Group3", "Q2", "Edu_Group3", "Marital_Group2"]
+    d = work[cols].dropna().copy()
+
+    f_a = "M_safe ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
+    f_b = "Y_recommend ~ X_prior_use + M_safe + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
+    f_c = "Y_recommend ~ X_prior_use + C(Age_Group3) + C(Q2) + C(Edu_Group3) + C(Marital_Group2)"
+
+    d = collapse_sparse_levels(d, "Age_Group3", min_n=15)
+    d = collapse_sparse_levels(d, "Edu_Group3", min_n=15)
+    d = collapse_sparse_levels(d, "Marital_Group2", min_n=15)
+
+    m_a, _ = safe_logit_fit(f_a, d, maxiter=500)
+    m_b, _ = safe_logit_fit(f_b, d, maxiter=500)
+    m_c, _ = safe_logit_fit(f_c, d, maxiter=500)
+
+    a_hat = float(m_a.params["X_prior_use"])
+    b_hat = float(m_b.params["M_safe"])
+    cprime_hat = float(m_b.params["X_prior_use"])
+    c_hat = float(m_c.params["X_prior_use"])
+    indirect_hat = a_hat * b_hat
+
+    boot_vals = []
+    idx = np.arange(len(d))
+    for _ in range(n_boot):
+        sample_idx = rng.choice(idx, size=len(idx), replace=True)
+        bdf = d.iloc[sample_idx]
+        try:
+            ba, _ = safe_logit_fit(f_a, bdf, maxiter=300)
+            bb, _ = safe_logit_fit(f_b, bdf, maxiter=300)
+            boot_vals.append(float(ba.params["X_prior_use"] * bb.params["M_safe"]))
+        except Exception:
+            continue
+
+    if len(boot_vals) < 50:
+        ci_low, ci_high = np.nan, np.nan
+    else:
+        ci_low = float(np.percentile(boot_vals, 2.5))
+        ci_high = float(np.percentile(boot_vals, 97.5))
+
+    return {
+        "n": int(len(d)),
+        "a": a_hat,
+        "b": b_hat,
+        "c_prime": cprime_hat,
+        "c_total": c_hat,
+        "indirect": indirect_hat,
+        "indirect_ci_low": ci_low,
+        "indirect_ci_high": ci_high,
+        "boot_kept": int(len(boot_vals)),
+    }
+
+
+def make_user_radar(users):
+    cols = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]
+    d = users[cols].dropna(how="all")
+    means = d.mean(skipna=True)
+
+    labels = [
+        "Necessary",
+        "Stability",
+        "Worse w/o meds",
+        "Side effects",
+        "Dependence worry",
+        "Long-term harm worry",
+    ]
+
+    vals = means.values.astype(float)
+    if len(vals) == 0 or np.all(np.isnan(vals)):
+        return None
+
+    vals = np.nan_to_num(vals, nan=np.nanmean(vals))
+    vals_pct = (vals - 1) / 4 * 100
+
+    angles = np.linspace(0, 2 * np.pi, len(vals_pct), endpoint=False)
+    vals_cycle = np.r_[vals_pct, vals_pct[0]]
+    angles_cycle = np.r_[angles, angles[0]]
+
+    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
+    ax.plot(angles_cycle, vals_cycle, linewidth=2)
+    ax.fill(angles_cycle, vals_cycle, alpha=0.25)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels)
+    ax.set_ylim(0, 100)
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.set_title("User Experience Profile (Q15-Q20, normalized 0-100)")
+    fig.tight_layout()
+    fig.savefig(RADAR_PNG, dpi=220)
+    plt.close(fig)
+    return means
 
 
 def main():
@@ -148,277 +419,177 @@ def main():
     users = df[df["Q31"] == 1].copy()
     non_users = df[df["Q31"] == 0].copy()
 
-    yes_no_unsure_cols = ["Q6", "Q7", "Q8", "Q9"]
-    likert_all = ["Q11", "Q12", "Q13"]
-    likert_user = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]
-    yes_no_user = ["Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31_1", "Q32"]
-
-    demographics_order = {
-        "Q1": [1, 2, 3, 4, 5],
-        "Q2": [1, 2],
-        "Q4": [1, 2, 3, 4, 5, 6],
-        "Q5": [1, 2, 3, 4],
-    }
-    demographics_labels = {
-        "Q1": {1: "18-25", 2: "26-35", 3: "36-45", 4: "46-60", 5: ">60"},
-        "Q2": {1: "Male", 2: "Female"},
-        "Q4": {1: "Primary", 2: "Middle School", 3: "High School", 4: "Institute/Diploma", 5: "University", 6: "Postgraduate"},
-        "Q5": {1: "Single", 2: "Married", 3: "Divorced", 4: "Widowed"},
-    }
-
     lines = []
-    lines.append(f"# Psychiatric Medication Use and Public Acceptance in Iraq — Comprehensive Survey Analysis (N={n_total})")
+    lines.append(f"# Psychiatric Medication Use and Public Acceptance in Iraq — Unified Survey Analysis (N={n_total})")
     lines.append("")
-    lines.append("## 1) Data Integrity and Scope")
+    lines.append("This script now provides a single unified output with main/clean models and clearly labeled exploratory analyses.")
     lines.append("")
-    lines.append(f"- Total respondents analyzed: **{n_total}**")
-    lines.append(f"- Participants with prior/current psychiatric medication use (Q31=Yes): **{len(users)}**")
-    lines.append(f"- Participants with no prior use (Q31=No): **{len(non_users)}**")
-    lines.append("")
-    lines.append("### Missingness Snapshot")
-    lines.append("")
-    lines.append("| Variable | Question (Arabic from source) | Non-missing n | Missing n | Missing % |")
-    lines.append("|---|---|---:|---:|---:|")
-    for c in df.columns:
-        nn = int(df[c].notna().sum())
-        miss = int(df[c].isna().sum())
-        lines.append(f"| {c} | {qlabels.get(c, '')} | {nn} | {miss} | {100*miss/n_total:.1f} |")
-
-    lines.append("")
-    lines.append("## 2) Descriptive Results")
-    lines.append("")
-    lines.append("### 2.1 Sociodemographic Distribution")
-    lines.append("")
-    lines.append("| Variable | Category | n (%) |")
-    lines.append("|---|---|---:|")
-    for var in ["Q1", "Q2", "Q4", "Q5"]:
-        valid = df[var].dropna()
-        n_valid = len(valid)
-        for code in demographics_order[var]:
-            k = int((valid == code).sum())
-            lines.append(f"| {var} | {demographics_labels[var][code]} | {fmt_count_pct(k, n_valid)} |")
-
-    lines.append("")
-    lines.append("### 2.2 Public Acceptance / Social Concern (Yes-No-Not Sure Questions)")
-    lines.append("")
-    lines.append("| Code | Question | Valid n | Yes | No | Not sure |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    for col in yes_no_unsure_cols:
-        n, yes, no, unsure = yes_no_unsure_table(df, col)
-        lines.append(f"| {col} | {qlabels.get(col, '')} | {n} | {yes} | {no} | {unsure} |")
-
-    lines.append("")
-    lines.append("### 2.3 Core Belief Items (Likert 1-5)")
-    lines.append("")
-    lines.append("| Code | Question | Valid n | Agree/Strongly Agree | Neutral | Disagree/Strongly Disagree |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    for col in likert_all:
-        n, a, ne, d = likert_grouped(df, col)
-        lines.append(f"| {col} | {qlabels.get(col, '')} | {n} | {a} | {ne} | {d} |")
-
-    lines.append("")
-    lines.append("### 2.4 User-Only Items (participants with Q31=Yes)")
-    lines.append("")
-    lines.append("| Code | Question | Valid n | Yes or Agree (%) | No or Disagree (%) | Neutral/Not sure (%) |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    for col in likert_user:
-        n, a, ne, d = likert_grouped(users, col)
-        lines.append(f"| {col} | {qlabels.get(col, '')} | {n} | {a} | {d} | {ne} |")
-    for col in yes_no_user:
-        n, y, no = yes_no_table(users, col)
-        lines.append(f"| {col} | {qlabels.get(col, '')} | {n} | {y} | {no} | 0 (0.0%) |")
-
-    lines.append("")
-    lines.append("### 2.5 Full Response Distribution for Likert Items")
-    lines.append("")
-    lines.append("| Code | Valid n | 1 | 2 | 3 | 4 | 5 |")
-    lines.append("|---|---:|---:|---:|---:|---:|---:|")
-    for col in likert_all + likert_user:
-        n, counts = likert_full_counts(df if col in likert_all else users, col)
-        lines.append(f"| {col} | {n} | {counts[1]} | {counts[2]} | {counts[3]} | {counts[4]} | {counts[5]} |")
-
-    lines.append("")
-    lines.append("## 3) Inferential Statistics and Effect Sizes")
-    lines.append("")
-    lines.append("### 3.1 Chi-square Association Tests")
-    lines.append("")
-    lines.append("| Predictor | Outcome | N used | Chi-square | p-value | Cramer's V |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    chi_pairs = [
-        ("Q1", "Q7"),
-        ("Q2", "Q9"),
-        ("Q4", "Q6"),
-        ("Q5", "Q8"),
-        ("Q31", "Q8"),
-        ("Q31", "Q9"),
-    ]
-    for x, y in chi_pairs:
-        chi2, p, n_used, cv = chi_square_result(df, x, y)
-        lines.append(
-            f"| {x} ({qlabels.get(x, '')}) | {y} ({qlabels.get(y, '')}) | {n_used} | "
-            f"{'NA' if pd.isna(chi2) else f'{chi2:.3f}'} | "
-            f"{'NA' if pd.isna(p) else f'{p:.4f}'} | "
-            f"{'NA' if pd.isna(cv) else f'{cv:.3f}'} |"
-        )
-
-    lines.append("")
-    lines.append("### 3.2 Odds Ratios (Fisher exact, 95% CI)")
-    lines.append("")
-    lines.append("| Exposure (Yes=1) | Outcome (Yes=1) | N used | Odds ratio | 95% CI | p-value |")
-    lines.append("|---|---|---:|---:|---:|---:|")
-    or_specs = [
-        ("Q31", "Q8"),  # prior use -> recommendation
-        ("Q31", "Q9"),  # prior use -> fear
-        ("Q6", "Q8"),   # believes safe -> recommendation
-        ("Q7", "Q8"),   # medical equivalence -> recommendation
-    ]
-    for exp_col, out_col in or_specs:
-        d = df[[exp_col, out_col]].dropna()
-        if out_col in ["Q8", "Q9"]:
-            d = d[d[out_col].isin([0, 1])]
-        if exp_col in ["Q6", "Q7"]:
-            d = d[d[exp_col].isin([0, 1])]
-        or_est, p, lcl, ucl, n_used = fisher_or_ci(d, exp_col, out_col, 1, 1)
-        lines.append(
-            f"| {exp_col} ({qlabels.get(exp_col, '')}) | {out_col} ({qlabels.get(out_col, '')}) | {n_used} | "
-            f"{'NA' if pd.isna(or_est) else f'{or_est:.3f}'} | "
-            f"{'NA' if pd.isna(lcl) else f'{lcl:.3f} to {ucl:.3f}'} | "
-            f"{'NA' if pd.isna(p) else f'{p:.4f}'} |"
-        )
-
-    lines.append("")
-    lines.append("### 3.3 Correlation of Belief Items (Spearman)")
-    lines.append("")
-    lines.append("| Pair | N used | Spearman rho | p-value |")
-    lines.append("|---|---:|---:|---:|")
-    corr_items = ["Q11", "Q12", "Q13", "Q19", "Q20"]
-    for a, b in combinations(corr_items, 2):
-        d = df[[a, b]].dropna()
-        if len(d) < 5:
-            lines.append(f"| {a}-{b} | {len(d)} | NA | NA |")
-            continue
-        rho, p = spearmanr(d[a], d[b])
-        lines.append(f"| {a}-{b} | {len(d)} | {rho:.3f} | {p:.4f} |")
-
-    lines.append("")
-    lines.append("### 3.4 Scale Reliability and Group Comparison")
-    lines.append("")
-    df["Risk_Belief_Score"] = df[["Q11", "Q12"]].mean(axis=1)
-    alpha_general, alpha_n = cronbach_alpha(df[["Q11", "Q12"]])
-    alpha_user, alpha_user_n = cronbach_alpha(users[["Q15", "Q16", "Q17", "Q18", "Q19", "Q20"]])
-    lines.append(f"- Cronbach alpha (general risk belief scale: Q11+Q12): **{alpha_general:.3f}** (n={alpha_n})")
-    lines.append(f"- Cronbach alpha (user-experience scale: Q15-Q20): **{alpha_user:.3f}** (n={alpha_user_n})")
+    lines.append("## Main/Clean Analysis (Publication-Ready)")
     lines.append("")
 
-    mw = df[["Q2", "Risk_Belief_Score"]].dropna()
-    male = mw[mw["Q2"] == 1]["Risk_Belief_Score"]
-    female = mw[mw["Q2"] == 2]["Risk_Belief_Score"]
-    if len(male) > 0 and len(female) > 0:
-        u_stat, p_mw = mannwhitneyu(male, female, alternative="two-sided")
-        lines.append(f"- Mann-Whitney U test for gender difference in Risk_Belief_Score: U={u_stat:.1f}, p={p_mw:.4f}")
-        lines.append(f"- Median score (male): {male.median():.2f}, median score (female): {female.median():.2f}")
-    else:
-        lines.append("- Mann-Whitney U test could not be computed because one group had no data.")
+    # 1) Hierarchical block logistic regression
+    lines.append("## 1) Hierarchical Block Logistic Regression (Outcome: Q8 Yes vs No)")
+    lines.append("")
+    d_block, blocks, d_sens, sens_model, sens_fit_type = fit_hierarchical_models(df)
+    lines.append(f"- Complete-case n (primary hierarchical models): **{len(d_block)}**")
+    lines.append("")
+    lines.append("| Model block | Formula summary | McFadden pseudo R² | LLR p-value |")
+    lines.append("|---|---|---:|---:|")
+    for name, m, formula, fit_type in blocks:
+        prsquared = getattr(m, "prsquared", np.nan)
+        llr_pvalue = getattr(m, "llr_pvalue", np.nan)
+        lines.append(f"| {name} ({fit_type}) | `{formula}` | {prsquared:.4f} | {fmt_p(llr_pvalue)} |")
 
     lines.append("")
-    lines.append("### 3.5 Multivariable Logistic Regression")
+    lines.append("### Final Primary Block (Block 3) — Adjusted Odds Ratios")
     lines.append("")
-    reg_df = df.copy()
-    reg_df["Recommend_Binary"] = np.where(reg_df["Q8"] == 1, 1, np.where(reg_df["Q8"].isin([0, 2]), 0, np.nan))
-    reg_df["PriorUse_Binary"] = np.where(reg_df["Q31"] == 1, 1, np.where(reg_df["Q31"] == 0, 0, np.nan))
-    reg_df["Safe_Binary"] = np.where(reg_df["Q6"] == 1, 1, np.where(reg_df["Q6"] == 0, 0, np.nan))
-    reg_df["Acceptable_Binary"] = np.where(reg_df["Q7"] == 1, 1, np.where(reg_df["Q7"] == 0, 0, np.nan))
-    reg_df["Fear_Binary"] = np.where(reg_df["Q9"] == 1, 1, np.where(reg_df["Q9"] == 0, 0, np.nan))
+    lines.append("| Predictor | Adjusted OR (95% CI) | p-value |")
+    lines.append("|---|---:|---:|")
+    for term, or_val, low, high, p in summarize_logit(blocks[-1][1]):
+        lines.append(f"| {term} | {fmt_or(or_val, low, high)} | {fmt_p(p)} |")
 
-    reg_df["Married_Binary"] = np.where(reg_df["Q5"] == 2, 1, np.where(reg_df["Q5"].isin([1, 3, 4]), 0, np.nan))
+    lines.append("")
+    lines.append("### Sensitivity Model Adding Proximal Beliefs (Q6/Q7)")
+    lines.append("")
+    lines.append(f"- Complete-case n (sensitivity model): **{len(d_sens)}**")
+    sens_pr2 = getattr(sens_model, "prsquared", np.nan)
+    lines.append(f"- McFadden pseudo R²: **{sens_pr2:.4f}**")
+    lines.append(f"- Fit type: **{sens_fit_type}**")
+    lines.append("- This sensitivity model is reported separately because Q6 and Q7 are conceptually close to Q8 and can dominate explanatory variance.")
 
-    model_data = reg_df[
-        [
-            "Recommend_Binary",
-            "Q1",
-            "Q2",
-            "Q4",
-            "Married_Binary",
-            "PriorUse_Binary",
-            "Safe_Binary",
-            "Acceptable_Binary",
-            "Fear_Binary",
-        ]
-    ].dropna()
-    lines.append(f"- Complete-case sample size for regression: **{len(model_data)}**")
-
+    # 2) Multinomial logistic retaining Not sure
+    lines.append("")
+    lines.append("## 2) Multinomial Logistic Regression Preserving Hesitation (Q8 = No / Yes / Not sure)")
+    lines.append("")
+    d_mn, mn_model, mn_fit_type = fit_multinomial_q8(df)
+    mn_categories = sorted(d_mn["Q8"].astype(int).unique().tolist())
+    non_ref_categories = mn_categories[1:]
+    lines.append(f"- Complete-case n: **{len(d_mn)}**")
+    lines.append(f"- Model log-likelihood: **{mn_model.llf:.3f}**")
+    lines.append(f"- Fit type: **{mn_fit_type}**")
+    lines.append("")
+    lines.append("Reference outcome in statsmodels is the lowest coded category; coefficients are shown for non-reference outcome equations.")
+    lines.append("")
+    lines.append("| Outcome equation | Predictor | Relative risk ratio (95% CI) | p-value |")
+    lines.append("|---|---|---:|---:|")
     try:
-        model = smf.logit(
-            "Recommend_Binary ~ C(Q2) + Q1 + Q4 + Married_Binary + PriorUse_Binary + Safe_Binary + Acceptable_Binary + Fear_Binary",
-            data=model_data,
-        ).fit(disp=0, maxiter=200)
-        params = model.params
-        conf = model.conf_int()
-        pvals = model.pvalues
-        lines.append("")
-        lines.append("| Predictor | Adjusted OR | 95% CI | p-value |")
-        lines.append("|---|---:|---:|---:|")
-        for term in params.index:
-            or_val = np.exp(params[term])
-            ci_low = np.exp(conf.loc[term, 0])
-            ci_high = np.exp(conf.loc[term, 1])
-            lines.append(f"| {term} | {or_val:.3f} | {ci_low:.3f} to {ci_high:.3f} | {pvals[term]:.4f} |")
-        lines.append("")
-        lines.append(f"- Model pseudo R² (McFadden): **{model.prsquared:.4f}**")
-        lines.append(f"- Likelihood ratio test p-value: **{model.llr_pvalue:.4f}**")
-    except Exception as e:
-        lines.append(f"- Regression could not be fit: `{e}`")
+        conf = mn_model.conf_int()
+    except Exception:
+        conf = None
+    for outcome_col in mn_model.params.columns:
+        mapped_outcome = non_ref_categories[int(outcome_col)] if int(outcome_col) < len(non_ref_categories) else outcome_col
+        for term in mn_model.params.index:
+            beta = mn_model.params.loc[term, outcome_col]
+            p = mn_model.pvalues.loc[term, outcome_col]
+            if conf is None:
+                ci_low = np.nan
+                ci_high = np.nan
+            elif isinstance(conf.index, pd.MultiIndex):
+                try:
+                    ci_row = conf.loc[(outcome_col, term)]
+                except KeyError:
+                    try:
+                        ci_row = conf.loc[(str(outcome_col), term)]
+                    except KeyError:
+                        ci_row = pd.Series({"lower": np.nan, "upper": np.nan})
+                ci_low = ci_row.get("lower", np.nan)
+                ci_high = ci_row.get("upper", np.nan)
+            else:
+                ci_row = conf.loc[term]
+                ci_low = ci_row.get("lower", np.nan) if hasattr(ci_row, "get") else ci_row[0]
+                ci_high = ci_row.get("upper", np.nan) if hasattr(ci_row, "get") else ci_row[1]
+            rrr = safe_exp(beta)
+            low = safe_exp(ci_low)
+            high = safe_exp(ci_high)
+            lines.append(f"| Q8={mapped_outcome} vs ref | {term} | {fmt_or(rrr, low, high)} | {fmt_p(float(p))} |")
 
     lines.append("")
-    lines.append("## 4) Mathematical Details and Checks")
+    lines.append("## Exploratory Analysis (Clearly Labeled)")
     lines.append("")
-    lines.append("### 4.1 Key Proportions with 95% Wilson Confidence Intervals")
+
+    # 3) Contact hypothesis
     lines.append("")
-    lines.append("| Metric | Numerator/Denominator | Proportion | 95% CI |")
-    lines.append("|---|---:|---:|---:|")
-    ci_specs = [
-        ("Believes psychiatric medications are safe (Q6=Yes)", int((df["Q6"] == 1).sum()), int(df["Q6"].isin([0, 1, 2]).sum())),
-        ("Would recommend to a close person (Q8=Yes)", int((df["Q8"] == 1).sum()), int(df["Q8"].isin([0, 1, 2]).sum())),
-        ("Fear of dealing with psychiatric medication users (Q9=Yes)", int((df["Q9"] == 1).sum()), int(df["Q9"].isin([0, 1, 2]).sum())),
-        ("Among users: report improvement (Q22=Yes)", int((users["Q22"] == 1).sum()), int(users["Q22"].isin([0, 1]).sum())),
-        ("Among users: report bothersome side effects (Q18 Agree/Strongly Agree)", int(users["Q18"].isin([4, 5]).sum()), int(users["Q18"].notna().sum())),
-    ]
-    for label, k, n in ci_specs:
-        lcl, ucl = wilson_ci(k, n)
-        p = (k / n) if n > 0 else np.nan
+    lines.append("## 3) Contact Hypothesis: Users vs Non-Users on Core Beliefs (Q11-Q13)")
+    lines.append("")
+    users_df, non_users_df, contact = contact_hypothesis(df)
+    lines.append(f"- Users (Q31=1): **{len(users_df)}**")
+    lines.append(f"- Non-users (Q31=0): **{len(non_users_df)}**")
+    lines.append("")
+    lines.append("| Item | User median | Non-user median | Mann-Whitney U p-value | Cliff's delta | Chi-square p-value | Cramer's V | N used |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
+    for col, u_stat, p_u, delta, p_c, cv, n_used, med_u, med_n in contact:
         lines.append(
-            f"| {label} | {k}/{n} | {'NA' if n==0 else f'{100*p:.1f}%'} | {'NA' if n==0 else f'{100*lcl:.1f}% to {100*ucl:.1f}%'} |"
+            f"| {col} ({qlabels.get(col, '')}) | {med_u:.2f} | {med_n:.2f} | {fmt_p(p_u)} | {delta:.3f} | {fmt_p(p_c)} | {cv:.3f} | {n_used} |"
         )
 
+    # 4) Exploratory stigma profiles
     lines.append("")
-    lines.append("### 4.2 Skip-Pattern and Instrument Consistency")
+    lines.append("## 4) Exploratory Stigma Phenotypes (K-Means on Standardized Q11-Q13)")
     lines.append("")
-    user_section_cols = ["Q15", "Q16", "Q17", "Q18", "Q19", "Q20", "Q22", "Q23", "Q24", "Q25", "Q26", "Q27", "Q28", "Q29", "Q30", "Q31_1", "Q32"]
-    non_user_non_missing = int(non_users[user_section_cols].notna().sum(axis=1).gt(0).sum())
-    user_all_missing = int(users[user_section_cols].notna().sum(axis=1).eq(0).sum())
-    lines.append(f"- Non-users with any user-section response filled: **{non_user_non_missing}**")
-    lines.append(f"- Users with all user-section responses missing: **{user_all_missing}**")
+    cluster_df, cluster_scores, best_k, profile_table, sizes = profile_clustering(df)
+    lines.append("| k | Silhouette score |")
+    lines.append("|---:|---:|")
+    for k, sil in cluster_scores:
+        lines.append(f"| {k} | {sil:.3f} |")
+    lines.append("")
+    lines.append(f"- Selected k by maximum silhouette: **{best_k}**")
+    lines.append("")
+    lines.append("| Profile | Size n | Q11 mean | Q12 mean | Q13 mean |")
+    lines.append("|---:|---:|---:|---:|---:|")
+    for _, row in profile_table.iterrows():
+        p = int(row["Profile"])
+        lines.append(f"| {p} | {int(sizes[p])} | {row['Q11']:.3f} | {row['Q12']:.3f} | {row['Q13']:.3f} |")
+
+    # 5) Mediation bootstrap
+    lines.append("")
+    lines.append("## 5) Exploratory Mediation (Associational): Q31 -> Q6 -> Q8")
+    lines.append("")
+    med = mediation_bootstrap(df)
+    lines.append(f"- Analysis sample (Q31/Q6/Q8 coded as binary Yes/No only): **n={med['n']}**")
+    lines.append(f"- a-path (Q31 -> Q6) log-odds coefficient: **{med['a']:.4f}**")
+    lines.append(f"- b-path (Q6 -> Q8, adjusted for Q31) log-odds coefficient: **{med['b']:.4f}**")
+    lines.append(f"- Direct effect c' (Q31 -> Q8 controlling mediator): **{med['c_prime']:.4f}**")
+    lines.append(f"- Total effect c (Q31 -> Q8 without mediator): **{med['c_total']:.4f}**")
+    lines.append(f"- Indirect effect a*b (log-odds scale): **{med['indirect']:.4f}**")
+    if np.isnan(med["indirect_ci_low"]):
+        lines.append("- Bootstrap CI for indirect effect: **not estimable** (too many failed resamples).")
+    else:
+        lines.append(
+            f"- Bootstrap 95% CI for indirect effect: **{med['indirect_ci_low']:.4f} to {med['indirect_ci_high']:.4f}** "
+            f"(successful resamples={med['boot_kept']})"
+        )
+    lines.append("- Interpretation note: this cross-sectional mediation is exploratory and should not be interpreted as causal.")
+
+    # 6) Radar chart
+    lines.append("")
+    lines.append("## 6) User-Subset Visual Profile")
+    lines.append("")
+    means = make_user_radar(users)
+    if means is None:
+        lines.append("- Radar chart was not generated because user subset had insufficient data.")
+    else:
+        lines.append(f"- Radar chart saved to: `{RADAR_PNG}`")
+        lines.append("- Mean raw item values used for radar chart:")
+        lines.append("")
+        lines.append("| Item | Mean (1-5) |")
+        lines.append("|---|---:|")
+        for col, val in means.items():
+            lines.append(f"| {col} ({qlabels.get(col, '')}) | {val:.3f} |")
 
     lines.append("")
-    lines.append("## 5) Audit of Problems in Previous Analysis Attempts")
+    lines.append("## 7) Notes for Manuscript Positioning")
     lines.append("")
-    lines.append("1. Some binary user variables (Q23, Q24, Q26, Q30, Q32) were summarized as Likert items in one prior script; this forced valid Yes/No values into the neutral column and produced incorrect tables.")
-    lines.append("2. Q19 and Q20 were interpreted as full-sample items in prior outputs, while their valid denominator is user-only; this can mislead interpretation if denominator is not shown.")
-    lines.append("3. One prior script contains `with open(\"analyze_v2.py\", \"w\")` which would overwrite the analysis script itself when executed.")
-    lines.append("4. Prior education grouping merged categories inconsistently and omitted mapped code 2 and code 4 in some tables.")
-    lines.append("5. Some p-values were reported without effect sizes or confidence intervals; this report adds Cramer's V, odds-ratio confidence intervals, and Wilson intervals.")
-
-    lines.append("")
-    lines.append("## 6) Practical Interpretation Summary")
-    lines.append("")
-    lines.append("The dataset shows a wide gap between willingness to recommend psychiatric medication and concerns about safety, dependence, and social fear. User subgroup data shows simultaneous benefit and burden: many users report clinical improvement while many also report side effects and anxiety. Multivariable analysis helps separate independent predictors of recommendation behavior from simple bivariate associations.")
+    lines.append("- Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.")
+    lines.append("- K-means profiling and mediation should be presented as exploratory secondary analyses.")
+    lines.append("- For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.")
 
     output_text = "\n".join(lines) + "\n"
     ANALYSIS_MD.write_text(output_text, encoding="utf-8")
     ROOT_ANALYSIS_MD.write_text(output_text, encoding="utf-8")
-
-    print(f"Comprehensive analysis written to: {ANALYSIS_MD}")
+    print(f"Unified analysis written to: {ANALYSIS_MD}")
     print(f"Root analysis file updated: {ROOT_ANALYSIS_MD}")
+    if RADAR_PNG.exists():
+        print(f"Radar figure written to: {RADAR_PNG}")
 
 
 if __name__ == "__main__":
