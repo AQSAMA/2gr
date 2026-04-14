@@ -327,62 +327,6 @@ def profile_clustering(df):
     return d, scores, best_k, profile_table, sizes
 
 
-def mediation_bootstrap(df, n_boot=1500, seed=42):
-    rng = np.random.default_rng(seed)
-
-    work = add_binary_demographics(df.copy())
-    work["X_prior_use"] = as_binary(work["Q31"], yes=1, no=0)
-    work["M_safe"] = as_binary(work["Q6"], yes=1, no=0)
-    work["Y_recommend"] = as_binary(work["Q8"], yes=1, no=0)
-
-    cols = ["X_prior_use", "M_safe", "Y_recommend", "Age_Binary", "Gender_Binary", "Edu_Binary", "Married_Binary"]
-    d = work[cols].dropna().copy()
-
-    f_a = "M_safe ~ X_prior_use + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
-    f_b = "Y_recommend ~ X_prior_use + M_safe + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
-    f_c = "Y_recommend ~ X_prior_use + Age_Binary + Gender_Binary + Edu_Binary + Married_Binary"
-
-    m_a, _ = safe_logit_fit(f_a, d, maxiter=500)
-    m_b, _ = safe_logit_fit(f_b, d, maxiter=500)
-    m_c, _ = safe_logit_fit(f_c, d, maxiter=500)
-
-    a_hat = float(m_a.params["X_prior_use"])
-    b_hat = float(m_b.params["M_safe"])
-    cprime_hat = float(m_b.params["X_prior_use"])
-    c_hat = float(m_c.params["X_prior_use"])
-    indirect_hat = a_hat * b_hat
-
-    boot_vals = []
-    idx = np.arange(len(d))
-    for _ in range(n_boot):
-        sample_idx = rng.choice(idx, size=len(idx), replace=True)
-        bdf = d.iloc[sample_idx]
-        try:
-            ba, _ = safe_logit_fit(f_a, bdf, maxiter=300)
-            bb, _ = safe_logit_fit(f_b, bdf, maxiter=300)
-            boot_vals.append(float(ba.params["X_prior_use"] * bb.params["M_safe"]))
-        except Exception:
-            continue
-
-    if len(boot_vals) < 50:
-        ci_low, ci_high = np.nan, np.nan
-    else:
-        ci_low = float(np.percentile(boot_vals, 2.5))
-        ci_high = float(np.percentile(boot_vals, 97.5))
-
-    return {
-        "n": int(len(d)),
-        "a": a_hat,
-        "b": b_hat,
-        "c_prime": cprime_hat,
-        "c_total": c_hat,
-        "indirect": indirect_hat,
-        "indirect_ci_low": ci_low,
-        "indirect_ci_high": ci_high,
-        "boot_kept": int(len(boot_vals)),
-    }
-
-
 def main():
     if not CLEAN_CSV.exists():
         raise FileNotFoundError(f"Cleaned CSV not found: {CLEAN_CSV}")
@@ -499,31 +443,11 @@ def main():
         p = int(row["Profile"])
         lines.append(f"| {p} | {int(sizes[p])} | {row['Q11']:.3f} | {row['Q12']:.3f} | {row['Q13']:.3f} |")
 
-    # 5) Mediation bootstrap
     lines.append("")
-    lines.append("## 5) Exploratory Mediation (Associational): Q31 -> Q6 -> Q8")
-    lines.append("")
-    med = mediation_bootstrap(df)
-    lines.append(f"- Analysis sample (Q31/Q6/Q8 coded as binary Yes/No only): **n={med['n']}**")
-    lines.append(f"- a-path (Q31 -> Q6) log-odds coefficient: **{med['a']:.4f}**")
-    lines.append(f"- b-path (Q6 -> Q8, adjusted for Q31) log-odds coefficient: **{med['b']:.4f}**")
-    lines.append(f"- Direct effect c' (Q31 -> Q8 controlling mediator): **{med['c_prime']:.4f}**")
-    lines.append(f"- Total effect c (Q31 -> Q8 without mediator): **{med['c_total']:.4f}**")
-    lines.append(f"- Indirect effect a*b (log-odds scale): **{med['indirect']:.4f}**")
-    if np.isnan(med["indirect_ci_low"]):
-        lines.append("- Bootstrap CI for indirect effect: **not estimable** (too many failed resamples).")
-    else:
-        lines.append(
-            f"- Bootstrap 95% CI for indirect effect: **{med['indirect_ci_low']:.4f} to {med['indirect_ci_high']:.4f}** "
-            f"(successful resamples={med['boot_kept']})"
-        )
-    lines.append("- Interpretation note: this cross-sectional mediation is exploratory and should not be interpreted as causal.")
-
-    lines.append("")
-    lines.append("## 6) Notes for Manuscript Positioning")
+    lines.append("## 5) Notes for Manuscript Positioning")
     lines.append("")
     lines.append("- Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.")
-    lines.append("- K-means profiling and mediation should be presented as exploratory secondary analyses.")
+    lines.append("- K-means profiling should be presented as an exploratory secondary analysis.")
     lines.append("- For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.")
 
     output_text = "\n".join(lines) + "\n"
