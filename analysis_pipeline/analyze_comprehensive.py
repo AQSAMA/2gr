@@ -54,7 +54,7 @@ ENGLISH_QUESTION_LABELS = {
     "Q26": "Medications make me confident in my ability to recover",
     "Q27": "Using medications makes me feel afraid",
     "Q28": "Psychiatric medications help me be in a better state",
-    "Q29": "Psychiatric medications help me be in a better state",
+    "Q29": "Psychiatric medications help me be in a better state (duplicate wording in source item)",
     "Q30": "Medications make my life worse",
     "Q31": "Do you currently use or have you ever used a psychiatric medication?",
     "Q31_1": "I feel psychiatric medications are necessary for me",
