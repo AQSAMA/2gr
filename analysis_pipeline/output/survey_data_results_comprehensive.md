@@ -112,7 +112,7 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 
 ## 6) User-Subset Visual Profile
 
-- Radar chart saved to: `/home/runner/work/2gr/2gr/analysis_pipeline/output/user_experience_radar.png`
+- Radar chart saved to: `analysis_pipeline/output/user_experience_radar.png`
 - Mean raw item values used for radar chart:
 
 | Item | Mean (1-5) |

@@ -21,6 +21,10 @@ QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
+RADAR_REPORT_PATH = "analysis_pipeline/output/user_experience_radar.png"
+MAX_LOGIT_PARAM_ABS = 8
+KMEANS_N_INIT = 50
+KMEANS_RANDOM_STATE = 42
 
 
 def fmt_p(p):
@@ -113,7 +117,7 @@ def safe_logit_fit(formula, data, maxiter=500):
         unstable = (
             params.empty
             or (not np.isfinite(params).all())
-            or (float(np.max(np.abs(params))) > 8)
+            or (float(np.max(np.abs(params))) > MAX_LOGIT_PARAM_ABS)
             or pd.isna(pr2)
             or (not np.isfinite(pr2))
             or (not converged)
@@ -133,7 +137,7 @@ def safe_mnlogit_fit(y, X, maxiter=500):
         unstable = (
             params.empty
             or (not np.isfinite(params.to_numpy()).all())
-            or (float(np.max(np.abs(params.to_numpy()))) > 8)
+            or (float(np.max(np.abs(params.to_numpy()))) > MAX_LOGIT_PARAM_ABS)
             or pd.isna(llf)
             or (not np.isfinite(llf))
         )
@@ -285,7 +289,7 @@ def profile_clustering(df):
     scores = []
     models = {}
     for k in [2, 3, 4]:
-        km = KMeans(n_clusters=k, n_init=50, random_state=42)
+        km = KMeans(n_clusters=k, n_init=KMEANS_N_INIT, random_state=KMEANS_RANDOM_STATE)
         labels = km.fit_predict(xs)
         sil = silhouette_score(xs, labels)
         scores.append((k, float(sil)))
@@ -568,7 +572,7 @@ def main():
     if means is None:
         lines.append("- Radar chart was not generated because user subset had insufficient data.")
     else:
-        lines.append(f"- Radar chart saved to: `{RADAR_PNG}`")
+        lines.append(f"- Radar chart saved to: `{RADAR_REPORT_PATH}`")
         lines.append("- Mean raw item values used for radar chart:")
         lines.append("")
         lines.append("| Item | Mean (1-5) |")
