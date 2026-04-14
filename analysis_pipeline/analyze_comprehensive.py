@@ -22,7 +22,7 @@ ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 RADAR_PNG = OUTPUT_DIR / "user_experience_radar.png"
 RADAR_REPORT_PATH = "analysis_pipeline/output/user_experience_radar.png"
-# Values above this absolute log-odds size usually indicate separation/instability in these survey models.
+# Absolute log-odds values above this threshold are treated as unstable for this survey model pipeline.
 MAX_LOGIT_PARAM_ABS = 8
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
@@ -165,8 +165,12 @@ def extract_multinomial_ci(conf, outcome_col, term):
                 continue
         return np.nan, np.nan
     ci_row = conf.loc[term]
-    low = ci_row.get("lower", np.nan) if hasattr(ci_row, "get") else ci_row[0]
-    high = ci_row.get("upper", np.nan) if hasattr(ci_row, "get") else ci_row[1]
+    if hasattr(ci_row, "get"):
+        low = ci_row.get("lower", np.nan)
+        high = ci_row.get("upper", np.nan)
+    else:
+        low = ci_row[0] if len(ci_row) > 0 else np.nan
+        high = ci_row[1] if len(ci_row) > 1 else np.nan
     return low, high
 
 
@@ -490,6 +494,7 @@ def main():
     d_mn, mn_model, mn_fit_type = fit_multinomial_q8(df)
     mn_categories = sorted(d_mn["Q8"].astype(int).unique().tolist())
     non_ref_categories = mn_categories[1:]
+    expected_mapping = len(mn_model.params.columns) == len(non_ref_categories)
     lines.append(f"- Complete-case n: **{len(d_mn)}**")
     lines.append(f"- Model log-likelihood: **{mn_model.llf:.3f}**")
     lines.append(f"- Fit type: **{mn_fit_type}**")
@@ -503,7 +508,7 @@ def main():
     except Exception:
         conf = None
     for equation_idx, outcome_col in enumerate(mn_model.params.columns):
-        mapped_outcome = non_ref_categories[equation_idx] if equation_idx < len(non_ref_categories) else outcome_col
+        mapped_outcome = non_ref_categories[equation_idx] if expected_mapping else outcome_col
         for term in mn_model.params.index:
             beta = mn_model.params.loc[term, outcome_col]
             p = mn_model.pvalues.loc[term, outcome_col]
