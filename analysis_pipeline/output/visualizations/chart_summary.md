@@ -8,7 +8,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Block-wise McFadden pseudo R² from the hierarchical logistic regression.
 
-**Quick analysis:** Block 3 demonstrates the largest increase in pseudo R², indicating the most substantial improvement in model fit.
+**Quick analysis:** Block 3 shows the largest increase in pseudo R², indicating the most substantial improvement in model fit.
 
 ## Chart 02: LLR significance by hierarchical block
 
@@ -104,7 +104,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Silhouette scores for candidate k values in exploratory profile clustering.
 
-**Quick analysis:** k=4 gives the best separation, aligning with the selected model in the markdown output.
+**Quick analysis:** k=4 gives the best separation, matching the final model choice.
 
 ## Chart 14: Profile means heatmap
 

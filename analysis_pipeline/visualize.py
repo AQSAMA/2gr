@@ -224,7 +224,7 @@ def main() -> None:
             filename=filename,
             title="Hierarchical model pseudo R² by block",
             caption="Block-wise McFadden pseudo R² from the hierarchical logistic regression.",
-            analysis="Block 3 demonstrates the largest increase in pseudo R², indicating the most substantial improvement in model fit.",
+            analysis="Block 3 shows the largest increase in pseudo R², indicating the most substantial improvement in model fit.",
         )
     )
 
@@ -536,7 +536,7 @@ def main() -> None:
             filename=filename,
             title="Silhouette score trend",
             caption="Silhouette scores for candidate k values in exploratory profile clustering.",
-            analysis=f"k={best_k} gives the best separation, aligning with the selected model in the markdown output.",
+            analysis=f"k={best_k} gives the best separation, matching the final model choice.",
         )
     )
 
