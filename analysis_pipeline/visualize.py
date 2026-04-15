@@ -15,7 +15,9 @@ INPUT_MD = BASE_DIR / "survey_data_results.md"
 OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output" / "visualizations"
 CHARTS_DIR = OUTPUT_DIR / "charts"
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
+# Floor for p-values before log10 transforms to avoid undefined log10(0).
 MIN_PVALUE = 1e-12
+TEXT_LABEL_OFFSET_RATIO = 0.03
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -212,7 +214,7 @@ def main() -> None:
         plt.ylabel("McFadden pseudo R²")
         max_height = max(block_r2)
         plt.ylim(0, max_height * 1.25)
-        label_offset = max_height * 0.03
+        label_offset = max_height * TEXT_LABEL_OFFSET_RATIO
         for bar, val in zip(bars, block_r2):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + label_offset, f"{val:.3f}", ha="center", va="bottom", fontsize=9)
 
@@ -238,7 +240,14 @@ def main() -> None:
         plt.ylabel("-log10(LLR p-value)")
         plt.legend(frameon=False)
         for bar, raw in zip(bars, block_p):
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.03, f"p={raw:.4f}", ha="center", va="bottom", fontsize=8)
+            plt.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + TEXT_LABEL_OFFSET_RATIO,
+                f"p={raw:.4f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
 
     save_chart(CHARTS_DIR / filename, draw_02)
     chart_outputs.append(
