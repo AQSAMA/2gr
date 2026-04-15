@@ -12,8 +12,8 @@ import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 INPUT_MD = BASE_DIR / "survey_data_results.md"
-OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output" / "visualizations"
-CHARTS_DIR = OUTPUT_DIR / "charts"
+OUTPUT_DIR = BASE_DIR / "output"
+CHARTS_DIR = OUTPUT_DIR
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 # Floor for p-values before log10 transforms to avoid undefined log10(0).
 MIN_PVALUE = 1e-12
@@ -600,9 +600,22 @@ def main() -> None:
     summary_lines.append("")
 
     for idx, chart in enumerate(chart_outputs, start=1):
+        description_path = OUTPUT_DIR / f"{Path(chart.filename).stem}.md"
+        description_lines = [
+            f"# {chart.title}",
+            "",
+            f"![{chart.title}]({chart.filename})",
+            "",
+            f"**Caption:** {chart.caption}",
+            "",
+            f"**Quick analysis:** {chart.analysis}",
+            "",
+        ]
+        description_path.write_text("\n".join(description_lines), encoding="utf-8")
+
         summary_lines.append(f"## Chart {idx:02d}: {chart.title}")
         summary_lines.append("")
-        summary_lines.append(f"![{chart.title}](charts/{chart.filename})")
+        summary_lines.append(f"![{chart.title}]({chart.filename})")
         summary_lines.append("")
         summary_lines.append(f"**Caption:** {chart.caption}")
         summary_lines.append("")
