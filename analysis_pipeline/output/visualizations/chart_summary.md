@@ -8,7 +8,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Block-wise McFadden pseudo R² from the hierarchical logistic regression.
 
-**Quick analysis:** Model fit increases across blocks, with Block 3 showing the strongest explanatory gain.
+**Quick analysis:** Block 3 demonstrates the largest increase in pseudo R², indicating the most substantial improvement in model fit.
 
 ## Chart 02: LLR significance by hierarchical block
 
@@ -16,7 +16,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Transformed LLR p-values for each hierarchical block.
 
-**Quick analysis:** Only the final block clearly passes conventional significance, matching the markdown table results.
+**Quick analysis:** Block 3 achieves statistical significance (p < 0.05), while Blocks 1 and 2 do not reach the conventional threshold.
 
 ## Chart 03: Primary adjusted OR forest plot
 
@@ -40,7 +40,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Predictor-level p-value strength for the primary logistic model.
 
-**Quick analysis:** Q13 and Fear_Binary show the strongest statistical signal among adjusted predictors.
+**Quick analysis:** Q13 and Fear_Binary exhibit the lowest p-values among adjusted predictors, indicating the most robust statistical associations.
 
 ## Chart 06: Multinomial forest plot (Q8=Yes)
 
@@ -64,7 +64,7 @@ Generated from `survey_data_results.md`.
 
 **Caption:** Side-by-side RRR values for key predictors across Yes and Not sure outcomes.
 
-**Quick analysis:** Q13 is stronger for Yes responses, while Q11 and Q12 are flatter in the Not sure equation.
+**Quick analysis:** Q13 shows a larger relative risk ratio for Yes responses, whereas Q11 and Q12 have relative risk ratios closer to 1.0 in the Not sure equation.
 
 ## Chart 09: Multinomial significance heatmap
 

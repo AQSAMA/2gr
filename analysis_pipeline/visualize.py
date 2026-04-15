@@ -224,7 +224,7 @@ def main() -> None:
             filename=filename,
             title="Hierarchical model pseudo R² by block",
             caption="Block-wise McFadden pseudo R² from the hierarchical logistic regression.",
-            analysis="Model fit increases across blocks, with Block 3 showing the strongest explanatory gain.",
+            analysis="Block 3 demonstrates the largest increase in pseudo R², indicating the most substantial improvement in model fit.",
         )
     )
 
@@ -257,7 +257,7 @@ def main() -> None:
             filename=filename,
             title="LLR significance by hierarchical block",
             caption="Transformed LLR p-values for each hierarchical block.",
-            analysis="Only the final block clearly passes conventional significance, matching the markdown table results.",
+            analysis="Block 3 achieves statistical significance (p < 0.05), while Blocks 1 and 2 do not reach the conventional threshold.",
         )
     )
 
@@ -331,7 +331,7 @@ def main() -> None:
             filename=filename,
             title="Primary predictor significance ranking",
             caption="Predictor-level p-value strength for the primary logistic model.",
-            analysis="Q13 and Fear_Binary show the strongest statistical signal among adjusted predictors.",
+            analysis="Q13 and Fear_Binary exhibit the lowest p-values among adjusted predictors, indicating the most robust statistical associations.",
         )
     )
 
@@ -414,7 +414,7 @@ def main() -> None:
             filename=filename,
             title="Multinomial key predictor comparison",
             caption="Side-by-side RRR values for key predictors across Yes and Not sure outcomes.",
-            analysis="Q13 is stronger for Yes responses, while Q11 and Q12 are flatter in the Not sure equation.",
+            analysis="Q13 shows a larger relative risk ratio for Yes responses, whereas Q11 and Q12 have relative risk ratios closer to 1.0 in the Not sure equation.",
         )
     )
 
