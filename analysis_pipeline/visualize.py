@@ -15,8 +15,9 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 INPUT_MD = BASE_DIR / "survey_data_results.md"
 OUTPUT_DIR = BASE_DIR / "output"
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
-# Floor for p-values before log10 transforms to avoid undefined log10(0).
+# Floor value prevents log10(0) errors while preserving significance ranking for very small p-values.
 MIN_PVALUE = 1e-12
+# Ratio of chart height used to offset text labels above bars.
 TEXT_LABEL_OFFSET_RATIO = 0.03
 EXPECTED_CHART_COUNT = 15
 
