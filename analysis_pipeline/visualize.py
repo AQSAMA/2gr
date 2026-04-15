@@ -566,8 +566,13 @@ def main() -> None:
         )
     )
 
-    if len(chart_outputs) != 15:
-        raise RuntimeError(f"Expected 15 charts, generated {len(chart_outputs)}")
+    expected_chart_files = {f"{idx:02d}_" for idx in range(1, 16)}
+    generated_files = [chart.filename for chart in chart_outputs]
+    if len(chart_outputs) != 15 or any(not any(name.startswith(prefix) for name in generated_files) for prefix in expected_chart_files):
+        raise RuntimeError(
+            "Chart generation incomplete. "
+            f"Expected 15 charts with prefixes 01_..15_, generated {len(chart_outputs)} charts: {generated_files}"
+        )
 
     summary_lines: list[str] = []
     summary_lines.append("# Survey Visualization Summary")
