@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
@@ -17,6 +18,7 @@ SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 # Floor for p-values before log10 transforms to avoid undefined log10(0).
 MIN_PVALUE = 1e-12
 TEXT_LABEL_OFFSET_RATIO = 0.03
+EXPECTED_CHART_COUNT = 15
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -108,7 +110,7 @@ def parse_or_ci(value: str) -> tuple[float, float, float]:
     match = re.search(r"([0-9.]+)\s*\(([-0-9.]+)\s*to\s*([-0-9.]+)\)", value)
     if not match:
         raise ValueError(
-            f"Unable to parse OR/CI value: '{value}'. Expected format: 'X.XX (Y.YY to Z.ZZ)'."
+            f"Unable to parse OR/CI value: '{value}'. Expected format: 'number (number to number)'."
         )
     return float(match.group(1)), float(match.group(2)), float(match.group(3))
 
@@ -580,21 +582,22 @@ def main() -> None:
         )
     )
 
-    expected_prefixes = [f"{idx:02d}_" for idx in range(1, 16)]
+    expected_prefixes = [f"{idx:02d}_" for idx in range(1, EXPECTED_CHART_COUNT + 1)]
     generated_files = [chart.filename for chart in chart_outputs]
     missing_prefixes = [prefix for prefix in expected_prefixes if not any(name.startswith(prefix) for name in generated_files)]
 
-    if len(chart_outputs) != 15 or missing_prefixes:
+    if len(chart_outputs) != EXPECTED_CHART_COUNT or missing_prefixes:
         raise RuntimeError(
             "Chart generation incomplete. "
-            f"Expected 15 charts with prefixes 01_..15_, generated {len(chart_outputs)} charts. "
+            f"Expected {EXPECTED_CHART_COUNT} charts with prefixes 01_..{EXPECTED_CHART_COUNT:02d}_, generated {len(chart_outputs)} charts. "
             f"Missing prefixes: {missing_prefixes}. Generated files: {generated_files}"
         )
 
     summary_lines: list[str] = []
     summary_lines.append("# Survey Visualization Summary")
     summary_lines.append("")
-    summary_lines.append("Generated from `survey_data_results.md`.")
+    summary_lines.append("This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `survey_data_results.md`.")
+    summary_lines.append(f"Generated at: {datetime.now(timezone.utc).isoformat()}")
     summary_lines.append("")
 
     for idx, chart in enumerate(chart_outputs, start=1):
