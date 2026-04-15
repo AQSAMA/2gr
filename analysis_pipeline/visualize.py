@@ -13,7 +13,6 @@ import numpy as np
 BASE_DIR = Path(__file__).resolve().parents[1]
 INPUT_MD = BASE_DIR / "survey_data_results.md"
 OUTPUT_DIR = BASE_DIR / "output"
-CHARTS_DIR = OUTPUT_DIR
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 # Floor for p-values before log10 transforms to avoid undefined log10(0).
 MIN_PVALUE = 1e-12
@@ -136,7 +135,6 @@ def main() -> None:
         raise FileNotFoundError(f"Input markdown not found: {INPUT_MD}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
     text = INPUT_MD.read_text(encoding="utf-8")
     tables = parse_tables(text)
@@ -218,7 +216,7 @@ def main() -> None:
         for bar, val in zip(bars, block_r2):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + label_offset, f"{val:.3f}", ha="center", va="bottom", fontsize=9)
 
-    save_chart(CHARTS_DIR / filename, draw_01)
+    save_chart(OUTPUT_DIR / filename, draw_01)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -251,7 +249,7 @@ def main() -> None:
                 fontsize=8,
             )
 
-    save_chart(CHARTS_DIR / filename, draw_02)
+    save_chart(OUTPUT_DIR / filename, draw_02)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -278,7 +276,7 @@ def main() -> None:
         plt.xlabel("Adjusted OR (log scale)")
         plt.title("Primary Model Predictors: Adjusted Odds Ratios")
 
-    save_chart(CHARTS_DIR / filename, draw_03)
+    save_chart(OUTPUT_DIR / filename, draw_03)
     n_sig_primary = sum(1 for p in primary_pvals if p < 0.05)
     chart_outputs.append(
         ChartOutput(
@@ -304,7 +302,7 @@ def main() -> None:
             align = "left" if val >= 0 else "right"
             plt.text(xpos, bar.get_y() + bar.get_height() / 2, f"{val:.2f}", va="center", ha=align, fontsize=8)
 
-    save_chart(CHARTS_DIR / filename, draw_04)
+    save_chart(OUTPUT_DIR / filename, draw_04)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -325,7 +323,7 @@ def main() -> None:
         plt.xlabel("-log10(p-value)")
         plt.title("Primary Predictors Ranked by Statistical Strength")
 
-    save_chart(CHARTS_DIR / filename, draw_05)
+    save_chart(OUTPUT_DIR / filename, draw_05)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -352,7 +350,7 @@ def main() -> None:
         plt.xlabel("Relative risk ratio (log scale)")
         plt.title("Multinomial Model: Q8=Yes vs Reference")
 
-    save_chart(CHARTS_DIR / filename, draw_06)
+    save_chart(OUTPUT_DIR / filename, draw_06)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -379,7 +377,7 @@ def main() -> None:
         plt.xlabel("Relative risk ratio (log scale)")
         plt.title("Multinomial Model: Q8=Not Sure vs Reference")
 
-    save_chart(CHARTS_DIR / filename, draw_07)
+    save_chart(OUTPUT_DIR / filename, draw_07)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -408,7 +406,7 @@ def main() -> None:
         plt.title("Multinomial Key Predictors Across Response Profiles")
         plt.legend(frameon=False)
 
-    save_chart(CHARTS_DIR / filename, draw_08)
+    save_chart(OUTPUT_DIR / filename, draw_08)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -433,7 +431,7 @@ def main() -> None:
         cbar = plt.colorbar(im)
         cbar.set_label("-log10(p-value)")
 
-    save_chart(CHARTS_DIR / filename, draw_09)
+    save_chart(OUTPUT_DIR / filename, draw_09)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -457,7 +455,7 @@ def main() -> None:
         plt.title("Contact Hypothesis: Median Belief Scores")
         plt.legend(frameon=False)
 
-    save_chart(CHARTS_DIR / filename, draw_10)
+    save_chart(OUTPUT_DIR / filename, draw_10)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -481,7 +479,7 @@ def main() -> None:
         plt.title("Effect Size Profile for Contact Hypothesis")
         plt.legend(frameon=False)
 
-    save_chart(CHARTS_DIR / filename, draw_11)
+    save_chart(OUTPUT_DIR / filename, draw_11)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -507,7 +505,7 @@ def main() -> None:
         plt.title("Contact Hypothesis Test Strength")
         plt.legend(frameon=False)
 
-    save_chart(CHARTS_DIR / filename, draw_12)
+    save_chart(OUTPUT_DIR / filename, draw_12)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -529,7 +527,7 @@ def main() -> None:
         plt.ylabel("Silhouette score")
         plt.title("K-Means Cluster Quality Across k Values")
 
-    save_chart(CHARTS_DIR / filename, draw_13)
+    save_chart(OUTPUT_DIR / filename, draw_13)
     best_k = k_values[int(np.argmax(silhouette_scores))]
     chart_outputs.append(
         ChartOutput(
@@ -552,7 +550,7 @@ def main() -> None:
         cbar = plt.colorbar(im)
         cbar.set_label("Mean score")
 
-    save_chart(CHARTS_DIR / filename, draw_14)
+    save_chart(OUTPUT_DIR / filename, draw_14)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -571,7 +569,7 @@ def main() -> None:
         plt.pie(profile_sizes, labels=labels, autopct="%1.1f%%", startangle=90, colors=colors[: len(labels)], wedgeprops={"linewidth": 1, "edgecolor": "white"})
         plt.title("Distribution of Respondents Across Stigma Profiles")
 
-    save_chart(CHARTS_DIR / filename, draw_15)
+    save_chart(OUTPUT_DIR / filename, draw_15)
     largest_profile = profiles[int(np.argmax(profile_sizes))]
     chart_outputs.append(
         ChartOutput(
@@ -624,7 +622,7 @@ def main() -> None:
 
     SUMMARY_MD.write_text("\n".join(summary_lines).strip() + "\n", encoding="utf-8")
 
-    print(f"Created {len(chart_outputs)} charts in: {CHARTS_DIR}")
+    print(f"Created {len(chart_outputs)} charts in: {OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
 
 
