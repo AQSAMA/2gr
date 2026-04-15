@@ -23,6 +23,7 @@ MIN_PVALUE = 1e-12
 # Ratio of chart height used to offset text labels above bars.
 TEXT_LABEL_OFFSET_RATIO = 0.03
 EXPECTED_CHART_COUNT = 26
+MIN_CORRELATION_SAMPLE_SIZE = 3
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -176,7 +177,7 @@ def map_yes_no_unsure(value: str) -> float | None:
 
 def safe_corr(a: np.ndarray, b: np.ndarray) -> float:
     mask = ~np.isnan(a) & ~np.isnan(b)
-    if np.sum(mask) < 3:
+    if np.sum(mask) < MIN_CORRELATION_SAMPLE_SIZE:
         return np.nan
     return float(np.corrcoef(a[mask], b[mask])[0, 1])
 
@@ -963,7 +964,7 @@ def main() -> None:
         raise RuntimeError(
             "Chart generation incomplete. "
             f"Expected {EXPECTED_CHART_COUNT} charts with prefixes 01_..{EXPECTED_CHART_COUNT:02d}_, generated {len(chart_outputs)} charts. "
-            f"Missing prefixes: {missing_prefixes}. Generated files: {generated_files}"
+            f"Missing prefixes: {missing_prefixes}."
         )
 
     summary_lines: list[str] = []
