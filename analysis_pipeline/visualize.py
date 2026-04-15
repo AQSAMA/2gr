@@ -232,7 +232,9 @@ def main() -> None:
     filename = "02_hierarchical_llr_significance.png"
 
     def draw_02() -> None:
-        transformed = [-math.log10(max(p, 1e-8)) for p in block_p]
+        transformed = [-math.log10(max(p, MIN_PVALUE)) for p in block_p]
+        transformed_max = max(transformed) if transformed else 0.0
+        label_offset = transformed_max * TEXT_LABEL_OFFSET_RATIO
         bars = plt.bar(block_names, transformed, color=["#A0CBE8", "#8CD17D", "#F28E2B"])
         threshold = -math.log10(0.05)
         plt.axhline(threshold, linestyle="--", color="#444444", linewidth=1.2, label="p = 0.05")
@@ -242,7 +244,7 @@ def main() -> None:
         for bar, raw in zip(bars, block_p):
             plt.text(
                 bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + TEXT_LABEL_OFFSET_RATIO,
+                bar.get_height() + label_offset,
                 f"p={raw:.4f}",
                 ha="center",
                 va="bottom",
