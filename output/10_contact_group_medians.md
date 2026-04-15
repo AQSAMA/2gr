@@ -1,5 +1,7 @@
 # Contact hypothesis median comparison
 
+This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
+
 ![Contact hypothesis median comparison](10_contact_group_medians.png)
 
 **Caption:** Users vs non-users median responses for Q11–Q13.

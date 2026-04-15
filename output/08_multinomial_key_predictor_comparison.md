@@ -1,5 +1,7 @@
 # Multinomial key predictor comparison
 
+This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
+
 ![Multinomial key predictor comparison](08_multinomial_key_predictor_comparison.png)
 
 **Caption:** Side-by-side RRR values for key predictors across Yes and Not sure outcomes.

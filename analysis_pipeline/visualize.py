@@ -606,6 +606,8 @@ def main() -> None:
         description_lines = [
             f"# {chart.title}",
             "",
+            "This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.",
+            "",
             f"![{chart.title}]({chart.filename})",
             "",
             f"**Caption:** {chart.caption}",
