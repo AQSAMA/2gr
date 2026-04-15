@@ -15,6 +15,7 @@ INPUT_MD = BASE_DIR / "survey_data_results.md"
 OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output" / "visualizations"
 CHARTS_DIR = OUTPUT_DIR / "charts"
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
+MIN_PVALUE = 1e-12
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -108,7 +109,7 @@ def parse_or_ci(value: str) -> tuple[float, float, float]:
         raise ValueError(
             f"Unable to parse OR/CI value: '{value}'. Expected format: 'X.XX (Y.YY to Z.ZZ)'."
         )
-    return tuple(float(match.group(i)) for i in range(1, 4))
+    return float(match.group(1)), float(match.group(2)), float(match.group(3))
 
 
 def parse_total_n(markdown_text: str) -> int:
@@ -209,9 +210,11 @@ def main() -> None:
         bars = plt.bar(block_names, block_r2, color=["#4E79A7", "#59A14F", "#E15759"])
         plt.title("Hierarchical Model Fit Improvement")
         plt.ylabel("McFadden pseudo R²")
-        plt.ylim(0, max(block_r2) * 1.25)
+        max_height = max(block_r2)
+        plt.ylim(0, max_height * 1.25)
+        label_offset = max_height * 0.03
         for bar, val in zip(bars, block_r2):
-            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.002, f"{val:.3f}", ha="center", va="bottom", fontsize=9)
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + label_offset, f"{val:.3f}", ha="center", va="bottom", fontsize=9)
 
     save_chart(CHARTS_DIR / filename, draw_01)
     chart_outputs.append(
@@ -304,7 +307,7 @@ def main() -> None:
     filename = "05_primary_predictor_significance.png"
 
     def draw_05() -> None:
-        scores = [-math.log10(max(p, 1e-12)) for p in primary_pvals]
+        scores = [-math.log10(max(p, MIN_PVALUE)) for p in primary_pvals]
         colors = ["#4E79A7" if p < 0.05 else "#BAB0AC" for p in primary_pvals]
         plt.barh(predictors, scores, color=colors)
         plt.axvline(-math.log10(0.05), color="#333333", linestyle="--", linewidth=1)
@@ -411,7 +414,7 @@ def main() -> None:
         labels = [row["Predictor"] for row in mn_yes]
         yes_p = [parse_pvalue(row["p-value"]) for row in mn_yes]
         unsure_p = [parse_pvalue(row["p-value"]) for row in mn_unsure]
-        mat = np.array([[-math.log10(max(v, 1e-12)) for v in yes_p], [-math.log10(max(v, 1e-12)) for v in unsure_p]])
+        mat = np.array([[-math.log10(max(v, MIN_PVALUE)) for v in yes_p], [-math.log10(max(v, MIN_PVALUE)) for v in unsure_p]])
         im = plt.imshow(mat, cmap="Blues", aspect="auto")
         plt.yticks([0, 1], ["Q8=Yes", "Q8=Not sure"])
         plt.xticks(np.arange(len(labels)), labels, rotation=35, ha="right")
@@ -483,8 +486,8 @@ def main() -> None:
     def draw_12() -> None:
         x = np.arange(len(contact_items))
         w = 0.36
-        mw_strength = [-math.log10(max(v, 1e-12)) for v in mw_p]
-        chi_strength = [-math.log10(max(v, 1e-12)) for v in chi_p]
+        mw_strength = [-math.log10(max(v, MIN_PVALUE)) for v in mw_p]
+        chi_strength = [-math.log10(max(v, MIN_PVALUE)) for v in chi_p]
         plt.bar(x - w / 2, mw_strength, width=w, color="#4E79A7", label="Mann-Whitney")
         plt.bar(x + w / 2, chi_strength, width=w, color="#F28E2B", label="Chi-square")
         plt.axhline(-math.log10(0.05), linestyle="--", color="#333333", linewidth=1)
