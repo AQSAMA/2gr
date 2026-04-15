@@ -1,7 +1,7 @@
 # Survey Visualization Summary
 
 This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `survey_data_results.md`.
-Generated at: 2026-04-15T11:52:13.224920+00:00
+Generated at: 2026-04-15T12:27:26.802164+00:00
 
 ## Chart 01: Hierarchical model pseudo R² by block
 
@@ -122,3 +122,91 @@ Generated at: 2026-04-15T11:52:13.224920+00:00
 **Caption:** Share of respondents (N=877) in each exploratory stigma profile.
 
 **Quick analysis:** Profile 2 is the largest segment, but the distribution remains relatively balanced overall.
+
+## Chart 16: Gender distribution
+
+![Gender distribution](16_demographics_gender_distribution.png)
+
+**Caption:** Gender composition of the survey sample (N=877).
+
+**Quick analysis:** The sample is predominantly female, which should be considered when interpreting attitude prevalence estimates.
+
+## Chart 17: Age-group distribution
+
+![Age-group distribution](17_demographics_age_distribution.png)
+
+**Caption:** Age-group distribution of respondents (N=877).
+
+**Quick analysis:** Most respondents are in the 18–25 group, so results mainly reflect younger public attitudes.
+
+## Chart 18: Education-level distribution
+
+![Education-level distribution](18_demographics_education_distribution.png)
+
+**Caption:** Education-level distribution among respondents (N=877).
+
+**Quick analysis:** University-level education is the largest category in this sample.
+
+## Chart 19: Diverging Likert chart (Q11–Q13)
+
+![Diverging Likert chart (Q11–Q13)](19_likert_diverging_q11_q13.png)
+
+**Caption:** Disagree/Neutral/Agree percentages for Q11, Q12, and Q13.
+
+**Quick analysis:** Q11 and Q12 lean toward agreement with concern-focused statements, while Q13 shows stronger positive confidence in newer medications.
+
+## Chart 20: Correlation matrix heatmap
+
+![Correlation matrix heatmap](20_correlation_matrix_primary_beliefs.png)
+
+**Caption:** Pearson correlations among core belief items and acceptance/recommendation indicators.
+
+**Quick analysis:** The matrix provides a quick view of how stigma-related beliefs move together and where overlap may influence multivariable modeling.
+
+## Chart 21: Acceptance by prior-use subgroup
+
+![Acceptance by prior-use subgroup](21_acceptance_by_prior_use.png)
+
+**Caption:** Recommendation acceptance rate among respondents with and without prior psychiatric medication use.
+
+**Quick analysis:** The cleaned dataset does not include a direct trusted-source variable, so prior medication exposure is used as the closest subgroup context for acceptance differences.
+
+## Chart 22: Marital-status distribution
+
+![Marital-status distribution](22_demographics_marital_distribution.png)
+
+**Caption:** Marital-status profile of participants (N=877).
+
+**Quick analysis:** Most participants are single, which aligns with the young age structure of the sample.
+
+## Chart 23: Safety-perception distribution
+
+![Safety-perception distribution](23_safety_perception_distribution.png)
+
+**Caption:** Distribution of responses to whether psychiatric medications are safe.
+
+**Quick analysis:** Safety perception is mixed, with a substantial uncertain segment that may be responsive to targeted counseling.
+
+## Chart 24: Acceptability distribution
+
+![Acceptability distribution](24_acceptability_distribution.png)
+
+**Caption:** Distribution of responses about accepting psychiatric medications like chronic-disease treatment.
+
+**Quick analysis:** Negative and uncertain acceptability responses remain prominent, which complements the modeled hesitation findings.
+
+## Chart 25: Recommendation response distribution
+
+![Recommendation response distribution](25_recommendation_distribution.png)
+
+**Caption:** Distribution of responses to recommending psychiatric medications to someone close.
+
+**Quick analysis:** A majority report willingness to recommend, but a notable minority still declines or remains unsure.
+
+## Chart 26: Social-interaction concern distribution
+
+![Social-interaction concern distribution](26_social_concern_distribution.png)
+
+**Caption:** Distribution of concern about interacting with people using psychiatric medications.
+
+**Quick analysis:** Social-contact concern remains common enough to signal persistent stigma in everyday interactions.

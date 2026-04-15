@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import csv
 import math
 import re
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,13 +15,14 @@ import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 INPUT_MD = BASE_DIR / "survey_data_results.md"
+INPUT_CSV = BASE_DIR / "survey_psychiatric_medication_use_public_acceptance_iraq_cleaned_english.csv"
 OUTPUT_DIR = BASE_DIR / "output"
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 # Floor value prevents log10(0) errors while preserving significance ranking for very small p-values.
 MIN_PVALUE = 1e-12
 # Ratio of chart height used to offset text labels above bars.
 TEXT_LABEL_OFFSET_RATIO = 0.03
-EXPECTED_CHART_COUNT = 15
+EXPECTED_CHART_COUNT = 26
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -133,13 +136,61 @@ def save_chart(path: Path, draw_fn: Callable[[], None]) -> None:
         plt.close(fig)
 
 
+def load_csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return [{k: (v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
+
+
+def ordered_counts(rows: list[dict[str, str]], column: str, order: list[str] | None = None) -> tuple[list[str], list[int]]:
+    counts = Counter(row.get(column, "") for row in rows if row.get(column, ""))
+    if order:
+        labels = [label for label in order if label in counts]
+        labels.extend([label for label in counts if label not in labels])
+    else:
+        labels = [label for label, _ in counts.most_common()]
+    return labels, [counts[label] for label in labels]
+
+
+def to_pct(values: list[int]) -> list[float]:
+    total = sum(values)
+    if total == 0:
+        return [0.0 for _ in values]
+    return [(100.0 * value) / total for value in values]
+
+
+def map_likert(value: str) -> float | None:
+    mapping = {
+        "Strongly disagree": 1.0,
+        "Disagree": 2.0,
+        "Neutral": 3.0,
+        "Agree": 4.0,
+        "Strongly agree": 5.0,
+    }
+    return mapping.get(value)
+
+
+def map_yes_no_unsure(value: str) -> float | None:
+    mapping = {"No": 1.0, "Not sure": 2.0, "Yes": 3.0}
+    return mapping.get(value)
+
+
+def safe_corr(a: np.ndarray, b: np.ndarray) -> float:
+    mask = ~np.isnan(a) & ~np.isnan(b)
+    if np.sum(mask) < 3:
+        return np.nan
+    return float(np.corrcoef(a[mask], b[mask])[0, 1])
+
+
 def main() -> None:
     if not INPUT_MD.exists():
         raise FileNotFoundError(f"Input markdown not found: {INPUT_MD}")
+    if not INPUT_CSV.exists():
+        raise FileNotFoundError(f"Input CSV not found: {INPUT_CSV}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     text = INPUT_MD.read_text(encoding="utf-8")
+    survey_rows = load_csv_rows(INPUT_CSV)
     tables = parse_tables(text)
     n_total = parse_total_n(text)
 
@@ -205,6 +256,73 @@ def main() -> None:
     profile_q11 = [parse_number(row["Q11 mean"]) for row in profile_table.rows]
     profile_q12 = [parse_number(row["Q12 mean"]) for row in profile_table.rows]
     profile_q13 = [parse_number(row["Q13 mean"]) for row in profile_table.rows]
+
+    age_col = "Age"
+    gender_col = "Gender"
+    edu_col = "Educational level"
+    marital_col = "Marital status"
+    recommendation_col = "Would you recommend psychiatric medications to someone close if needed?"
+    acceptance_col = "Do you see their use as acceptable like hypertension and diabetes medications?"
+    concerns_col = "Do you have concerns about interacting with a person taking psychiatric medications?"
+    prior_use_col = "Do you currently use or have you ever used a psychiatric medication?"
+    q11_col = "Doctors prescribe medications more than necessary"
+    q12_col = "Most medications cause psychological or physical dependence"
+    q13_col = "Modern medications are safer than older ones"
+    safety_col = "Do you think psychiatric medications are safe?"
+
+    age_labels, age_counts = ordered_counts(survey_rows, age_col, ["18-25", "26-35", "36-45", "46-60", ">60"])
+    gender_labels, gender_counts = ordered_counts(survey_rows, gender_col, ["Female", "Male"])
+    edu_labels, edu_counts = ordered_counts(survey_rows, edu_col, ["Primary", "High school", "University", "Postgraduate"])
+    marital_labels, marital_counts = ordered_counts(survey_rows, marital_col, ["Single", "Married", "Divorced", "Widowed"])
+    recommend_labels, recommend_counts = ordered_counts(survey_rows, recommendation_col, ["Yes", "Not sure", "No"])
+    acceptance_labels, acceptance_counts = ordered_counts(survey_rows, acceptance_col, ["Yes", "Not sure", "No"])
+    safety_labels, safety_counts = ordered_counts(survey_rows, safety_col, ["Yes", "Not sure", "No"])
+    concerns_labels, concerns_counts = ordered_counts(survey_rows, concerns_col, ["Yes", "Not sure", "No"])
+
+    likert_questions = [q11_col, q12_col, q13_col]
+    likert_short_labels = ["Q11", "Q12", "Q13"]
+    likert_groups: dict[str, list[float]] = {"Disagree": [], "Neutral": [], "Agree": []}
+    for question in likert_questions:
+        counts = Counter(row.get(question, "") for row in survey_rows if row.get(question, ""))
+        total = sum(counts.values())
+        disagree = counts.get("Strongly disagree", 0) + counts.get("Disagree", 0)
+        neutral = counts.get("Neutral", 0)
+        agree = counts.get("Agree", 0) + counts.get("Strongly agree", 0)
+        if total == 0:
+            likert_groups["Disagree"].append(0.0)
+            likert_groups["Neutral"].append(0.0)
+            likert_groups["Agree"].append(0.0)
+        else:
+            likert_groups["Disagree"].append((100.0 * disagree) / total)
+            likert_groups["Neutral"].append((100.0 * neutral) / total)
+            likert_groups["Agree"].append((100.0 * agree) / total)
+
+    corr_columns = [q11_col, q12_col, q13_col, concerns_col, acceptance_col, recommendation_col]
+    corr_labels = ["Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"]
+    corr_vectors: list[np.ndarray] = []
+    for column in corr_columns:
+        mapped: list[float] = []
+        for row in survey_rows:
+            raw = row.get(column, "")
+            value = map_likert(raw)
+            if value is None:
+                value = map_yes_no_unsure(raw)
+            mapped.append(np.nan if value is None else value)
+        corr_vectors.append(np.array(mapped, dtype=float))
+    corr_matrix = np.zeros((len(corr_vectors), len(corr_vectors)))
+    for i, vec_i in enumerate(corr_vectors):
+        for j, vec_j in enumerate(corr_vectors):
+            corr_matrix[i, j] = safe_corr(vec_i, vec_j)
+
+    prior_groups = ["Yes", "No"]
+    prior_recommend_pct: list[float] = []
+    prior_n: list[int] = []
+    for prior_value in prior_groups:
+        subgroup = [row for row in survey_rows if row.get(prior_use_col, "") == prior_value and row.get(recommendation_col, "")]
+        denom = len(subgroup)
+        numer = sum(1 for row in subgroup if row.get(recommendation_col, "") == "Yes")
+        prior_n.append(denom)
+        prior_recommend_pct.append((100.0 * numer / denom) if denom else 0.0)
 
     # 01
     filename = "01_hierarchical_pseudo_r2.png"
@@ -580,6 +698,260 @@ def main() -> None:
             title="Profile size distribution",
             caption=f"Share of respondents (N={n_total}) in each exploratory stigma profile.",
             analysis=f"Profile {largest_profile} is the largest segment, but the distribution remains relatively balanced overall.",
+        )
+    )
+
+    # 16
+    filename = "16_demographics_gender_distribution.png"
+
+    def draw_16() -> None:
+        pct = to_pct(gender_counts)
+        bars = plt.bar(gender_labels, pct, color=["#B07AA1", "#4E79A7"][: len(gender_labels)])
+        plt.ylabel("Percent of respondents")
+        plt.title("Sample Composition by Gender")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.8, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_16)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Gender distribution",
+            caption=f"Gender composition of the survey sample (N={n_total}).",
+            analysis="The sample is predominantly female, which should be considered when interpreting attitude prevalence estimates.",
+        )
+    )
+
+    # 17
+    filename = "17_demographics_age_distribution.png"
+
+    def draw_17() -> None:
+        pct = to_pct(age_counts)
+        bars = plt.bar(age_labels, pct, color="#59A14F")
+        plt.ylabel("Percent of respondents")
+        plt.title("Sample Composition by Age Group")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_17)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Age-group distribution",
+            caption=f"Age-group distribution of respondents (N={n_total}).",
+            analysis="Most respondents are in the 18–25 group, so results mainly reflect younger public attitudes.",
+        )
+    )
+
+    # 18
+    filename = "18_demographics_education_distribution.png"
+
+    def draw_18() -> None:
+        pct = to_pct(edu_counts)
+        bars = plt.bar(edu_labels, pct, color="#EDC948")
+        plt.ylabel("Percent of respondents")
+        plt.title("Sample Composition by Education Level")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_18)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Education-level distribution",
+            caption=f"Education-level distribution among respondents (N={n_total}).",
+            analysis="University-level education is the largest category in this sample.",
+        )
+    )
+
+    # 19
+    filename = "19_likert_diverging_q11_q13.png"
+
+    def draw_19() -> None:
+        y = np.arange(len(likert_short_labels))
+        disagree = np.array(likert_groups["Disagree"])
+        neutral = np.array(likert_groups["Neutral"])
+        agree = np.array(likert_groups["Agree"])
+        plt.barh(y, -disagree, color="#E15759", label="Disagree")
+        plt.barh(y, neutral, color="#BAB0AC", label="Neutral")
+        plt.barh(y, agree, left=neutral, color="#59A14F", label="Agree")
+        plt.axvline(0, color="#333333", linewidth=1)
+        plt.yticks(y, likert_short_labels)
+        plt.xlabel("Percent of respondents")
+        plt.title("Diverging Likert Profile for Core Stigma Questions")
+        plt.xlim(-100, 100)
+        plt.legend(frameon=False, loc="lower right")
+
+    save_chart(OUTPUT_DIR / filename, draw_19)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Diverging Likert chart (Q11–Q13)",
+            caption="Disagree/Neutral/Agree percentages for Q11, Q12, and Q13.",
+            analysis="Q11 and Q12 lean toward agreement with concern-focused statements, while Q13 shows stronger positive confidence in newer medications.",
+        )
+    )
+
+    # 20
+    filename = "20_correlation_matrix_primary_beliefs.png"
+
+    def draw_20() -> None:
+        im = plt.imshow(corr_matrix, cmap="coolwarm", vmin=-1, vmax=1)
+        plt.xticks(np.arange(len(corr_labels)), corr_labels, rotation=35, ha="right")
+        plt.yticks(np.arange(len(corr_labels)), corr_labels)
+        plt.title("Correlation Matrix: Core Beliefs and Acceptance Indicators")
+        cbar = plt.colorbar(im)
+        cbar.set_label("Pearson correlation")
+        for i in range(corr_matrix.shape[0]):
+            for j in range(corr_matrix.shape[1]):
+                value = corr_matrix[i, j]
+                if np.isnan(value):
+                    label = "NA"
+                else:
+                    label = f"{value:.2f}"
+                plt.text(j, i, label, ha="center", va="center", fontsize=7, color="#111111")
+
+    save_chart(OUTPUT_DIR / filename, draw_20)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Correlation matrix heatmap",
+            caption="Pearson correlations among core belief items and acceptance/recommendation indicators.",
+            analysis="The matrix provides a quick view of how stigma-related beliefs move together and where overlap may influence multivariable modeling.",
+        )
+    )
+
+    # 21
+    filename = "21_acceptance_by_prior_use.png"
+
+    def draw_21() -> None:
+        bars = plt.bar(prior_groups, prior_recommend_pct, color=["#4E79A7", "#F28E2B"])
+        plt.ylabel("Recommend 'Yes' rate (%)")
+        plt.title("Recommendation Acceptance by Prior Medication Use")
+        plt.ylim(0, 100)
+        for bar, pct, count in zip(bars, prior_recommend_pct, prior_n):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1.2, f"{pct:.1f}% (n={count})", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_21)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Acceptance by prior-use subgroup",
+            caption="Recommendation acceptance rate among respondents with and without prior psychiatric medication use.",
+            analysis="The cleaned dataset does not include a direct trusted-source variable, so prior medication exposure is used as the closest subgroup context for acceptance differences.",
+        )
+    )
+
+    # 22
+    filename = "22_demographics_marital_distribution.png"
+
+    def draw_22() -> None:
+        pct = to_pct(marital_counts)
+        bars = plt.bar(marital_labels, pct, color="#76B7B2")
+        plt.ylabel("Percent of respondents")
+        plt.title("Sample Composition by Marital Status")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_22)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Marital-status distribution",
+            caption=f"Marital-status profile of participants (N={n_total}).",
+            analysis="Most participants are single, which aligns with the young age structure of the sample.",
+        )
+    )
+
+    # 23
+    filename = "23_safety_perception_distribution.png"
+
+    def draw_23() -> None:
+        pct = to_pct(safety_counts)
+        bars = plt.bar(safety_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(safety_labels)])
+        plt.ylabel("Percent of respondents")
+        plt.title("Perceived Safety of Psychiatric Medications")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_23)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Safety-perception distribution",
+            caption="Distribution of responses to whether psychiatric medications are safe.",
+            analysis="Safety perception is mixed, with a substantial uncertain segment that may be responsive to targeted counseling.",
+        )
+    )
+
+    # 24
+    filename = "24_acceptability_distribution.png"
+
+    def draw_24() -> None:
+        pct = to_pct(acceptance_counts)
+        bars = plt.bar(acceptance_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(acceptance_labels)])
+        plt.ylabel("Percent of respondents")
+        plt.title("Public Acceptability of Psychiatric Medication Use")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_24)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Acceptability distribution",
+            caption="Distribution of responses about accepting psychiatric medications like chronic-disease treatment.",
+            analysis="Negative and uncertain acceptability responses remain prominent, which complements the modeled hesitation findings.",
+        )
+    )
+
+    # 25
+    filename = "25_recommendation_distribution.png"
+
+    def draw_25() -> None:
+        pct = to_pct(recommend_counts)
+        bars = plt.bar(recommend_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(recommend_labels)])
+        plt.ylabel("Percent of respondents")
+        plt.title("Recommendation Willingness Distribution")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_25)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Recommendation response distribution",
+            caption="Distribution of responses to recommending psychiatric medications to someone close.",
+            analysis="A majority report willingness to recommend, but a notable minority still declines or remains unsure.",
+        )
+    )
+
+    # 26
+    filename = "26_social_concern_distribution.png"
+
+    def draw_26() -> None:
+        pct = to_pct(concerns_counts)
+        bars = plt.bar(concerns_labels, pct, color=["#E15759", "#BAB0AC", "#59A14F"][: len(concerns_labels)])
+        plt.ylabel("Percent of respondents")
+        plt.title("Concerns About Interacting With Medication Users")
+        plt.ylim(0, max(pct) * 1.2 if pct else 1)
+        for bar, val in zip(bars, pct):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_26)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Social-interaction concern distribution",
+            caption="Distribution of concern about interacting with people using psychiatric medications.",
+            analysis="Social-contact concern remains common enough to signal persistent stigma in everyday interactions.",
         )
     )
 
