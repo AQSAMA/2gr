@@ -105,7 +105,9 @@ def parse_pvalue(value: str) -> float:
 def parse_or_ci(value: str) -> tuple[float, float, float]:
     match = re.search(r"([0-9.]+)\s*\(([-0-9.]+)\s*to\s*([-0-9.]+)\)", value)
     if not match:
-        raise ValueError(f"Unable to parse OR/CI value: {value}")
+        raise ValueError(
+            f"Unable to parse OR/CI value: '{value}'. Expected format: 'X.XX (Y.YY to Z.ZZ)'."
+        )
     return tuple(float(match.group(i)) for i in range(1, 4))
 
 
@@ -566,12 +568,15 @@ def main() -> None:
         )
     )
 
-    expected_chart_files = {f"{idx:02d}_" for idx in range(1, 16)}
+    expected_prefixes = [f"{idx:02d}_" for idx in range(1, 16)]
     generated_files = [chart.filename for chart in chart_outputs]
-    if len(chart_outputs) != 15 or any(not any(name.startswith(prefix) for name in generated_files) for prefix in expected_chart_files):
+    missing_prefixes = [prefix for prefix in expected_prefixes if not any(name.startswith(prefix) for name in generated_files)]
+
+    if len(chart_outputs) != 15 or missing_prefixes:
         raise RuntimeError(
             "Chart generation incomplete. "
-            f"Expected 15 charts with prefixes 01_..15_, generated {len(chart_outputs)} charts: {generated_files}"
+            f"Expected 15 charts with prefixes 01_..15_, generated {len(chart_outputs)} charts. "
+            f"Missing prefixes: {missing_prefixes}. Generated files: {generated_files}"
         )
 
     summary_lines: list[str] = []
