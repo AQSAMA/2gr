@@ -237,19 +237,25 @@ def main() -> None:
         "Acceptance by Prior Use",
         ["Prior Use", "Recommend Yes %", "Sample n"],
     )
-    general_attitudes_table = find_table(
-        tables,
-        "General Attitudes Distribution",
-        ["Question", "Yes %", "Not sure %", "No %"],
-    )
-    recommendation_by_gender_table = next(
-        (
-            table
-            for table in tables
-            if "recommendation by gender" in table.heading.lower() and all(h in table.headers for h in ["Gender"])
-        ),
-        None,
-    )
+    try:
+        general_attitudes_table = find_table(
+            tables,
+            "General Attitudes Distribution",
+            ["Question", "Yes n", "Not sure n", "No n", "Yes %", "Not sure %", "No %"],
+        )
+    except ValueError:
+        general_attitudes_table = find_table(
+            tables,
+            "General Attitudes Distribution",
+            ["Question", "Yes %", "Not sure %", "No %"],
+        )
+    recommendation_by_gender_table: MarkdownTable | None = None
+    for headers in (["Gender", "Yes %", "Not sure %", "No %"], ["Gender", "Yes n", "Not sure n", "No n"]):
+        try:
+            recommendation_by_gender_table = find_table(tables, "Recommendation by Gender", headers)
+            break
+        except ValueError:
+            continue
 
     chart_outputs: list[ChartOutput] = []
 
