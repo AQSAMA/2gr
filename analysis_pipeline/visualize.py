@@ -22,7 +22,7 @@ SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 MIN_PVALUE = 1e-12
 # Ratio of chart height used to offset text labels above bars.
 TEXT_LABEL_OFFSET_RATIO = 0.03
-EXPECTED_CHART_COUNT = 26
+EXPECTED_CHART_COUNT = 31
 MIN_CORRELATION_SAMPLE_SIZE = 3
 
 
@@ -182,6 +182,41 @@ def safe_corr(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.corrcoef(a[mask], b[mask])[0, 1])
 
 
+def draw_donut(ax: plt.Axes, labels: list[str], counts: list[int], title: str, colors: list[str]) -> None:
+    wedges, _, autotexts = ax.pie(
+        counts,
+        labels=labels,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=colors[: len(labels)],
+        wedgeprops={"width": 0.42, "edgecolor": "white"},
+        textprops={"fontsize": 8},
+    )
+    for txt in autotexts:
+        txt.set_fontsize(8)
+    ax.set_title(title, fontsize=10)
+    ax.axis("equal")
+
+
+def draw_waffle(ax: plt.Axes, percent_value: float, title: str, positive_label: str = "Yes", negative_label: str = "Other") -> None:
+    total_cells = 100
+    positive_cells = int(round(max(0.0, min(100.0, percent_value))))
+    indices = np.arange(total_cells)
+    x = indices % 10
+    y = 9 - (indices // 10)
+    colors = np.array(["#E0E0E0"] * total_cells, dtype=object)
+    colors[:positive_cells] = "#59A14F"
+    ax.scatter(x, y, c=colors, marker="s", s=185, edgecolors="white", linewidths=0.8)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim(-0.7, 9.7)
+    ax.set_ylim(-0.7, 9.7)
+    ax.set_title(title)
+    ax.text(0, -1.5, f"{positive_label}: {percent_value:.1f}% | {negative_label}: {100.0 - percent_value:.1f}%", fontsize=9)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+
 def main() -> None:
     if not INPUT_MD.exists():
         raise FileNotFoundError(f"Input markdown not found: {INPUT_MD}")
@@ -279,6 +314,9 @@ def main() -> None:
     acceptance_labels, acceptance_counts = ordered_counts(survey_rows, acceptance_col, ["Yes", "Not sure", "No"])
     safety_labels, safety_counts = ordered_counts(survey_rows, safety_col, ["Yes", "Not sure", "No"])
     concerns_labels, concerns_counts = ordered_counts(survey_rows, concerns_col, ["Yes", "Not sure", "No"])
+    safety_count_map = dict(zip(safety_labels, safety_counts))
+    acceptance_count_map = dict(zip(acceptance_labels, acceptance_counts))
+    recommend_count_map = dict(zip(recommend_labels, recommend_counts))
 
     likert_questions = [q11_col, q12_col, q13_col]
     likert_short_labels = ["Q11", "Q12", "Q13"]
@@ -324,6 +362,24 @@ def main() -> None:
         numer = sum(1 for row in subgroup if row.get(recommendation_col, "") == "Yes")
         prior_n.append(denom)
         prior_recommend_pct.append((100.0 * numer / denom) if denom else 0.0)
+
+    safety_yes = safety_count_map.get("Yes", 0)
+    safety_no = safety_count_map.get("No", 0)
+    safety_decisive_total = safety_yes + safety_no
+    safety_yes_share_decisive = (100.0 * safety_yes / safety_decisive_total) if safety_decisive_total else 0.0
+    safety_no_share_decisive = (100.0 * safety_no / safety_decisive_total) if safety_decisive_total else 0.0
+
+    gender_groups = [group for group in ["Female", "Male"] if group in set(gender_labels)]
+    gender_recommend_categories = ["Yes", "Not sure", "No"]
+    gender_recommend_pct: dict[str, list[float]] = {}
+    for gender in gender_groups:
+        subgroup = [row for row in survey_rows if row.get(gender_col, "") == gender and row.get(recommendation_col, "")]
+        subgroup_counts = Counter(row.get(recommendation_col, "") for row in subgroup)
+        total = sum(subgroup_counts.get(cat, 0) for cat in gender_recommend_categories)
+        if total == 0:
+            gender_recommend_pct[gender] = [0.0, 0.0, 0.0]
+        else:
+            gender_recommend_pct[gender] = [(100.0 * subgroup_counts.get(cat, 0)) / total for cat in gender_recommend_categories]
 
     # 01
     filename = "01_hierarchical_pseudo_r2.png"
@@ -953,6 +1009,142 @@ def main() -> None:
             title="Social-interaction concern distribution",
             caption="Distribution of concern about interacting with people using psychiatric medications.",
             analysis="Social-contact concern remains common enough to signal persistent stigma in everyday interactions.",
+        )
+    )
+
+    # 27
+    filename = "27_donut_main_questions.png"
+
+    def draw_27() -> None:
+        axes = [plt.subplot(1, 3, idx + 1) for idx in range(3)]
+        draw_donut(
+            axes[0],
+            ["Yes", "Not sure", "No"],
+            [safety_count_map.get("Yes", 0), safety_count_map.get("Not sure", 0), safety_count_map.get("No", 0)],
+            "Safety",
+            ["#59A14F", "#BAB0AC", "#E15759"],
+        )
+        draw_donut(
+            axes[1],
+            ["Yes", "Not sure", "No"],
+            [acceptance_count_map.get("Yes", 0), acceptance_count_map.get("Not sure", 0), acceptance_count_map.get("No", 0)],
+            "Acceptability",
+            ["#59A14F", "#BAB0AC", "#E15759"],
+        )
+        draw_donut(
+            axes[2],
+            ["Yes", "Not sure", "No"],
+            [recommend_count_map.get("Yes", 0), recommend_count_map.get("Not sure", 0), recommend_count_map.get("No", 0)],
+            "Recommendation",
+            ["#59A14F", "#BAB0AC", "#E15759"],
+        )
+        plt.suptitle("Main Public Opinion Questions (Donut View)", fontsize=14)
+
+    save_chart(OUTPUT_DIR / filename, draw_27)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Donut charts for main questions",
+            caption="Donut infographic view for safety, acceptability, and recommendation responses.",
+            analysis="This compact format gives a quick social-media-style snapshot of the three core public opinion outcomes.",
+        )
+    )
+
+    # 28
+    filename = "28_waffle_safety_yes_share.png"
+
+    def draw_28() -> None:
+        draw_waffle(
+            plt.gca(),
+            safety_count_map.get("Yes", 0) * 100.0 / max(sum(safety_counts), 1),
+            "Waffle Chart: Safety 'Yes' Share (Per 100 Respondents)",
+            positive_label="Safety Yes",
+            negative_label="Not Yes",
+        )
+
+    save_chart(OUTPUT_DIR / filename, draw_28)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Safety waffle chart",
+            caption="100-cell waffle chart showing the share answering Yes on safety.",
+            analysis="The grid format translates percentages into an intuitive 'out of 100 people' visual.",
+        )
+    )
+
+    # 29
+    filename = "29_safety_yes_no_decisive.png"
+
+    def draw_29() -> None:
+        labels = ["Yes", "No"]
+        values = [safety_yes_share_decisive, safety_no_share_decisive]
+        bars = plt.bar(labels, values, color=["#59A14F", "#E15759"])
+        plt.ylabel("Percent among decisive responses")
+        plt.title("Safety Debate: Yes vs No (Excluding Not Sure)")
+        plt.ylim(0, 100)
+        for bar, val in zip(bars, values):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1, f"{val:.1f}%", ha="center", va="bottom", fontsize=9)
+
+    save_chart(OUTPUT_DIR / filename, draw_29)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Safety yes-vs-no chart",
+            caption="Direct Yes versus No comparison for safety among decisive responses.",
+            analysis="This focuses the safety debate on respondents with a clear position.",
+        )
+    )
+
+    # 30
+    filename = "30_experience_gap_recommendation.png"
+
+    def draw_30() -> None:
+        bars = plt.bar(prior_groups, prior_recommend_pct, color=["#4E79A7", "#F28E2B"])
+        plt.ylabel("Recommend 'Yes' rate (%)")
+        plt.title("Experience Gap: Recommendation by Prior Medication Use")
+        plt.ylim(0, 100)
+        for bar, pct, count in zip(bars, prior_recommend_pct, prior_n):
+            plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1, f"{pct:.1f}% (n={count})", ha="center", va="bottom", fontsize=8)
+
+    save_chart(OUTPUT_DIR / filename, draw_30)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Experience-gap chart",
+            caption="Recommendation acceptance rates among respondents with and without prior medication experience.",
+            analysis="A clear gap between experienced and non-experienced respondents highlights the role of personal exposure.",
+        )
+    )
+
+    # 31
+    filename = "31_gender_recommendation_breakdown.png"
+
+    def draw_31() -> None:
+        x = np.arange(len(gender_groups))
+        width = 0.24
+        yes_vals = [gender_recommend_pct[group][0] for group in gender_groups]
+        unsure_vals = [gender_recommend_pct[group][1] for group in gender_groups]
+        no_vals = [gender_recommend_pct[group][2] for group in gender_groups]
+        b1 = plt.bar(x - width, yes_vals, width=width, color="#59A14F", label="Yes")
+        b2 = plt.bar(x, unsure_vals, width=width, color="#BAB0AC", label="Not sure")
+        b3 = plt.bar(x + width, no_vals, width=width, color="#E15759", label="No")
+        plt.xticks(x, gender_groups)
+        plt.ylim(0, 100)
+        plt.ylabel("Percent within gender")
+        plt.title("Recommendation Opinions by Gender")
+        plt.legend(frameon=False)
+        for bars in [b1, b2, b3]:
+            for bar in bars:
+                val = bar.get_height()
+                plt.text(bar.get_x() + bar.get_width() / 2, val + 0.8, f"{val:.1f}%", ha="center", va="bottom", fontsize=7)
+
+    save_chart(OUTPUT_DIR / filename, draw_31)
+    chart_outputs.append(
+        ChartOutput(
+            filename=filename,
+            title="Gender breakdown of recommendation opinions",
+            caption="Within-gender distribution of Yes/Not sure/No responses for recommendation.",
+            analysis="The side-by-side format highlights how recommendation sentiment differs between women and men.",
         )
     )
 

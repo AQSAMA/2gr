@@ -1,7 +1,7 @@
 # Survey Visualization Summary
 
 This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `survey_data_results.md`.
-Generated at: 2026-04-15T12:29:14.078232+00:00
+Generated at: 2026-04-17T12:51:25.958024+00:00
 
 ## Chart 01: Hierarchical model pseudo R² by block
 
@@ -210,3 +210,43 @@ Generated at: 2026-04-15T12:29:14.078232+00:00
 **Caption:** Distribution of concern about interacting with people using psychiatric medications.
 
 **Quick analysis:** Social-contact concern remains common enough to signal persistent stigma in everyday interactions.
+
+## Chart 27: Donut charts for main questions
+
+![Donut charts for main questions](27_donut_main_questions.png)
+
+**Caption:** Donut infographic view for safety, acceptability, and recommendation responses.
+
+**Quick analysis:** This compact format gives a quick social-media-style snapshot of the three core public opinion outcomes.
+
+## Chart 28: Safety waffle chart
+
+![Safety waffle chart](28_waffle_safety_yes_share.png)
+
+**Caption:** 100-cell waffle chart showing the share answering Yes on safety.
+
+**Quick analysis:** The grid format translates percentages into an intuitive 'out of 100 people' visual.
+
+## Chart 29: Safety yes-vs-no chart
+
+![Safety yes-vs-no chart](29_safety_yes_no_decisive.png)
+
+**Caption:** Direct Yes versus No comparison for safety among decisive responses.
+
+**Quick analysis:** This focuses the safety debate on respondents with a clear position.
+
+## Chart 30: Experience-gap chart
+
+![Experience-gap chart](30_experience_gap_recommendation.png)
+
+**Caption:** Recommendation acceptance rates among respondents with and without prior medication experience.
+
+**Quick analysis:** A clear gap between experienced and non-experienced respondents highlights the role of personal exposure.
+
+## Chart 31: Gender breakdown of recommendation opinions
+
+![Gender breakdown of recommendation opinions](31_gender_recommendation_breakdown.png)
+
+**Caption:** Within-gender distribution of Yes/Not sure/No responses for recommendation.
+
+**Quick analysis:** The side-by-side format highlights how recommendation sentiment differs between women and men.
