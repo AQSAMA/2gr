@@ -102,6 +102,8 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 - K-means profiling should be presented as an exploratory secondary analysis.
 - For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.
 
+<div style="page-break-after: always;"></div>
+
 ## Demographics Summary
 
 | Variable | Category | Count | Percentage |

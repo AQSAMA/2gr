@@ -18,6 +18,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 CLEAN_CSV = OUTPUT_DIR / "cleaned_survey_data_utf8.csv"
 QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
+VALUE_LABELS_JSON = OUTPUT_DIR / "value_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 KMEANS_N_INIT = 50
@@ -334,6 +335,8 @@ def main():
     df = pd.read_csv(CLEAN_CSV)
     with open(QUESTION_LABELS_JSON, "r", encoding="utf-8") as f:
         qlabels = json.load(f)
+    with open(VALUE_LABELS_JSON, "r", encoding="utf-8") as f:
+        value_labels = json.load(f)
 
     n_total = len(df)
 
@@ -452,15 +455,21 @@ def main():
 
     # 6) Descriptive statistics appendices (added without modifying existing inferential analyses)
     lines.append("")
+    lines.append('<div style="page-break-after: always;"></div>')
+    lines.append("")
     lines.append("## Demographics Summary")
     lines.append("")
     lines.append("| Variable | Category | Count | Percentage |")
     lines.append("|---|---|---:|---:|")
+    demographics_value_labels = {
+        q: {int(code): label for code, label in value_labels.get(q, {}).items() if str(code).lstrip("-").isdigit()}
+        for q in ["Q1", "Q2", "Q4", "Q5"]
+    }
     demographic_specs = [
-        ("Gender", "Q2", {1: "Male", 2: "Female"}),
-        ("Age", "Q1", {1: "18-25", 2: "26-35", 3: "36-45", 4: "46-60", 5: ">60"}),
-        ("Educational level", "Q4", {1: "Primary", 2: "Middle School", 3: "High School", 4: "Institute/Diploma", 5: "University", 6: "Postgraduate"}),
-        ("Marital status", "Q5", {1: "Single", 2: "Married", 3: "Divorced", 4: "Widowed"}),
+        ("Gender", "Q2", demographics_value_labels.get("Q2", {})),
+        ("Age", "Q1", demographics_value_labels.get("Q1", {})),
+        ("Educational level", "Q4", demographics_value_labels.get("Q4", {})),
+        ("Marital status", "Q5", demographics_value_labels.get("Q5", {})),
     ]
     for var_label, col, categories in demographic_specs:
         valid = df[col].dropna()
