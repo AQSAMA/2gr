@@ -101,3 +101,62 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 - Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.
 - K-means profiling should be presented as an exploratory secondary analysis.
 - For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.
+
+<div style="page-break-after: always;"></div>
+
+## Demographics Summary
+
+| Variable | Category | Count | Percentage |
+|---|---|---:|---:|
+| Gender | Male | 244 | 28.05% |
+| Gender | Female | 626 | 71.95% |
+| Age | 18-25 | 651 | 74.57% |
+| Age | 26-35 | 153 | 17.53% |
+| Age | 36-45 | 44 | 5.04% |
+| Age | 46-60 | 24 | 2.75% |
+| Age | >60 | 1 | 0.11% |
+| Educational level | Primary | 5 | 0.57% |
+| Educational level | Middle School | 0 | 0.00% |
+| Educational level | High School | 61 | 6.99% |
+| Educational level | Institute/Diploma | 0 | 0.00% |
+| Educational level | University | 689 | 78.92% |
+| Educational level | Postgraduate | 118 | 13.52% |
+| Marital status | Single | 684 | 78.44% |
+| Marital status | Married | 183 | 20.99% |
+| Marital status | Divorced | 3 | 0.34% |
+| Marital status | Widowed | 2 | 0.23% |
+
+## Core Beliefs Likert Distribution
+
+| Question | Disagree % | Neutral % | Agree % |
+|---|---:|---:|---:|
+| Q11 | 13.78% | 34.67% | 51.55% |
+| Q12 | 4.95% | 27.65% | 67.40% |
+| Q13 | 12.18% | 35.86% | 51.95% |
+
+## Correlation Matrix: Primary Beliefs
+
+| Variable | Q11 | Q12 | Q13 | Concern | Acceptance | Recommend |
+|---|---:|---:|---:|---:|---:|---:|
+| Q11 | 1.000 | 0.269 | -0.066 | 0.059 | -0.085 | -0.086 |
+| Q12 | 0.269 | 1.000 | -0.038 | 0.058 | -0.163 | -0.087 |
+| Q13 | -0.066 | -0.038 | 1.000 | -0.105 | 0.026 | 0.077 |
+| Concern | 0.059 | 0.058 | -0.105 | 1.000 | -0.040 | -0.042 |
+| Acceptance | -0.085 | -0.163 | 0.026 | -0.040 | 1.000 | 0.232 |
+| Recommend | -0.086 | -0.087 | 0.077 | -0.042 | 0.232 | 1.000 |
+
+## Acceptance by Prior Use
+
+| Prior Use | Recommend Yes % | Sample n |
+|---|---:|---:|
+| Yes | 65.08% | 126 |
+| No | 55.80% | 715 |
+
+## General Attitudes Distribution
+
+| Question | Yes % | Not sure % | No % |
+|---|---:|---:|---:|
+| Safety perception | 23.65% | 31.23% | 45.12% |
+| Acceptability | 30.80% | 17.70% | 51.49% |
+| Recommendation willingness | 57.65% | 11.62% | 30.72% |
+| Social concerns | 37.77% | 13.09% | 49.14% |

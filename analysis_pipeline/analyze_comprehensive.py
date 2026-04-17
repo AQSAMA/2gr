@@ -18,10 +18,12 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 CLEAN_CSV = OUTPUT_DIR / "cleaned_survey_data_utf8.csv"
 QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
+VALUE_LABELS_JSON = OUTPUT_DIR / "value_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
+DEMOGRAPHIC_QUESTION_IDS = ("Q1", "Q2", "Q4", "Q5")
 # Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
 CLUSTER_RANGE = [2, 3, 4]
 # English render labels are used only for report text so final outputs remain English-only.
@@ -98,6 +100,15 @@ def english_question_label(col, qlabels):
     if has_arabic(raw):
         return ""
     return str(raw)
+
+
+def numeric_code_label_map(value_labels, question_id):
+    """Convert JSON string-coded value labels to integer-keyed mappings for coded survey columns."""
+    return {
+        int(code): label
+        for code, label in value_labels.get(question_id, {}).items()
+        if str(code).lstrip("-").isdigit()
+    }
 
 
 def cramers_v_from_ct(ct: pd.DataFrame):
@@ -334,6 +345,8 @@ def main():
     df = pd.read_csv(CLEAN_CSV)
     with open(QUESTION_LABELS_JSON, "r", encoding="utf-8") as f:
         qlabels = json.load(f)
+    with open(VALUE_LABELS_JSON, "r", encoding="utf-8") as f:
+        value_labels = json.load(f)
 
     n_total = len(df)
 
@@ -449,6 +462,94 @@ def main():
     lines.append("- Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.")
     lines.append("- K-means profiling should be presented as an exploratory secondary analysis.")
     lines.append("- For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.")
+
+    # 6) Descriptive statistics appendices (added without modifying existing inferential analyses)
+    lines.append("")
+    lines.append('<div style="page-break-after: always;"></div>')
+    lines.append("")
+    lines.append("## Demographics Summary")
+    lines.append("")
+    lines.append("| Variable | Category | Count | Percentage |")
+    lines.append("|---|---|---:|---:|")
+    demographics_value_labels = {q: numeric_code_label_map(value_labels, q) for q in DEMOGRAPHIC_QUESTION_IDS}
+    demographic_specs = [
+        ("Gender", "Q2", demographics_value_labels.get("Q2", {})),
+        ("Age", "Q1", demographics_value_labels.get("Q1", {})),
+        ("Educational level", "Q4", demographics_value_labels.get("Q4", {})),
+        ("Marital status", "Q5", demographics_value_labels.get("Q5", {})),
+    ]
+    for var_label, col, categories in demographic_specs:
+        valid = df[col].dropna()
+        denom = len(valid)
+        for code, cat_label in categories.items():
+            count = int((valid == code).sum())
+            pct = (count / denom * 100.0) if denom else np.nan
+            lines.append(f"| {var_label} | {cat_label} | {count} | {pct:.2f}% |")
+
+    lines.append("")
+    lines.append("## Core Beliefs Likert Distribution")
+    lines.append("")
+    lines.append("| Question | Disagree % | Neutral % | Agree % |")
+    lines.append("|---|---:|---:|---:|")
+    for qcol in ["Q11", "Q12", "Q13"]:
+        valid = df[qcol].dropna()
+        denom = len(valid)
+        disagree_pct = (valid.isin([1, 2]).sum() / denom * 100.0) if denom else np.nan
+        neutral_pct = ((valid == 3).sum() / denom * 100.0) if denom else np.nan
+        agree_pct = (valid.isin([4, 5]).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {qcol} | {disagree_pct:.2f}% | {neutral_pct:.2f}% | {agree_pct:.2f}% |")
+
+    lines.append("")
+    lines.append("## Correlation Matrix: Primary Beliefs")
+    lines.append("")
+    lines.append("| Variable | Q11 | Q12 | Q13 | Concern | Acceptance | Recommend |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|")
+    corr_cols = {
+        "Q11": "Q11",
+        "Q12": "Q12",
+        "Q13": "Q13",
+        "Concern": "Q9",
+        "Acceptance": "Q7",
+        "Recommend": "Q8",
+    }
+    corr_df = df[list(corr_cols.values())].apply(pd.to_numeric, errors="coerce")
+    corr = corr_df.corr(method="pearson")
+    corr_order = ["Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"]
+    for row_name in corr_order:
+        row_col = corr_cols[row_name]
+        row_vals = [f"{corr.loc[row_col, corr_cols[col_name]]:.3f}" for col_name in corr_order]
+        lines.append(f"| {row_name} | " + " | ".join(row_vals) + " |")
+
+    lines.append("")
+    lines.append("## Acceptance by Prior Use")
+    lines.append("")
+    lines.append("| Prior Use | Recommend Yes % | Sample n |")
+    lines.append("|---|---:|---:|")
+    prior_use_specs = [("Yes", 1), ("No", 0)]
+    for label, code in prior_use_specs:
+        subgroup = df[(df["Q31"] == code) & (df["Q8"].isin([0, 1, 2]))]
+        denom = len(subgroup)
+        recommend_yes_pct = ((subgroup["Q8"] == 1).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {label} | {recommend_yes_pct:.2f}% | {denom} |")
+
+    lines.append("")
+    lines.append("## General Attitudes Distribution")
+    lines.append("")
+    lines.append("| Question | Yes % | Not sure % | No % |")
+    lines.append("|---|---:|---:|---:|")
+    attitude_specs = [
+        ("Safety perception", "Q6"),
+        ("Acceptability", "Q7"),
+        ("Recommendation willingness", "Q8"),
+        ("Social concerns", "Q9"),
+    ]
+    for label, col in attitude_specs:
+        valid = df[df[col].isin([0, 1, 2])][col]
+        denom = len(valid)
+        yes_pct = ((valid == 1).sum() / denom * 100.0) if denom else np.nan
+        unsure_pct = ((valid == 2).sum() / denom * 100.0) if denom else np.nan
+        no_pct = ((valid == 0).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {label} | {yes_pct:.2f}% | {unsure_pct:.2f}% | {no_pct:.2f}% |")
 
     output_text = "\n".join(lines) + "\n"
     ANALYSIS_MD.write_text(output_text, encoding="utf-8")
