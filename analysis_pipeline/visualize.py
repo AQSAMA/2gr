@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import csv
 import math
 import re
-from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,7 +13,6 @@ import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 INPUT_MD = BASE_DIR / "survey_data_results.md"
-INPUT_CSV = BASE_DIR / "survey_psychiatric_medication_use_public_acceptance_iraq_cleaned_english.csv"
 OUTPUT_DIR = BASE_DIR / "output"
 SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
 # Floor value prevents log10(0) errors while preserving significance ranking for very small p-values.
@@ -23,7 +20,6 @@ MIN_PVALUE = 1e-12
 # Ratio of chart height used to offset text labels above bars.
 TEXT_LABEL_OFFSET_RATIO = 0.03
 EXPECTED_CHART_COUNT = 31
-MIN_CORRELATION_SAMPLE_SIZE = 3
 
 
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -127,6 +123,15 @@ def parse_total_n(markdown_text: str) -> int:
     return int(match.group(1))
 
 
+def parse_percent(value: str) -> float:
+    cleaned = value.replace("%", "").strip()
+    return parse_number(cleaned)
+
+
+def parse_int(value: str) -> int:
+    return int(parse_number(value))
+
+
 def save_chart(path: Path, draw_fn: Callable[[], None]) -> None:
     fig = plt.figure(figsize=(10, 6), dpi=300)
     try:
@@ -135,51 +140,6 @@ def save_chart(path: Path, draw_fn: Callable[[], None]) -> None:
         fig.savefig(path, dpi=300, bbox_inches="tight")
     finally:
         plt.close(fig)
-
-
-def load_csv_rows(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8") as handle:
-        return [{k: (v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
-
-
-def ordered_counts(rows: list[dict[str, str]], column: str, order: list[str] | None = None) -> tuple[list[str], list[int]]:
-    counts = Counter(row.get(column, "") for row in rows if row.get(column, ""))
-    if order:
-        labels = [label for label in order if label in counts]
-        labels.extend([label for label in counts if label not in labels])
-    else:
-        labels = [label for label, _ in counts.most_common()]
-    return labels, [counts[label] for label in labels]
-
-
-def to_pct(values: list[int]) -> list[float]:
-    total = sum(values)
-    if total == 0:
-        return [0.0 for _ in values]
-    return [(100.0 * value) / total for value in values]
-
-
-def map_likert(value: str) -> float | None:
-    mapping = {
-        "Strongly disagree": 1.0,
-        "Disagree": 2.0,
-        "Neutral": 3.0,
-        "Agree": 4.0,
-        "Strongly agree": 5.0,
-    }
-    return mapping.get(value)
-
-
-def map_yes_no_unsure(value: str) -> float | None:
-    mapping = {"No": 1.0, "Not sure": 2.0, "Yes": 3.0}
-    return mapping.get(value)
-
-
-def safe_corr(a: np.ndarray, b: np.ndarray) -> float:
-    mask = ~np.isnan(a) & ~np.isnan(b)
-    if np.sum(mask) < MIN_CORRELATION_SAMPLE_SIZE:
-        return np.nan
-    return float(np.corrcoef(a[mask], b[mask])[0, 1])
 
 
 def draw_donut(ax: plt.Axes, labels: list[str], counts: list[int], title: str, colors: list[str]) -> None:
@@ -220,13 +180,10 @@ def draw_waffle(ax: plt.Axes, percent_value: float, title: str, positive_label: 
 def main() -> None:
     if not INPUT_MD.exists():
         raise FileNotFoundError(f"Input markdown not found: {INPUT_MD}")
-    if not INPUT_CSV.exists():
-        raise FileNotFoundError(f"Input CSV not found: {INPUT_CSV}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     text = INPUT_MD.read_text(encoding="utf-8")
-    survey_rows = load_csv_rows(INPUT_CSV)
     tables = parse_tables(text)
     n_total = parse_total_n(text)
 
@@ -259,6 +216,39 @@ def main() -> None:
         tables,
         "Exploratory Stigma Phenotypes",
         ["Profile", "Size n", "Q11 mean", "Q12 mean", "Q13 mean"],
+    )
+    demographics_table = find_table(
+        tables,
+        "Demographics Summary",
+        ["Variable", "Category", "Count", "Percentage"],
+    )
+    likert_dist_table = find_table(
+        tables,
+        "Core Beliefs Likert Distribution",
+        ["Question", "Disagree %", "Neutral %", "Agree %"],
+    )
+    corr_table = find_table(
+        tables,
+        "Correlation Matrix: Primary Beliefs",
+        ["Variable", "Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"],
+    )
+    prior_use_table = find_table(
+        tables,
+        "Acceptance by Prior Use",
+        ["Prior Use", "Recommend Yes %", "Sample n"],
+    )
+    general_attitudes_table = find_table(
+        tables,
+        "General Attitudes Distribution",
+        ["Question", "Yes %", "Not sure %", "No %"],
+    )
+    recommendation_by_gender_table = next(
+        (
+            table
+            for table in tables
+            if "recommendation by gender" in table.heading.lower() and all(h in table.headers for h in ["Gender"])
+        ),
+        None,
     )
 
     chart_outputs: list[ChartOutput] = []
@@ -293,75 +283,95 @@ def main() -> None:
     profile_q12 = [parse_number(row["Q12 mean"]) for row in profile_table.rows]
     profile_q13 = [parse_number(row["Q13 mean"]) for row in profile_table.rows]
 
-    age_col = "Age"
-    gender_col = "Gender"
-    edu_col = "Educational level"
-    marital_col = "Marital status"
-    recommendation_col = "Would you recommend psychiatric medications to someone close if needed?"
-    acceptance_col = "Do you see their use as acceptable like hypertension and diabetes medications?"
-    concerns_col = "Do you have concerns about interacting with a person taking psychiatric medications?"
-    prior_use_col = "Do you currently use or have you ever used a psychiatric medication?"
-    q11_col = "Doctors prescribe medications more than necessary"
-    q12_col = "Most medications cause psychological or physical dependence"
-    q13_col = "Modern medications are safer than older ones"
-    safety_col = "Do you think psychiatric medications are safe?"
+    def pick_demo(variable: str, ordered_categories: list[tuple[str, list[str]]]) -> tuple[list[str], list[int], list[float]]:
+        rows = [row for row in demographics_table.rows if row["Variable"].strip().lower() == variable.strip().lower()]
+        by_category = {row["Category"].strip().lower(): row for row in rows}
+        labels: list[str] = []
+        counts: list[int] = []
+        pct: list[float] = []
+        for label, aliases in ordered_categories:
+            matched_row = None
+            for candidate in [label, *aliases]:
+                matched_row = by_category.get(candidate.strip().lower())
+                if matched_row:
+                    break
+            if not matched_row:
+                continue
+            labels.append(label)
+            counts.append(parse_int(matched_row["Count"]))
+            pct.append(parse_percent(matched_row["Percentage"]))
+        return labels, counts, pct
 
-    age_labels, age_counts = ordered_counts(survey_rows, age_col, ["18-25", "26-35", "36-45", "46-60", ">60"])
-    gender_labels, gender_counts = ordered_counts(survey_rows, gender_col, ["Female", "Male"])
-    edu_labels, edu_counts = ordered_counts(survey_rows, edu_col, ["Primary", "High school", "University", "Postgraduate"])
-    marital_labels, marital_counts = ordered_counts(survey_rows, marital_col, ["Single", "Married", "Divorced", "Widowed"])
-    recommend_labels, recommend_counts = ordered_counts(survey_rows, recommendation_col, ["Yes", "Not sure", "No"])
-    acceptance_labels, acceptance_counts = ordered_counts(survey_rows, acceptance_col, ["Yes", "Not sure", "No"])
-    safety_labels, safety_counts = ordered_counts(survey_rows, safety_col, ["Yes", "Not sure", "No"])
-    concerns_labels, concerns_counts = ordered_counts(survey_rows, concerns_col, ["Yes", "Not sure", "No"])
-    safety_count_map = dict(zip(safety_labels, safety_counts))
-    acceptance_count_map = dict(zip(acceptance_labels, acceptance_counts))
-    recommend_count_map = dict(zip(recommend_labels, recommend_counts))
+    age_labels, age_counts, age_pct = pick_demo(
+        "Age",
+        [("18-25", []), ("26-35", []), ("36-45", []), ("46-60", []), (">60", [])],
+    )
+    gender_labels, gender_counts, gender_pct = pick_demo(
+        "Gender",
+        [("Female", []), ("Male", [])],
+    )
+    edu_labels, edu_counts, edu_pct = pick_demo(
+        "Educational level",
+        [("Primary", []), ("High school", ["High School"]), ("University", []), ("Postgraduate", [])],
+    )
+    marital_labels, marital_counts, marital_pct = pick_demo(
+        "Marital status",
+        [("Single", []), ("Married", []), ("Divorced", []), ("Widowed", [])],
+    )
 
-    likert_questions = [q11_col, q12_col, q13_col]
+    likert_questions = ["Q11", "Q12", "Q13"]
     likert_short_labels = ["Q11", "Q12", "Q13"]
     likert_groups: dict[str, list[float]] = {"Disagree": [], "Neutral": [], "Agree": []}
+    likert_map = {row["Question"].strip().upper(): row for row in likert_dist_table.rows}
     for question in likert_questions:
-        counts = Counter(row.get(question, "") for row in survey_rows if row.get(question, ""))
-        total = sum(counts.values())
-        disagree = counts.get("Strongly disagree", 0) + counts.get("Disagree", 0)
-        neutral = counts.get("Neutral", 0)
-        agree = counts.get("Agree", 0) + counts.get("Strongly agree", 0)
-        if total == 0:
+        row = likert_map.get(question)
+        if not row:
             likert_groups["Disagree"].append(0.0)
             likert_groups["Neutral"].append(0.0)
             likert_groups["Agree"].append(0.0)
-        else:
-            likert_groups["Disagree"].append((100.0 * disagree) / total)
-            likert_groups["Neutral"].append((100.0 * neutral) / total)
-            likert_groups["Agree"].append((100.0 * agree) / total)
+            continue
+        likert_groups["Disagree"].append(parse_percent(row["Disagree %"]))
+        likert_groups["Neutral"].append(parse_percent(row["Neutral %"]))
+        likert_groups["Agree"].append(parse_percent(row["Agree %"]))
 
-    corr_columns = [q11_col, q12_col, q13_col, concerns_col, acceptance_col, recommendation_col]
     corr_labels = ["Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"]
-    corr_vectors: list[np.ndarray] = []
-    for column in corr_columns:
-        mapped: list[float] = []
-        for row in survey_rows:
-            raw = row.get(column, "")
-            value = map_likert(raw)
-            if value is None:
-                value = map_yes_no_unsure(raw)
-            mapped.append(np.nan if value is None else value)
-        corr_vectors.append(np.array(mapped, dtype=float))
-    corr_matrix = np.zeros((len(corr_vectors), len(corr_vectors)))
-    for i, vec_i in enumerate(corr_vectors):
-        for j, vec_j in enumerate(corr_vectors):
-            corr_matrix[i, j] = safe_corr(vec_i, vec_j)
+    corr_row_map = {row["Variable"].strip(): row for row in corr_table.rows}
+    corr_matrix = np.array(
+        [[parse_number(corr_row_map[label][column]) for column in corr_labels] for label in corr_labels],
+        dtype=float,
+    )
 
     prior_groups = ["Yes", "No"]
-    prior_recommend_pct: list[float] = []
-    prior_n: list[int] = []
-    for prior_value in prior_groups:
-        subgroup = [row for row in survey_rows if row.get(prior_use_col, "") == prior_value and row.get(recommendation_col, "")]
-        denom = len(subgroup)
-        numer = sum(1 for row in subgroup if row.get(recommendation_col, "") == "Yes")
-        prior_n.append(denom)
-        prior_recommend_pct.append((100.0 * numer / denom) if denom else 0.0)
+    prior_map = {row["Prior Use"].strip(): row for row in prior_use_table.rows}
+    prior_recommend_pct = [parse_percent(prior_map[group]["Recommend Yes %"]) if group in prior_map else 0.0 for group in prior_groups]
+    prior_n = [parse_int(prior_map[group]["Sample n"]) if group in prior_map else 0 for group in prior_groups]
+
+    yes_no_labels = ["Yes", "Not sure", "No"]
+    attitude_rows = {row["Question"].strip().lower(): row for row in general_attitudes_table.rows}
+
+    def pick_attitude(question: str) -> tuple[list[float], list[int]]:
+        row = attitude_rows.get(question.lower())
+        if not row:
+            return [0.0, 0.0, 0.0], [0, 0, 0]
+        pct_vals = [parse_percent(row[f"{label} %"]) for label in yes_no_labels]
+        if all(f"{label} n" in row for label in yes_no_labels):
+            count_vals = [parse_int(row[f"{label} n"]) for label in yes_no_labels]
+        else:
+            count_vals = [int(round((pct / 100.0) * n_total)) for pct in pct_vals]
+        return pct_vals, count_vals
+
+    safety_pct, safety_counts = pick_attitude("Safety perception")
+    acceptance_pct, acceptance_counts = pick_attitude("Acceptability")
+    recommend_pct, recommend_counts = pick_attitude("Recommendation willingness")
+    concerns_pct, concerns_counts = pick_attitude("Social concerns")
+
+    safety_labels = yes_no_labels.copy()
+    acceptance_labels = yes_no_labels.copy()
+    recommend_labels = yes_no_labels.copy()
+    concerns_labels = yes_no_labels.copy()
+    safety_count_map = dict(zip(safety_labels, safety_counts))
+    acceptance_count_map = dict(zip(acceptance_labels, acceptance_counts))
+    recommend_count_map = dict(zip(recommend_labels, recommend_counts))
 
     safety_yes = safety_count_map.get("Yes", 0)
     safety_no = safety_count_map.get("No", 0)
@@ -372,14 +382,20 @@ def main() -> None:
     gender_groups = [group for group in ["Female", "Male"] if group in set(gender_labels)]
     gender_recommend_categories = ["Yes", "Not sure", "No"]
     gender_recommend_pct: dict[str, list[float]] = {}
+    if recommendation_by_gender_table:
+        for row in recommendation_by_gender_table.rows:
+            gender = row.get("Gender", "").strip()
+            if gender not in gender_groups:
+                continue
+            if all(f"{category} %" in row for category in gender_recommend_categories):
+                gender_recommend_pct[gender] = [parse_percent(row[f"{category} %"]) for category in gender_recommend_categories]
+            elif all(f"{category} n" in row for category in gender_recommend_categories):
+                counts = [parse_int(row[f"{category} n"]) for category in gender_recommend_categories]
+                total = sum(counts)
+                gender_recommend_pct[gender] = [(100.0 * count / total) if total else 0.0 for count in counts]
     for gender in gender_groups:
-        subgroup = [row for row in survey_rows if row.get(gender_col, "") == gender and row.get(recommendation_col, "")]
-        subgroup_counts = Counter(row.get(recommendation_col, "") for row in subgroup)
-        total = sum(subgroup_counts.get(cat, 0) for cat in gender_recommend_categories)
-        if total == 0:
-            gender_recommend_pct[gender] = [0.0, 0.0, 0.0]
-        else:
-            gender_recommend_pct[gender] = [(100.0 * subgroup_counts.get(cat, 0)) / total for cat in gender_recommend_categories]
+        if gender not in gender_recommend_pct:
+            gender_recommend_pct[gender] = [recommend_pct[0], recommend_pct[1], recommend_pct[2]]
 
     # 01
     filename = "01_hierarchical_pseudo_r2.png"
@@ -762,7 +778,7 @@ def main() -> None:
     filename = "16_demographics_gender_distribution.png"
 
     def draw_16() -> None:
-        pct = to_pct(gender_counts)
+        pct = gender_pct
         bars = plt.bar(gender_labels, pct, color=["#B07AA1", "#4E79A7"][: len(gender_labels)])
         plt.ylabel("Percent of respondents")
         plt.title("Sample Composition by Gender")
@@ -784,7 +800,7 @@ def main() -> None:
     filename = "17_demographics_age_distribution.png"
 
     def draw_17() -> None:
-        pct = to_pct(age_counts)
+        pct = age_pct
         bars = plt.bar(age_labels, pct, color="#59A14F")
         plt.ylabel("Percent of respondents")
         plt.title("Sample Composition by Age Group")
@@ -806,7 +822,7 @@ def main() -> None:
     filename = "18_demographics_education_distribution.png"
 
     def draw_18() -> None:
-        pct = to_pct(edu_counts)
+        pct = edu_pct
         bars = plt.bar(edu_labels, pct, color="#EDC948")
         plt.ylabel("Percent of respondents")
         plt.title("Sample Composition by Education Level")
@@ -906,7 +922,7 @@ def main() -> None:
     filename = "22_demographics_marital_distribution.png"
 
     def draw_22() -> None:
-        pct = to_pct(marital_counts)
+        pct = marital_pct
         bars = plt.bar(marital_labels, pct, color="#76B7B2")
         plt.ylabel("Percent of respondents")
         plt.title("Sample Composition by Marital Status")
@@ -928,7 +944,7 @@ def main() -> None:
     filename = "23_safety_perception_distribution.png"
 
     def draw_23() -> None:
-        pct = to_pct(safety_counts)
+        pct = safety_pct
         bars = plt.bar(safety_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(safety_labels)])
         plt.ylabel("Percent of respondents")
         plt.title("Perceived Safety of Psychiatric Medications")
@@ -950,7 +966,7 @@ def main() -> None:
     filename = "24_acceptability_distribution.png"
 
     def draw_24() -> None:
-        pct = to_pct(acceptance_counts)
+        pct = acceptance_pct
         bars = plt.bar(acceptance_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(acceptance_labels)])
         plt.ylabel("Percent of respondents")
         plt.title("Public Acceptability of Psychiatric Medication Use")
@@ -972,7 +988,7 @@ def main() -> None:
     filename = "25_recommendation_distribution.png"
 
     def draw_25() -> None:
-        pct = to_pct(recommend_counts)
+        pct = recommend_pct
         bars = plt.bar(recommend_labels, pct, color=["#59A14F", "#BAB0AC", "#E15759"][: len(recommend_labels)])
         plt.ylabel("Percent of respondents")
         plt.title("Recommendation Willingness Distribution")
@@ -994,7 +1010,7 @@ def main() -> None:
     filename = "26_social_concern_distribution.png"
 
     def draw_26() -> None:
-        pct = to_pct(concerns_counts)
+        pct = concerns_pct
         bars = plt.bar(concerns_labels, pct, color=["#E15759", "#BAB0AC", "#59A14F"][: len(concerns_labels)])
         plt.ylabel("Percent of respondents")
         plt.title("Concerns About Interacting With Medication Users")
