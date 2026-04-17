@@ -23,6 +23,7 @@ ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
+DEMOGRAPHIC_QUESTION_IDS = ("Q1", "Q2", "Q4", "Q5")
 # Exploratory profile search is intentionally bounded to small k values for interpretability with Q11-Q13.
 CLUSTER_RANGE = [2, 3, 4]
 # English render labels are used only for report text so final outputs remain English-only.
@@ -99,6 +100,15 @@ def english_question_label(col, qlabels):
     if has_arabic(raw):
         return ""
     return str(raw)
+
+
+def numeric_code_label_map(value_labels, question_id):
+    """Convert JSON string-coded value labels to integer-keyed mappings for coded survey columns."""
+    return {
+        int(code): label
+        for code, label in value_labels.get(question_id, {}).items()
+        if str(code).lstrip("-").isdigit()
+    }
 
 
 def cramers_v_from_ct(ct: pd.DataFrame):
@@ -461,10 +471,7 @@ def main():
     lines.append("")
     lines.append("| Variable | Category | Count | Percentage |")
     lines.append("|---|---|---:|---:|")
-    demographics_value_labels = {
-        q: {int(code): label for code, label in value_labels.get(q, {}).items() if str(code).lstrip("-").isdigit()}
-        for q in ["Q1", "Q2", "Q4", "Q5"]
-    }
+    demographics_value_labels = {q: numeric_code_label_map(value_labels, q) for q in DEMOGRAPHIC_QUESTION_IDS}
     demographic_specs = [
         ("Gender", "Q2", demographics_value_labels.get("Q2", {})),
         ("Age", "Q1", demographics_value_labels.get("Q1", {})),
