@@ -535,8 +535,8 @@ def main():
     lines.append("")
     lines.append("## General Attitudes Distribution")
     lines.append("")
-    lines.append("| Question | Yes % | Not sure % | No % |")
-    lines.append("|---|---:|---:|---:|")
+    lines.append("| Question | Yes n | Yes % | Not sure n | Not sure % | No n | No % |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|")
     attitude_specs = [
         ("Safety perception", "Q6"),
         ("Acceptability", "Q7"),
@@ -546,10 +546,37 @@ def main():
     for label, col in attitude_specs:
         valid = df[df[col].isin([0, 1, 2])][col]
         denom = len(valid)
-        yes_pct = ((valid == 1).sum() / denom * 100.0) if denom else np.nan
-        unsure_pct = ((valid == 2).sum() / denom * 100.0) if denom else np.nan
-        no_pct = ((valid == 0).sum() / denom * 100.0) if denom else np.nan
-        lines.append(f"| {label} | {yes_pct:.2f}% | {unsure_pct:.2f}% | {no_pct:.2f}% |")
+        yes_n = int((valid == 1).sum())
+        unsure_n = int((valid == 2).sum())
+        no_n = int((valid == 0).sum())
+        yes_pct = (yes_n / denom * 100.0) if denom else np.nan
+        unsure_pct = (unsure_n / denom * 100.0) if denom else np.nan
+        no_pct = (no_n / denom * 100.0) if denom else np.nan
+        lines.append(f"| {label} | {yes_n} | {yes_pct:.2f}% | {unsure_n} | {unsure_pct:.2f}% | {no_n} | {no_pct:.2f}% |")
+
+    lines.append("")
+    lines.append("## Recommendation by Gender")
+    lines.append("")
+    lines.append("| Gender | Yes n | Yes % | Not sure n | Not sure % | No n | No % | Sample n |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
+    gender_label_map = numeric_code_label_map(value_labels, "Q2")
+    gender_specs = [
+        ("Male", 1),
+        ("Female", 2),
+    ]
+    for fallback_label, gender_code in gender_specs:
+        gender_label = gender_label_map.get(gender_code, fallback_label)
+        subgroup = df[(df["Q2"] == gender_code) & (df["Q8"].isin([0, 1, 2]))]["Q8"]
+        denom = len(subgroup)
+        yes_n = int((subgroup == 1).sum())
+        unsure_n = int((subgroup == 2).sum())
+        no_n = int((subgroup == 0).sum())
+        yes_pct = (yes_n / denom * 100.0) if denom else np.nan
+        unsure_pct = (unsure_n / denom * 100.0) if denom else np.nan
+        no_pct = (no_n / denom * 100.0) if denom else np.nan
+        lines.append(
+            f"| {gender_label} | {yes_n} | {yes_pct:.2f}% | {unsure_n} | {unsure_pct:.2f}% | {no_n} | {no_pct:.2f}% | {denom} |"
+        )
 
     output_text = "\n".join(lines) + "\n"
     ANALYSIS_MD.write_text(output_text, encoding="utf-8")
