@@ -450,6 +450,91 @@ def main():
     lines.append("- K-means profiling should be presented as an exploratory secondary analysis.")
     lines.append("- For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.")
 
+    # 6) Descriptive statistics appendices (added without modifying existing inferential analyses)
+    lines.append("")
+    lines.append("## Demographics Summary")
+    lines.append("")
+    lines.append("| Variable | Category | Count | Percentage |")
+    lines.append("|---|---|---:|---:|")
+    demographic_specs = [
+        ("Gender", "Q2", {1: "Male", 2: "Female"}),
+        ("Age", "Q1", {1: "18-25", 2: "26-35", 3: "36-45", 4: "46-60", 5: ">60"}),
+        ("Educational level", "Q4", {1: "Primary", 2: "Middle School", 3: "High School", 4: "Institute/Diploma", 5: "University", 6: "Postgraduate"}),
+        ("Marital status", "Q5", {1: "Single", 2: "Married", 3: "Divorced", 4: "Widowed"}),
+    ]
+    for var_label, col, categories in demographic_specs:
+        valid = df[col].dropna()
+        denom = len(valid)
+        for code, cat_label in categories.items():
+            count = int((valid == code).sum())
+            pct = (count / denom * 100.0) if denom else np.nan
+            lines.append(f"| {var_label} | {cat_label} | {count} | {pct:.2f}% |")
+
+    lines.append("")
+    lines.append("## Core Beliefs Likert Distribution")
+    lines.append("")
+    lines.append("| Question | Disagree % | Neutral % | Agree % |")
+    lines.append("|---|---:|---:|---:|")
+    for qcol in ["Q11", "Q12", "Q13"]:
+        valid = df[qcol].dropna()
+        denom = len(valid)
+        disagree_pct = (valid.isin([1, 2]).sum() / denom * 100.0) if denom else np.nan
+        neutral_pct = ((valid == 3).sum() / denom * 100.0) if denom else np.nan
+        agree_pct = (valid.isin([4, 5]).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {qcol} | {disagree_pct:.2f}% | {neutral_pct:.2f}% | {agree_pct:.2f}% |")
+
+    lines.append("")
+    lines.append("## Correlation Matrix: Primary Beliefs")
+    lines.append("")
+    lines.append("| Variable | Q11 | Q12 | Q13 | Concern | Acceptance | Recommend |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|")
+    corr_cols = {
+        "Q11": "Q11",
+        "Q12": "Q12",
+        "Q13": "Q13",
+        "Concern": "Q9",
+        "Acceptance": "Q7",
+        "Recommend": "Q8",
+    }
+    corr_df = df[list(corr_cols.values())].apply(pd.to_numeric, errors="coerce")
+    corr = corr_df.corr(method="pearson")
+    corr_order = ["Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"]
+    for row_name in corr_order:
+        row_col = corr_cols[row_name]
+        row_vals = [f"{corr.loc[row_col, corr_cols[col_name]]:.3f}" for col_name in corr_order]
+        lines.append(f"| {row_name} | " + " | ".join(row_vals) + " |")
+
+    lines.append("")
+    lines.append("## Acceptance by Prior Use")
+    lines.append("")
+    lines.append("| Prior Use | Recommend Yes % | Sample n |")
+    lines.append("|---|---:|---:|")
+    prior_use_specs = [("Yes", 1), ("No", 0)]
+    for label, code in prior_use_specs:
+        subgroup = df[(df["Q31"] == code) & (df["Q8"].isin([0, 1, 2]))]
+        denom = len(subgroup)
+        recommend_yes_pct = ((subgroup["Q8"] == 1).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {label} | {recommend_yes_pct:.2f}% | {denom} |")
+
+    lines.append("")
+    lines.append("## General Attitudes Distribution")
+    lines.append("")
+    lines.append("| Question | Yes % | Not sure % | No % |")
+    lines.append("|---|---:|---:|---:|")
+    attitude_specs = [
+        ("Safety perception", "Q6"),
+        ("Acceptability", "Q7"),
+        ("Recommendation willingness", "Q8"),
+        ("Social concerns", "Q9"),
+    ]
+    for label, col in attitude_specs:
+        valid = df[df[col].isin([0, 1, 2])][col]
+        denom = len(valid)
+        yes_pct = ((valid == 1).sum() / denom * 100.0) if denom else np.nan
+        unsure_pct = ((valid == 2).sum() / denom * 100.0) if denom else np.nan
+        no_pct = ((valid == 0).sum() / denom * 100.0) if denom else np.nan
+        lines.append(f"| {label} | {yes_pct:.2f}% | {unsure_pct:.2f}% | {no_pct:.2f}% |")
+
     output_text = "\n".join(lines) + "\n"
     ANALYSIS_MD.write_text(output_text, encoding="utf-8")
     ROOT_ANALYSIS_MD.write_text(output_text, encoding="utf-8")
