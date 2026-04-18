@@ -10,7 +10,7 @@ In this setting, psychiatric medication use and public acceptance are linked pub
 
 ## B. Problem Statement
 
-The Iraqi evidence base shows a persistent mismatch between mental health need and treatment engagement. Population data identified low treatment contact despite substantial disorder prevalence, while public perception studies reported mixed beliefs: some respondents endorsed medical explanations, but many still held blaming and socially distancing attitudes toward people with mental illness (Sadik et al., 2010). More recent reports continue to describe service shortages, policy implementation gaps, and ongoing stigma that can delay formal care (Saied et al., 2023).
+The Iraqi evidence base shows a persistent mismatch between mental health need and treatment engagement. Population data show low treatment contact despite substantial disorder prevalence, while public perception studies report mixed beliefs: some respondents endorse medical explanations, but many still hold blaming and socially distancing attitudes toward people with mental illness (Sadik et al., 2010). More recent reports continue to describe service shortages, policy implementation gaps, and ongoing stigma that can delay formal care (Saied et al., 2023).
 
 This creates a practical problem for Iraqi pharmacy and mental health practice. If public beliefs around psychiatric illness and medication remain ambivalent, treatment pathways may shift toward delay, interrupted adherence, or non-medical alternatives before specialist care is reached. Existing literature clarifies parts of this problem, but it does not provide a single contemporary Iraqi cross-sectional assessment that directly links medication acceptance, stigma-related beliefs, and treatment-facing attitudes in one analytic framework.
 
@@ -24,6 +24,6 @@ The study addresses four research questions. First, what are the prevailing publ
 
 For Iraqi pharmacists, this study provides locally grounded evidence on how people think about psychiatric medication at the point where treatment decisions are often made. Pharmacists in Iraq frequently serve as accessible first-contact professionals, so understanding acceptance barriers can improve counseling quality, adherence support, and referral conversations.
 
-For clinicians, educators, and policy makers, the study adds current Iraqi cross-sectional evidence that complements existing service and stigma literature. It grounds mental health planning in measurable public-facing barriers that influence medication acceptance in daily practice (Saied et al., 2023; Sadik et al., 2010).
+For clinicians, educators, and policy makers, the study adds current Iraqi cross-sectional evidence that complements existing service and stigma literature. It grounds mental health planning in measurable barriers that people encounter when considering psychiatric medication in daily practice (Saied et al., 2023; Sadik et al., 2010).
 
 For the wider Iraqi mental health agenda, the study supports more culturally responsive intervention design. By identifying attitude patterns tied to treatment acceptance, it can inform public education, primary care coordination, and community communication strategies in ways that fit Iraqi social realities rather than relying on assumptions from non-Iraqi settings (Younis & Khunda, 2020; Burnam et al., 2009).
