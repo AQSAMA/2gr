@@ -1,7 +1,7 @@
 # Survey Visualization Summary
 
 This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `analysis_pipeline/output/analysis_results.json`.
-Generated at: 2026-04-18T10:27:00.669422+00:00
+Generated at: 2026-04-18T10:59:09.810166+00:00
 
 ## Chart 01: Hierarchical model pseudo R² by block
 

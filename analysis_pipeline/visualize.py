@@ -28,6 +28,10 @@ EXPECTED_CHART_COUNT = 31
 plt.style.use("seaborn-v0_8-whitegrid")
 
 
+def safe_float(val, default=np.nan): return float(val) if val is not None else default
+def safe_int(val, default=0): return int(val) if val is not None else default
+
+
 @dataclass
 class ChartOutput:
     filename: str
@@ -89,7 +93,7 @@ def main() -> None:
     MANUSCRIPT_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
     data = json.loads(INPUT_JSON.read_text(encoding="utf-8"))
-    n_total = int(data["meta"]["n_total"])
+    n_total = safe_int(data["meta"]["n_total"])
     inferential = data["inferential"]
     descriptive = data["descriptive"]
 
@@ -98,36 +102,36 @@ def main() -> None:
     # Shared parsed structures
     block_rows = inferential["hierarchical"]["blocks"]
     block_names = [str(row["block"]).split("(")[0].strip() for row in block_rows]
-    block_r2 = [float(row["mcfadden_pseudo_r2"]) for row in block_rows]
-    block_p = [float(row["llr_pvalue"]) for row in block_rows]
+    block_r2 = [safe_float(row.get("mcfadden_pseudo_r2")) for row in block_rows]
+    block_p = [safe_float(row.get("llr_pvalue")) for row in block_rows]
 
     primary_rows = [row for row in inferential["primary_or"] if str(row["predictor"]).lower() != "intercept"]
     predictors = [str(row["predictor"]) for row in primary_rows]
-    primary_or_vals = [(float(row["adjusted_or"]), float(row["ci_low"]), float(row["ci_high"])) for row in primary_rows]
-    primary_pvals = [float(row["p_value"]) for row in primary_rows]
+    primary_or_vals = [(safe_float(row.get("adjusted_or")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in primary_rows]
+    primary_pvals = [safe_float(row.get("p_value")) for row in primary_rows]
 
     multinomial_rows = inferential["multinomial"]["rows"]
-    mn_yes = [row for row in multinomial_rows if int(row["outcome"]) == 1 and str(row["predictor"]) != "const"]
-    mn_unsure = [row for row in multinomial_rows if int(row["outcome"]) == 2 and str(row["predictor"]) != "const"]
+    mn_yes = [row for row in multinomial_rows if safe_int(row.get("outcome")) == 1 and str(row["predictor"]) != "const"]
+    mn_unsure = [row for row in multinomial_rows if safe_int(row.get("outcome")) == 2 and str(row["predictor"]) != "const"]
 
     contact_rows = inferential["contact_hypothesis"]["items"]
     contact_items = [str(row["item"]).split("(")[0].strip() for row in contact_rows]
-    user_median = [float(row["user_median"]) for row in contact_rows]
-    non_median = [float(row["non_user_median"]) for row in contact_rows]
-    cliff_delta = [float(row["cliffs_delta"]) for row in contact_rows]
-    cramer_v = [float(row["cramers_v"]) for row in contact_rows]
-    mw_p = [float(row["mann_whitney_u_pvalue"]) for row in contact_rows]
-    chi_p = [float(row["chi_square_pvalue"]) for row in contact_rows]
+    user_median = [safe_float(row.get("user_median")) for row in contact_rows]
+    non_median = [safe_float(row.get("non_user_median")) for row in contact_rows]
+    cliff_delta = [safe_float(row.get("cliffs_delta")) for row in contact_rows]
+    cramer_v = [safe_float(row.get("cramers_v")) for row in contact_rows]
+    mw_p = [safe_float(row.get("mann_whitney_u_pvalue")) for row in contact_rows]
+    chi_p = [safe_float(row.get("chi_square_pvalue")) for row in contact_rows]
 
-    k_values = [int(row["k"]) for row in inferential["kmeans"]["scores"]]
-    silhouette_scores = [float(row["silhouette_score"]) for row in inferential["kmeans"]["scores"]]
+    k_values = [safe_int(row.get("k")) for row in inferential["kmeans"]["scores"]]
+    silhouette_scores = [safe_float(row.get("silhouette_score")) for row in inferential["kmeans"]["scores"]]
 
     profile_rows = inferential["kmeans"]["profiles"]
-    profiles = [int(row["profile"]) for row in profile_rows]
-    profile_sizes = [int(row["size_n"]) for row in profile_rows]
-    profile_q11 = [float(row["Q11_mean"]) for row in profile_rows]
-    profile_q12 = [float(row["Q12_mean"]) for row in profile_rows]
-    profile_q13 = [float(row["Q13_mean"]) for row in profile_rows]
+    profiles = [safe_int(row.get("profile")) for row in profile_rows]
+    profile_sizes = [safe_int(row.get("size_n")) for row in profile_rows]
+    profile_q11 = [safe_float(row.get("Q11_mean")) for row in profile_rows]
+    profile_q12 = [safe_float(row.get("Q12_mean")) for row in profile_rows]
+    profile_q13 = [safe_float(row.get("Q13_mean")) for row in profile_rows]
 
     def pick_demo(variable: str, ordered_categories: list[tuple[str, list[str]]]) -> tuple[list[str], list[int], list[float]]:
         rows = [row for row in descriptive["demographics"] if str(row["variable"]).strip().lower() == variable.strip().lower()]
@@ -144,8 +148,8 @@ def main() -> None:
             if not matched_row:
                 continue
             labels.append(label)
-            counts.append(int(matched_row["count"]))
-            pct.append(float(matched_row["percentage"]))
+            counts.append(safe_int(matched_row.get("count")))
+            pct.append(safe_float(matched_row.get("percentage")))
         return labels, counts, pct
 
     age_labels, age_counts, age_pct = pick_demo(
@@ -176,17 +180,17 @@ def main() -> None:
             likert_groups["Neutral"].append(0.0)
             likert_groups["Agree"].append(0.0)
             continue
-        likert_groups["Disagree"].append(float(row["disagree_pct"]))
-        likert_groups["Neutral"].append(float(row["neutral_pct"]))
-        likert_groups["Agree"].append(float(row["agree_pct"]))
+        likert_groups["Disagree"].append(safe_float(row.get("disagree_pct")))
+        likert_groups["Neutral"].append(safe_float(row.get("neutral_pct")))
+        likert_groups["Agree"].append(safe_float(row.get("agree_pct")))
 
     corr_labels = [str(var) for var in descriptive["correlations"]["variables"]]
     corr_matrix = np.array(descriptive["correlations"]["matrix"], dtype=float)
 
     prior_groups = ["Yes", "No"]
     prior_map = {str(row["prior_use_label"]).strip(): row for row in descriptive["acceptance_by_prior_use"]}
-    prior_recommend_pct = [float(prior_map[group]["recommend_yes_pct"]) if group in prior_map else 0.0 for group in prior_groups]
-    prior_n = [int(prior_map[group]["sample_n"]) if group in prior_map else 0 for group in prior_groups]
+    prior_recommend_pct = [safe_float(prior_map[group].get("recommend_yes_pct"), default=0.0) if group in prior_map else 0.0 for group in prior_groups]
+    prior_n = [safe_int(prior_map[group].get("sample_n"), default=0) if group in prior_map else 0 for group in prior_groups]
 
     yes_no_labels = ["Yes", "Not sure", "No"]
     attitude_rows = {str(row["question_label"]).strip().lower(): row for row in descriptive["attitudes"]}
@@ -195,8 +199,8 @@ def main() -> None:
         row = attitude_rows.get(question.lower())
         if not row:
             return [0.0, 0.0, 0.0], [0, 0, 0]
-        pct_vals = [float(row["yes_pct"]), float(row["not_sure_pct"]), float(row["no_pct"])]
-        count_vals = [int(row["yes_n"]), int(row["not_sure_n"]), int(row["no_n"])]
+        pct_vals = [safe_float(row.get("yes_pct")), safe_float(row.get("not_sure_pct")), safe_float(row.get("no_pct"))]
+        count_vals = [safe_int(row.get("yes_n")), safe_int(row.get("not_sure_n")), safe_int(row.get("no_n"))]
         return pct_vals, count_vals
 
     safety_pct, safety_counts = pick_attitude("Safety perception")
@@ -226,9 +230,9 @@ def main() -> None:
         if gender not in gender_groups:
             continue
         if all(key in row for key in ("yes_pct", "not_sure_pct", "no_pct")):
-            gender_recommend_pct[gender] = [float(row["yes_pct"]), float(row["not_sure_pct"]), float(row["no_pct"])]
+            gender_recommend_pct[gender] = [safe_float(row.get("yes_pct")), safe_float(row.get("not_sure_pct")), safe_float(row.get("no_pct"))]
         elif all(key in row for key in ("yes_n", "not_sure_n", "no_n")):
-            counts = [int(row["yes_n"]), int(row["not_sure_n"]), int(row["no_n"])]
+            counts = [safe_int(row.get("yes_n")), safe_int(row.get("not_sure_n")), safe_int(row.get("no_n"))]
             total = sum(counts)
             gender_recommend_pct[gender] = [(100.0 * count / total) if total else 0.0 for count in counts]
     for gender in gender_groups:
@@ -426,8 +430,8 @@ def main() -> None:
         keys = ["Gender_Binary", "Q11", "Q12", "Q13"]
         yes_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_yes}
         unsure_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_unsure}
-        yes_vals = [yes_map[k] for k in keys]
-        unsure_vals = [unsure_map[k] for k in keys]
+        yes_vals = [yes_map.get(k, np.nan) for k in keys]
+        unsure_vals = [unsure_map.get(k, np.nan) for k in keys]
         x = np.arange(len(keys))
         w = 0.38
         plt.bar(x - w / 2, yes_vals, width=w, color="#4E79A7", label="Q8=Yes")
@@ -1056,8 +1060,13 @@ def main() -> None:
         "31_gender_recommendation_breakdown",
     ]
     for stem in manuscript_figure_stems:
-        shutil.copy(CHART_OUTPUT_DIR / f"{stem}.png", MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
-        shutil.copy(CHART_OUTPUT_DIR / f"{stem}.md", MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
+        png_src = CHART_OUTPUT_DIR / f"{stem}.png"
+        md_src = CHART_OUTPUT_DIR / f"{stem}.md"
+        if png_src.exists() and md_src.exists():
+            shutil.copy(png_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
+            shutil.copy(md_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
+        else:
+            print(f"Warning: Could not copy {stem} to figures directory (not found).")
 
     print(f"Created {len(chart_outputs)} charts in: {CHART_OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
