@@ -154,9 +154,16 @@ Reference outcome in statsmodels is the lowest coded category; coefficients are 
 
 ## General Attitudes Distribution
 
-| Question | Yes % | Not sure % | No % |
-|---|---:|---:|---:|
-| Safety perception | 23.65% | 31.23% | 45.12% |
-| Acceptability | 30.80% | 17.70% | 51.49% |
-| Recommendation willingness | 57.65% | 11.62% | 30.72% |
-| Social concerns | 37.77% | 13.09% | 49.14% |
+| Question | Yes n | Yes % | Not sure n | Not sure % | No n | No % |
+|---|---:|---:|---:|---:|---:|---:|
+| Safety perception | 206 | 23.65% | 272 | 31.23% | 393 | 45.12% |
+| Acceptability | 268 | 30.80% | 154 | 17.70% | 448 | 51.49% |
+| Recommendation willingness | 501 | 57.65% | 101 | 11.62% | 267 | 30.72% |
+| Social concerns | 329 | 37.77% | 114 | 13.09% | 428 | 49.14% |
+
+## Recommendation by Gender
+
+| Gender | Yes n | Yes % | Not sure n | Not sure % | No n | No % | Sample n |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Male | 136 | 55.97% | 20 | 8.23% | 87 | 35.80% | 243 |
+| Female | 365 | 58.40% | 81 | 12.96% | 179 | 28.64% | 625 |
