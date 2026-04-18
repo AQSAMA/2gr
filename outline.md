@@ -8,6 +8,34 @@
 
 ---
 
+## 0. FRONT MATTER (DEFERRED FOR THIS PR)
+
+The following sections are recognized by the college project arrangement but are intentionally not drafted in this PR by design:
+1. Cover Page
+2. Certification of the Supervisor
+3. Dedication
+4. Acknowledgment
+5. Table of Contents
+6. List of Figures
+7. List of Tables
+
+---
+
+## Institutional Chapter Mapping (College Format)
+
+To align the current manuscript architecture with the college-required chapter format:
+
+1. **Chapter One** = current **I. INTRODUCTION** + **II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)**
+2. **Chapter Two** = current **III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)**
+3. **Chapter Three** = current **IV. RESULTS (PRIMARY SURVEY FINDINGS)**
+4. **Chapter Four** = current **V. DISCUSSION**
+5. **Chapter Five** = current **VI. RECOMMENDATIONS** + **VII. CONCLUSION**
+6. **References** = current **VIII. REFERENCES**
+
+This mapping is structural and does not change source-scoping or result-provenance rules in this outline.
+
+---
+
 ## Core Rule for This Outline
 
 This manuscript is an **original cross-sectional study** with a **supportive literature review**.  
