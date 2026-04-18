@@ -436,8 +436,8 @@ def main() -> None:
         keys = ["Gender_Binary", "Q11", "Q12", "Q13"]
         yes_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_yes}
         unsure_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_unsure}
-        yes_vals = [yes_map.get(k, np.nan) for k in keys]
-        unsure_vals = [unsure_map.get(k, np.nan) for k in keys]
+        yes_vals = [safe_float(yes_map.get(k), default=np.nan) for k in keys]
+        unsure_vals = [safe_float(unsure_map.get(k), default=np.nan) for k in keys]
         x = np.arange(len(keys))
         w = 0.38
         plt.bar(x - w / 2, yes_vals, width=w, color="#4E79A7", label="Q8=Yes")
@@ -1068,11 +1068,14 @@ def main() -> None:
     for stem in manuscript_figure_stems:
         png_src = CHART_OUTPUT_DIR / f"{stem}.png"
         md_src = CHART_OUTPUT_DIR / f"{stem}.md"
-        if png_src.exists() and md_src.exists():
+        if png_src.exists():
             shutil.copy(png_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
+        else:
+            print(f"Warning: Could not copy {png_src.name} to figures directory (not found).")
+        if md_src.exists():
             shutil.copy(md_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
         else:
-            print(f"Warning: Could not copy {stem} to figures directory (not found).")
+            print(f"Warning: Could not copy {md_src.name} to figures directory (not found).")
 
     print(f"Created {len(chart_outputs)} charts in: {CHART_OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
