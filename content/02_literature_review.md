@@ -1,6 +1,6 @@
-# II. LITERATURE REVIEW
+# SUPPORTIVE LITERATURE BACKGROUND
 
-	This section establishes the global and theoretical context for understanding psychiatric medication use and public acceptance in Iraq. It examines definitions of stigma, frameworks for understanding medication adherence, and general trends across the Middle East and North Africa (MENA) region. Specific Iraqi statistics and findings are presented separately in Section IV (Key Findings from Literature).
+	This section provides supportive conceptual and regional context for the original cross-sectional study. It summarizes frameworks and prior evidence used to interpret the study findings, while primary quantitative results are reported in the dedicated Results chapter from survey data.
 
 ## A. Mental Health Stigma: Global to Local Context
 
