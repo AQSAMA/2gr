@@ -46,6 +46,6 @@ When interpreted with mapped Iraqi and regional literature, the survey indicates
 
 ## C. Closing Evidence-Based Statement
 
-Psychiatric medication acceptance in Iraq can improve when health services address trust and fear directly, not indirectly. The present survey and mapped literature suggest a practical direction: align rational prescribing, clear counseling, and culturally grounded public education within integrated care pathways. This approach is realistic for Iraq and can narrow the gap between willingness to recommend treatment and confidence to accept it.
+Psychiatric medication acceptance in Iraq can improve when health services address trust and fear directly, not indirectly. The present survey and mapped literature suggest a practical direction: align rational prescribing, clear counseling, and culturally grounded public education within integrated care pathways. In this dataset, recommendation willingness (57.65%) was markedly higher than safety perception (23.65%), which shows where trust-building must focus. This approach is realistic for Iraq and can narrow the gap between willingness to recommend treatment and confidence to accept it.
 
 <div style="page-break-after: always;"></div>
