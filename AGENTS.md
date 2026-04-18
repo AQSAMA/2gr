@@ -40,6 +40,7 @@ Do not use: "Delve," "landscape," "tapestry," "realm," "game-changer," "paramoun
 ## B. Section-Level Evidence Scoping (MANDATORY)
 1. **Results section:** Use only `survey_data_results.md` for numeric findings and model outputs.
 2. **Methods section:** Describe the primary survey design, participant profile, variable coding, and statistical analysis workflow; do not describe database search strategies.
+   - Define Q31 explicitly in Methods as personal psychiatric medication use so later Results labels are unambiguous.
 3. **Introduction and Discussion:** Use section-relevant literature from `sources/` guided by `outline.md` source pools and `content/02_literature_review.md`, then link directly to survey findings.
 4. **Recommendations and Conclusion:** Anchor first in survey findings, then triangulate with supportive literature.
 5. **Results subsection standardization:** Keep lettering/order fixed as A-F (Sample Characteristics, Descriptive Outcomes, Primary Model Results, Multinomial Model Results, Sensitivity Analysis, Exploratory Results).

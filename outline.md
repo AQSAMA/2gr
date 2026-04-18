@@ -109,6 +109,7 @@ Appendices
 - Key questionnaire domains
 - Outcome definitions (binary and multinomial recommendation outcomes)
 - Predictor definitions (demographic and belief variables)
+- Explicit variable definition for Q31 as personal psychiatric medication use (coded as user/non-user groups)
 
 ### D. Data Management and Coding
 **Content:**
