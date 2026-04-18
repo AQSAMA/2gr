@@ -32,4 +32,4 @@ Analyses were run on cleaned survey data with complete-case estimation per model
 
 ## G. Ethics and Governance Note
 
-Ethics procedures for this project follow institutional requirements for consent and confidentiality, and the official approval identifier should be inserted from approved project records in the final thesis version.
+Ethics procedures for this project follow institutional requirements for consent and confidentiality [Ethics approval number: PENDING].

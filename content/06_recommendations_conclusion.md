@@ -12,4 +12,4 @@ For pharmacy practice, counseling should prioritize three messages: realistic sa
 
 ## C. Final Perspective
 
-The main contribution of this study is not only that acceptance levels were measured, but that actionable predictors were identified using multivariable analysis on Iraqi primary data. This provides a stronger empirical base for targeted interventions and supports a shift from broad stigma narratives to measurable, testable communication and care strategies.
+The main contribution of this study is not only measuring acceptance levels but also identifying actionable predictors using multivariable analysis on Iraqi primary data. This provides a stronger empirical base for targeted interventions and supports a shift from broad stigma narratives to measurable, testable communication and care strategies.
