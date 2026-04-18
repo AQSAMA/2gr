@@ -1,53 +1,39 @@
-# III. METHODOLOGY AND SEARCH STRATEGY
+# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
 
-## A. Review Design
+## A. Study Design and Setting
 
-	This study adopts a narrative literature review approach to examine psychiatric medication use and public acceptance in Iraq. A narrative review was selected because it allows the synthesis of diverse types of evidence—including empirical studies, systematic reviews, policy documents, and clinical reports—into a coherent account of the current state of knowledge on this topic. Unlike a systematic review with strict protocol-driven search procedures, a narrative review is well-suited to exploring broad, multifaceted questions where the available literature spans different methodologies, populations, and geographic contexts (Saied et al., 2023; Younis & Khunda, 2020).
+This study used an original cross-sectional survey design to measure public views on psychiatric medications in Iraq at one time point. The analytical dataset contained 877 responses, and all inferential analyses were conducted on this survey dataset as reported in `survey_data_results.md`.
 
-	The review draws upon a curated collection of 48 sources that were personally selected and gathered by the researcher. These sources were identified through academic databases, institutional reports, and reference list screening over the course of the research period. The goal was not to conduct an exhaustive, replicable database search, but rather to assemble a meaningful body of literature that reflects the key dimensions of psychiatric medication use and public attitudes in Iraq and the surrounding region.
+## B. Participants and Sampling
 
-## B. Source Selection Criteria
+Participants were members of the Iraqi public who completed the survey instrument. The achieved sample size was 877. The sample was analytically retained with item-level complete-case handling for each model, so the effective sample size varied by analysis depending on missing responses in model variables.
 
-	Sources included in this review were selected based on three primary criteria: relevance to the topic, temporal focus on the post-conflict period, and geographic priority given to Iraqi studies.
+## C. Survey Instrument
 
-### 1. Relevance
+The questionnaire included sociodemographic items and belief/attitude items related to psychiatric medication use. Demographic variables included age (Q1), gender (Q2), educational level (Q4), and marital status (Q5). Core outcome and perception items included recommendation willingness (Q8), social concern (Q9), belief items on prescribing and dependence (Q11 and Q12), confidence in newer medications (Q13), and prior personal use history (Q31). Response structures included binary and three-category public-attitude items (No/Yes/Not sure) and five-point Likert items.
 
-	All selected sources directly address one or more of the following topics: mental health stigma and public attitudes, psychiatric medication prescribing and use, medication adherence and its determinants, mental health system capacity and barriers to care, or the impact of conflict and displacement on psychological well-being. Sources that dealt exclusively with non-psychiatric medications or with populations that had no comparative value to the Iraqi context were not included.
+## D. Variables and Operational Definitions
 
-### 2. Temporal Focus
+The primary confirmatory outcome was recommendation willingness (Q8). For binary logistic modeling, Q8 was recoded as `Recommend_Binary` with Yes=1 and No=0, while Not sure responses were excluded from that binary model. For multinomial modeling, Q8 was preserved as a three-category outcome (No/Yes/Not sure). The demographic predictors were recoded into binary covariates: `Age_Binary` (18–25 vs older groups), `Gender_Binary` (female vs male coding), `Edu_Binary` (university/postgraduate vs lower education), and `Married_Binary` (ever-married categories vs single). `PriorUse_Binary` was derived from Q31 (Users vs Non-Users), and `Fear_Binary` was derived from Q9 (Yes vs No). Belief predictors Q11, Q12, and Q13 were modeled as ordinal Likert scores.
 
-	The review prioritizes literature published from 2003 onward, reflecting the post-conflict reality that has defined Iraq's mental health landscape. The year 2003 marks a turning point in Iraqi society—the US-led invasion and its aftermath fundamentally reshaped the country's healthcare infrastructure, displaced millions, and created new patterns of psychological trauma (Younis & Khunda, 2020). The majority of the reviewed sources (approximately 55%) were published from 2019 onward, reflecting growing scholarly attention to mental health in Iraq and the MENA region. A small number of earlier publications were included when they provided foundational theoretical frameworks or measurement tools relevant to the analysis.
+## E. Data Management and Statistical Analysis
 
-### 3. Geographic Scope
+The analysis started with descriptive summaries for demographics, core outcome distributions, and key belief distributions. Confirmatory modeling then followed a hierarchical block logistic regression pipeline for the binary outcome (Q8 Yes vs No), using complete-case data (n=647). Block 1 included demographic covariates only. Block 2 added prior medication use. Block 3 added belief and concern variables (Q11, Q12, Q13, and Fear_Binary). Incremental model fit was evaluated using McFadden pseudo R² and likelihood-ratio test p-values.
 
-	Iraqi studies formed the primary focus of this review, with 13 sources reporting original data collected within Iraq—from cities including Baghdad, Basra, Mosul, Karbala, and Sulaimani. These studies provide direct evidence on prescribing patterns, public perceptions, medication use among university students, adherence challenges, and the role of faith healers in the Iraqi context (Sadik et al., 2010; Kadhim et al., 2024; Nassr & Wadeea, 2026; Younis et al., 2020).
+A predefined sensitivity model added proximal belief items Q6 and Q7 to the primary binary framework and was reported separately (complete-case n=406) because these items are conceptually close to Q8 and may dominate explanatory variance.
 
-	An additional 13 sources address MENA and regional populations, including studies conducted in Kuwait, Qatar, Lebanon, Egypt, and Turkey, as well as research on Iraqi refugee populations in Australia. These regional studies provide valuable comparative data and help situate Iraqi findings within the broader cultural and healthcare context of the Arab world (Okasha et al., 2025; Zolezzi et al., 2018; Al-Awadhi et al., 2017).
+A second confirmatory model was a multinomial logistic regression that preserved hesitation in Q8 (No/Yes/Not sure), fit on complete-case data (n=837). Results were reported as relative risk ratios with 95% confidence intervals and p-values.
 
-	The remaining sources are international in scope, comprising systematic reviews, meta-analyses, and studies from other settings that offer theoretical frameworks, validated measurement tools, and evidence on topics such as medication adherence and stigma that can be applied to the Iraqi context (Angermeyer et al., 2017; Gast & Mathes, 2019; Mojtabai, 2009).
+Secondary hypothesis testing evaluated the contact hypothesis using Users vs Non-Users (Q31) on Q11–Q13. Group comparisons used Mann-Whitney U tests, Cliff’s delta effect sizes, and chi-square tests with Cramer’s V.
 
-## C. Inclusion and Exclusion Criteria
+Exploratory profiling used k-means clustering on standardized Q11–Q13 scores, testing k=2, k=3, and k=4 and selecting the profile solution by maximum silhouette score.
 
-### 1. Inclusion Criteria
+## F. Ethical Considerations
 
-	The following types of sources were included in this review: empirical studies (quantitative, qualitative, and mixed methods) that report original data on psychiatric medication use, mental health attitudes, or related topics in Iraq or the MENA region; systematic reviews and meta-analyses that synthesize evidence on stigma, medication adherence, or public attitudes toward psychiatric treatment; policy documents and reports from recognized organizations such as the World Health Organization and the Iraqi Ministry of Health; and clinical practice guidelines relevant to psychiatric prescribing in low- and middle-income settings. Sources available in English or Arabic were considered. Priority was given to peer-reviewed journal articles, though grey literature from credible institutional sources was also included when it provided data not available elsewhere.
+The analytical file contained de-identified coded survey responses, and no direct personal identifiers were included in the dataset used for analysis. Results are reported in aggregate form to protect participant privacy.
 
-### 2. Exclusion Criteria
+## G. Methodological Limitations
 
-	Studies published before 2003 were generally excluded, as the pre-conflict context in Iraq differs substantially from current conditions. Exceptions were made for a limited number of foundational studies that remain widely cited in the field. Conference abstracts without full-text access, studies focused solely on non-Iraqi populations without comparative relevance, and studies addressing exclusively non-psychiatric medication use were excluded from the review.
+Because this was a cross-sectional survey, the analyses identify associations rather than causal effects. The sample composition was not demographically balanced, with females representing 71.95% of respondents, participants aged 18–25 representing 74.57%, and university-educated participants representing 78.92%. Complete-case modeling reduced analyzable observations in inferential models (n=647 in the primary hierarchical models and n=406 in the Q6/Q7 sensitivity model), which may introduce selection effects. All outcomes and predictors were self-reported, so response bias and social desirability bias remain possible. The stigma-phenotype analysis was exploratory and should be interpreted as hypothesis-generating rather than confirmatory.
 
-## D. Data Extraction and Thematic Synthesis
-
-	The 48 reviewed sources were analyzed using a narrative synthesis approach rather than a statistical meta-analysis. Each source was read in full, and key data were extracted, including study design, population characteristics, geographic setting, main findings, and reported statistics. The extracted information was then organized into thematic categories that align with the objectives of this review.
-
-	Six major themes emerged from the categorization process. The first theme, medication adherence and pharmacotherapy, encompasses 12 sources examining factors that influence whether patients initiate and maintain psychiatric treatment. The second theme, stigma and mental health attitudes, draws on 11 sources that document public perceptions, cultural beliefs, and their effects on help-seeking behavior. The third theme, conflict impact and war-related mental health, covers eight sources addressing PTSD, trauma, and the psychological consequences of Iraq's successive conflicts. The fourth theme, healthcare system capacity and integration, includes six sources evaluating the structure, workforce, and accessibility of mental health services. The fifth theme, gender and women's mental health, comprises four sources examining the specific challenges faced by Iraqi women. The sixth theme, substance use and its intersection with mental health, draws on two sources documenting patterns of drug and alcohol use in Iraq.
-
-	Within each theme, findings were compared across studies and contexts to identify consistent patterns, contradictions, and gaps in the existing evidence. Iraqi-specific data were compared with regional and international findings to determine whether patterns observed in Iraq align with or differ from broader trends. This comparative approach allows the review to highlight where Iraq shares common challenges with other post-conflict or MENA settings and where its situation is distinct.
-
-## E. Limitations of the Review
-
-	Several limitations should be acknowledged. First, this review relies on a curated selection of sources rather than a protocol-driven systematic search, which means that some relevant studies may not have been captured. However, the selection process was guided by clear criteria and aimed to represent the breadth of available evidence on the topic.
-
-	Second, the review is limited to sources available in English and Arabic, which may exclude relevant studies published in other languages, particularly Kurdish-language research from the Kurdistan Region of Iraq. Third, the volume of empirical research conducted specifically within Iraq remains limited compared to other countries in the region. For some topics, the review relies on regional or international studies to fill gaps in Iraqi-specific evidence, and readers should exercise caution when generalizing these findings to the Iraqi context.
-
-	Fourth, Iraq's situation continues to change rapidly. Studies conducted during the peak of the ISIS conflict (2014–2017) may not fully reflect current conditions, while newer studies may not yet capture the long-term consequences of those events. Finally, grey literature and institutional reports, while valuable for providing policy-relevant data, may not have undergone the same peer review process as academic journal articles. Where possible, findings from grey literature were corroborated with data from peer-reviewed sources.
+<div style="page-break-after: always;"></div>
