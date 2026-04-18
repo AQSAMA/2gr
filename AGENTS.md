@@ -39,7 +39,7 @@ Do not use: "Delve," "landscape," "tapestry," "realm," "game-changer," "paramoun
 ## B. Section-Level Evidence Scoping (MANDATORY)
 1. **Results section:** Use only `survey_data_results.md` for numeric findings and model outputs.
 2. **Methods section:** Describe the primary survey design, participant profile, variable coding, and statistical analysis workflow; do not describe database search strategies.
-3. **Introduction and Discussion:** Use mapped literature from `sources/` plus direct linkage to survey findings.
+3. **Introduction and Discussion:** Use section-relevant literature from `sources/` guided by `outline.md` source pools and the supportive literature chapter, then link directly to survey findings.
 4. **Recommendations and Conclusion:** Anchor first in survey findings, then triangulate with supportive literature.
 
 ## C. Main vs Exploratory Reporting Rule

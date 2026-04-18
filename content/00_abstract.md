@@ -1,6 +1,6 @@
 # ABSTRACT
 
-**Background:** Iraq has a high mental health burden and major barriers to treatment acceptance, but Iraq-specific primary data on public acceptance of psychiatric medications remain limited.
+**Background:** Iraq has a high mental health burden and major barriers to treatment acceptance, but primary data specific to Iraq on public acceptance of psychiatric medications remain limited.
 
 **Methods:** This original cross-sectional study analyzed survey responses from 877 participants in Iraq. The main analyses used hierarchical block logistic regression for willingness to recommend psychiatric medications and multinomial logistic regression to preserve the "not sure" response. Main analyses were separated from exploratory analyses.
 

@@ -16,7 +16,7 @@ For core belief items, agreement levels were high for concerns and mixed for saf
 
 ## C. Primary Hierarchical Logistic Regression (Main/Clean)
 
-The hierarchical sequence showed limited explanatory value for demographics alone, moderate increase after adding prior use, and a clear improvement after adding belief and fear variables. McFadden pseudo R² increased from 0.0040 in Block 1 to 0.0116 in Block 2 and to 0.0686 in Block 3. The Block 3 likelihood-ratio test was statistically significant (p<0.0001).
+McFadden pseudo R² increased from 0.0040 in Block 1 to 0.0116 in Block 2 and to 0.0686 in Block 3. This corresponds to an increase of 0.0076 from Block 1 to Block 2 and an increase of 0.0570 from Block 2 to Block 3. The Block 3 likelihood-ratio test was statistically significant (p<0.0001).
 
 In the final primary block, significant predictors were gender, Q11 (overprescribing concern), Q13 (modern medication safety belief), and fear. Female gender was positively associated with recommendation willingness (AOR 1.516, 95% CI 1.043 to 2.205, p=0.0294). Higher Q11 agreement was negatively associated with recommendation (AOR 0.830, 95% CI 0.696 to 0.991, p=0.0396). Higher Q13 agreement was positively associated with recommendation (AOR 1.507, 95% CI 1.248 to 1.820, p<0.0001). Fear was negatively associated with recommendation (AOR 0.504, 95% CI 0.358 to 0.711, p<0.0001).
 

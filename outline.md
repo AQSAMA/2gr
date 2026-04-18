@@ -12,7 +12,7 @@
 
 I. Abstract  
 II. Introduction  
-III. Methods (Cross-Sectional Survey)  
+III. Methodology (Cross-Sectional Survey)  
 IV. Results (Primary + Exploratory, from survey dataset)  
 V. Discussion  
 VI. Conclusion  
