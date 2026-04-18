@@ -1,20 +1,23 @@
 from __future__ import annotations
 
+import json
 import math
-import re
+import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-INPUT_MD = BASE_DIR / "survey_data_results.md"
-OUTPUT_DIR = BASE_DIR / "output"
-SUMMARY_MD = OUTPUT_DIR / "chart_summary.md"
+OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output"
+INPUT_JSON = OUTPUT_DIR / "analysis_results.json"
+CHART_OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output" / "all_charts"
+MANUSCRIPT_FIGURES_DIR = BASE_DIR / "figures"
+SUMMARY_MD = CHART_OUTPUT_DIR / "chart_summary.md"
 # Floor value prevents log10(0) errors while preserving significance ranking for very small p-values.
 MIN_PVALUE = 1e-12
 # Ratio of chart height used to offset text labels above bars.
@@ -25,11 +28,20 @@ EXPECTED_CHART_COUNT = 31
 plt.style.use("seaborn-v0_8-whitegrid")
 
 
-@dataclass
-class MarkdownTable:
-    heading: str
-    headers: list[str]
-    rows: list[dict[str, str]]
+def safe_float(val: Any, default: float = np.nan) -> float:
+    """Convert nullable numeric values to float with a safe default.
+
+    If val is not None but not float-convertible, ValueError/TypeError may be raised.
+    """
+    return float(val) if val is not None else default
+
+
+def safe_int(val: Any, default: int = 0) -> int:
+    """Convert nullable numeric values to int with a safe default.
+
+    If val is not None but not int-convertible, ValueError/TypeError may be raised.
+    """
+    return int(val) if val is not None else default
 
 
 @dataclass
@@ -38,98 +50,6 @@ class ChartOutput:
     title: str
     caption: str
     analysis: str
-
-
-def _split_row(line: str) -> list[str]:
-    return [cell.strip() for cell in line.strip().strip("|").split("|")]
-
-
-def _is_separator(line: str) -> bool:
-    cells = _split_row(line)
-    if not cells:
-        return False
-    return all(re.fullmatch(r":?-{3,}:?", cell or "") for cell in cells)
-
-
-def parse_tables(markdown_text: str) -> list[MarkdownTable]:
-    lines = markdown_text.splitlines()
-    tables: list[MarkdownTable] = []
-    current_heading = ""
-    i = 0
-
-    while i < len(lines):
-        line = lines[i].strip()
-        if line.startswith("#"):
-            current_heading = line.lstrip("#").strip()
-
-        if i + 1 < len(lines) and "|" in lines[i] and _is_separator(lines[i + 1].strip()):
-            headers = _split_row(lines[i])
-            rows: list[dict[str, str]] = []
-            j = i + 2
-            while j < len(lines):
-                row_line = lines[j].rstrip()
-                if not row_line.strip().startswith("|"):
-                    break
-                cells = _split_row(row_line)
-                if len(cells) == len(headers):
-                    rows.append(dict(zip(headers, cells)))
-                j += 1
-            tables.append(MarkdownTable(heading=current_heading, headers=headers, rows=rows))
-            i = j
-            continue
-
-        i += 1
-
-    return tables
-
-
-def find_table(tables: list[MarkdownTable], heading_keyword: str, required_headers: list[str]) -> MarkdownTable:
-    for table in tables:
-        if heading_keyword.lower() not in table.heading.lower():
-            continue
-        if all(h in table.headers for h in required_headers):
-            return table
-    raise ValueError(
-        f"Could not find table for heading keyword '{heading_keyword}' with headers {required_headers}."
-    )
-
-
-def parse_number(value: str) -> float:
-    cleaned = value.replace("**", "").replace(",", "").strip()
-    cleaned = cleaned.replace("−", "-")
-    return float(cleaned)
-
-
-def parse_pvalue(value: str) -> float:
-    cleaned = value.strip()
-    if cleaned.startswith("<"):
-        return float(cleaned[1:])
-    return parse_number(cleaned)
-
-
-def parse_or_ci(value: str) -> tuple[float, float, float]:
-    match = re.search(r"([0-9.]+)\s*\(([-0-9.]+)\s*to\s*([-0-9.]+)\)", value)
-    if not match:
-        raise ValueError(
-            f"Unable to parse OR/CI value: '{value}'. Expected format: 'number (number to number)'."
-        )
-    return float(match.group(1)), float(match.group(2)), float(match.group(3))
-
-
-def parse_total_n(markdown_text: str) -> int:
-    match = re.search(r"N=(\d+)", markdown_text)
-    if not match:
-        raise ValueError("Unable to parse total sample size from survey_data_results.md")
-    return int(match.group(1))
-
-
-def parse_percent(value: str) -> float:
-    cleaned = value.replace("%", "").strip()
-    return parse_number(cleaned)
-
-
-def parse_int(value: str) -> int:
-    return int(parse_number(value))
 
 
 def save_chart(path: Path, draw_fn: Callable[[], None]) -> None:
@@ -178,120 +98,56 @@ def draw_waffle(ax: plt.Axes, percent_value: float, title: str, positive_label: 
 
 
 def main() -> None:
-    if not INPUT_MD.exists():
-        raise FileNotFoundError(f"Input markdown not found: {INPUT_MD}")
+    if not INPUT_JSON.exists():
+        raise FileNotFoundError(f"Input JSON not found: {INPUT_JSON}")
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    CHART_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    MANUSCRIPT_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-    text = INPUT_MD.read_text(encoding="utf-8")
-    tables = parse_tables(text)
-    n_total = parse_total_n(text)
-
-    block_table = find_table(
-        tables,
-        "Hierarchical Block Logistic Regression",
-        ["Model block", "McFadden pseudo R²", "LLR p-value"],
-    )
-    primary_or_table = find_table(
-        tables,
-        "Final Primary Block",
-        ["Predictor", "Adjusted OR (95% CI)", "p-value"],
-    )
-    multinomial_table = find_table(
-        tables,
-        "Multinomial Logistic Regression",
-        ["Outcome equation", "Predictor", "Relative risk ratio (95% CI)", "p-value"],
-    )
-    contact_table = find_table(
-        tables,
-        "Contact Hypothesis",
-        ["Item", "User median", "Non-user median", "Mann-Whitney U p-value", "Cliff's delta", "Chi-square p-value", "Cramer's V"],
-    )
-    silhouette_table = find_table(
-        tables,
-        "Exploratory Stigma Phenotypes",
-        ["k", "Silhouette score"],
-    )
-    profile_table = find_table(
-        tables,
-        "Exploratory Stigma Phenotypes",
-        ["Profile", "Size n", "Q11 mean", "Q12 mean", "Q13 mean"],
-    )
-    demographics_table = find_table(
-        tables,
-        "Demographics Summary",
-        ["Variable", "Category", "Count", "Percentage"],
-    )
-    likert_dist_table = find_table(
-        tables,
-        "Core Beliefs Likert Distribution",
-        ["Question", "Disagree %", "Neutral %", "Agree %"],
-    )
-    corr_table = find_table(
-        tables,
-        "Correlation Matrix: Primary Beliefs",
-        ["Variable", "Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"],
-    )
-    prior_use_table = find_table(
-        tables,
-        "Acceptance by Prior Use",
-        ["Prior Use", "Recommend Yes %", "Sample n"],
-    )
-    try:
-        general_attitudes_table = find_table(
-            tables,
-            "General Attitudes Distribution",
-            ["Question", "Yes n", "Not sure n", "No n", "Yes %", "Not sure %", "No %"],
-        )
-    except ValueError:
-        general_attitudes_table = find_table(
-            tables,
-            "General Attitudes Distribution",
-            ["Question", "Yes %", "Not sure %", "No %"],
-        )
-    recommendation_by_gender_table: MarkdownTable | None = None
-    for headers in (["Gender", "Yes %", "Not sure %", "No %"], ["Gender", "Yes n", "Not sure n", "No n"]):
-        try:
-            recommendation_by_gender_table = find_table(tables, "Recommendation by Gender", headers)
-            break
-        except ValueError:
-            continue
+    data = json.loads(INPUT_JSON.read_text(encoding="utf-8"))
+    n_total = safe_int(data["meta"]["n_total"])
+    inferential = data["inferential"]
+    descriptive = data["descriptive"]
 
     chart_outputs: list[ChartOutput] = []
 
     # Shared parsed structures
-    block_names = [row["Model block"].split("(")[0].strip() for row in block_table.rows]
-    block_r2 = [parse_number(row["McFadden pseudo R²"]) for row in block_table.rows]
-    block_p = [parse_pvalue(row["LLR p-value"]) for row in block_table.rows]
+    block_rows = inferential["hierarchical"]["blocks"]
+    block_names = [str(row["block"]).split("(")[0].strip() for row in block_rows]
+    block_r2 = [safe_float(row.get("mcfadden_pseudo_r2")) for row in block_rows]
+    block_p = [safe_float(row.get("llr_pvalue")) for row in block_rows]
 
-    primary_rows = [row for row in primary_or_table.rows if row["Predictor"].lower() != "intercept"]
-    predictors = [row["Predictor"] for row in primary_rows]
-    primary_or_vals = [parse_or_ci(row["Adjusted OR (95% CI)"]) for row in primary_rows]
-    primary_pvals = [parse_pvalue(row["p-value"]) for row in primary_rows]
+    primary_rows = [row for row in inferential["primary_or"] if str(row["predictor"]).lower() != "intercept"]
+    predictors = [str(row["predictor"]) for row in primary_rows]
+    primary_or_vals = [(safe_float(row.get("adjusted_or")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in primary_rows]
+    primary_pvals = [safe_float(row.get("p_value")) for row in primary_rows]
 
-    mn_yes = [row for row in multinomial_table.rows if row["Outcome equation"].startswith("Q8=1") and row["Predictor"] != "const"]
-    mn_unsure = [row for row in multinomial_table.rows if row["Outcome equation"].startswith("Q8=2") and row["Predictor"] != "const"]
+    multinomial_rows = inferential["multinomial"]["rows"]
+    mn_yes = [row for row in multinomial_rows if safe_int(row.get("outcome")) == 1 and str(row["predictor"]) != "const"]
+    mn_unsure = [row for row in multinomial_rows if safe_int(row.get("outcome")) == 2 and str(row["predictor"]) != "const"]
 
-    contact_items = [row["Item"].split("(")[0].strip() for row in contact_table.rows]
-    user_median = [parse_number(row["User median"]) for row in contact_table.rows]
-    non_median = [parse_number(row["Non-user median"]) for row in contact_table.rows]
-    cliff_delta = [parse_number(row["Cliff's delta"]) for row in contact_table.rows]
-    cramer_v = [parse_number(row["Cramer's V"]) for row in contact_table.rows]
-    mw_p = [parse_pvalue(row["Mann-Whitney U p-value"]) for row in contact_table.rows]
-    chi_p = [parse_pvalue(row["Chi-square p-value"]) for row in contact_table.rows]
+    contact_rows = inferential["contact_hypothesis"]["items"]
+    contact_items = [str(row["item"]).split("(")[0].strip() for row in contact_rows]
+    user_median = [safe_float(row.get("user_median")) for row in contact_rows]
+    non_median = [safe_float(row.get("non_user_median")) for row in contact_rows]
+    cliff_delta = [safe_float(row.get("cliffs_delta")) for row in contact_rows]
+    cramer_v = [safe_float(row.get("cramers_v")) for row in contact_rows]
+    mw_p = [safe_float(row.get("mann_whitney_u_pvalue")) for row in contact_rows]
+    chi_p = [safe_float(row.get("chi_square_pvalue")) for row in contact_rows]
 
-    k_values = [int(parse_number(row["k"])) for row in silhouette_table.rows]
-    silhouette_scores = [parse_number(row["Silhouette score"]) for row in silhouette_table.rows]
+    k_values = [safe_int(row.get("k")) for row in inferential["kmeans"]["scores"]]
+    silhouette_scores = [safe_float(row.get("silhouette_score")) for row in inferential["kmeans"]["scores"]]
 
-    profiles = [int(parse_number(row["Profile"])) for row in profile_table.rows]
-    profile_sizes = [int(parse_number(row["Size n"])) for row in profile_table.rows]
-    profile_q11 = [parse_number(row["Q11 mean"]) for row in profile_table.rows]
-    profile_q12 = [parse_number(row["Q12 mean"]) for row in profile_table.rows]
-    profile_q13 = [parse_number(row["Q13 mean"]) for row in profile_table.rows]
+    profile_rows = inferential["kmeans"]["profiles"]
+    profiles = [safe_int(row.get("profile")) for row in profile_rows]
+    profile_sizes = [safe_int(row.get("size_n")) for row in profile_rows]
+    profile_q11 = [safe_float(row.get("Q11_mean")) for row in profile_rows]
+    profile_q12 = [safe_float(row.get("Q12_mean")) for row in profile_rows]
+    profile_q13 = [safe_float(row.get("Q13_mean")) for row in profile_rows]
 
     def pick_demo(variable: str, ordered_categories: list[tuple[str, list[str]]]) -> tuple[list[str], list[int], list[float]]:
-        rows = [row for row in demographics_table.rows if row["Variable"].strip().lower() == variable.strip().lower()]
-        by_category = {row["Category"].strip().lower(): row for row in rows}
+        rows = [row for row in descriptive["demographics"] if str(row["variable"]).strip().lower() == variable.strip().lower()]
+        by_category = {str(row["category_label"]).strip().lower(): row for row in rows}
         labels: list[str] = []
         counts: list[int] = []
         pct: list[float] = []
@@ -304,8 +160,8 @@ def main() -> None:
             if not matched_row:
                 continue
             labels.append(label)
-            counts.append(parse_int(matched_row["Count"]))
-            pct.append(parse_percent(matched_row["Percentage"]))
+            counts.append(safe_int(matched_row.get("count")))
+            pct.append(safe_float(matched_row.get("percentage")))
         return labels, counts, pct
 
     age_labels, age_counts, age_pct = pick_demo(
@@ -328,7 +184,7 @@ def main() -> None:
     likert_questions = ["Q11", "Q12", "Q13"]
     likert_short_labels = ["Q11", "Q12", "Q13"]
     likert_groups: dict[str, list[float]] = {"Disagree": [], "Neutral": [], "Agree": []}
-    likert_map = {row["Question"].strip().upper(): row for row in likert_dist_table.rows}
+    likert_map = {str(row["question_id"]).strip().upper(): row for row in descriptive["likert"]}
     for question in likert_questions:
         row = likert_map.get(question)
         if not row:
@@ -336,34 +192,27 @@ def main() -> None:
             likert_groups["Neutral"].append(0.0)
             likert_groups["Agree"].append(0.0)
             continue
-        likert_groups["Disagree"].append(parse_percent(row["Disagree %"]))
-        likert_groups["Neutral"].append(parse_percent(row["Neutral %"]))
-        likert_groups["Agree"].append(parse_percent(row["Agree %"]))
+        likert_groups["Disagree"].append(safe_float(row.get("disagree_pct")))
+        likert_groups["Neutral"].append(safe_float(row.get("neutral_pct")))
+        likert_groups["Agree"].append(safe_float(row.get("agree_pct")))
 
-    corr_labels = ["Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"]
-    corr_row_map = {row["Variable"].strip(): row for row in corr_table.rows}
-    corr_matrix = np.array(
-        [[parse_number(corr_row_map[label][column]) for column in corr_labels] for label in corr_labels],
-        dtype=float,
-    )
+    corr_labels = [str(var) for var in descriptive["correlations"]["variables"]]
+    corr_matrix = np.array(descriptive["correlations"]["matrix"], dtype=float)
 
     prior_groups = ["Yes", "No"]
-    prior_map = {row["Prior Use"].strip(): row for row in prior_use_table.rows}
-    prior_recommend_pct = [parse_percent(prior_map[group]["Recommend Yes %"]) if group in prior_map else 0.0 for group in prior_groups]
-    prior_n = [parse_int(prior_map[group]["Sample n"]) if group in prior_map else 0 for group in prior_groups]
+    prior_map = {str(row["prior_use_label"]).strip(): row for row in descriptive["acceptance_by_prior_use"]}
+    prior_recommend_pct = [safe_float(prior_map[group].get("recommend_yes_pct"), default=0.0) if group in prior_map else 0.0 for group in prior_groups]
+    prior_n = [safe_int(prior_map[group].get("sample_n"), default=0) if group in prior_map else 0 for group in prior_groups]
 
     yes_no_labels = ["Yes", "Not sure", "No"]
-    attitude_rows = {row["Question"].strip().lower(): row for row in general_attitudes_table.rows}
+    attitude_rows = {str(row["question_label"]).strip().lower(): row for row in descriptive["attitudes"]}
 
     def pick_attitude(question: str) -> tuple[list[float], list[int]]:
         row = attitude_rows.get(question.lower())
         if not row:
             return [0.0, 0.0, 0.0], [0, 0, 0]
-        pct_vals = [parse_percent(row[f"{label} %"]) for label in yes_no_labels]
-        if all(f"{label} n" in row for label in yes_no_labels):
-            count_vals = [parse_int(row[f"{label} n"]) for label in yes_no_labels]
-        else:
-            count_vals = [int(round((pct / 100.0) * n_total)) for pct in pct_vals]
+        pct_vals = [safe_float(row.get("yes_pct")), safe_float(row.get("not_sure_pct")), safe_float(row.get("no_pct"))]
+        count_vals = [safe_int(row.get("yes_n")), safe_int(row.get("not_sure_n")), safe_int(row.get("no_n"))]
         return pct_vals, count_vals
 
     safety_pct, safety_counts = pick_attitude("Safety perception")
@@ -388,17 +237,16 @@ def main() -> None:
     gender_groups = [group for group in ["Female", "Male"] if group in set(gender_labels)]
     gender_recommend_categories = ["Yes", "Not sure", "No"]
     gender_recommend_pct: dict[str, list[float]] = {}
-    if recommendation_by_gender_table:
-        for row in recommendation_by_gender_table.rows:
-            gender = row.get("Gender", "").strip()
-            if gender not in gender_groups:
-                continue
-            if all(f"{category} %" in row for category in gender_recommend_categories):
-                gender_recommend_pct[gender] = [parse_percent(row[f"{category} %"]) for category in gender_recommend_categories]
-            elif all(f"{category} n" in row for category in gender_recommend_categories):
-                counts = [parse_int(row[f"{category} n"]) for category in gender_recommend_categories]
-                total = sum(counts)
-                gender_recommend_pct[gender] = [(100.0 * count / total) if total else 0.0 for count in counts]
+    for row in descriptive.get("gender_crosstabs", []):
+        gender = str(row.get("gender_label", "")).strip()
+        if gender not in gender_groups:
+            continue
+        if all(key in row for key in ("yes_pct", "not_sure_pct", "no_pct")):
+            gender_recommend_pct[gender] = [safe_float(row.get("yes_pct")), safe_float(row.get("not_sure_pct")), safe_float(row.get("no_pct"))]
+        elif all(key in row for key in ("yes_n", "not_sure_n", "no_n")):
+            counts = [safe_int(row.get("yes_n")), safe_int(row.get("not_sure_n")), safe_int(row.get("no_n"))]
+            total = sum(counts)
+            gender_recommend_pct[gender] = [(100.0 * count / total) if total else 0.0 for count in counts]
     for gender in gender_groups:
         if gender not in gender_recommend_pct:
             gender_recommend_pct[gender] = [recommend_pct[0], recommend_pct[1], recommend_pct[2]]
@@ -416,7 +264,7 @@ def main() -> None:
         for bar, val in zip(bars, block_r2):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + label_offset, f"{val:.3f}", ha="center", va="bottom", fontsize=9)
 
-    save_chart(OUTPUT_DIR / filename, draw_01)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_01)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -449,7 +297,7 @@ def main() -> None:
                 fontsize=8,
             )
 
-    save_chart(OUTPUT_DIR / filename, draw_02)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_02)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -476,7 +324,7 @@ def main() -> None:
         plt.xlabel("Adjusted OR (log scale)")
         plt.title("Primary Model Predictors: Adjusted Odds Ratios")
 
-    save_chart(OUTPUT_DIR / filename, draw_03)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_03)
     n_sig_primary = sum(1 for p in primary_pvals if p < 0.05)
     chart_outputs.append(
         ChartOutput(
@@ -502,7 +350,7 @@ def main() -> None:
             align = "left" if val >= 0 else "right"
             plt.text(xpos, bar.get_y() + bar.get_height() / 2, f"{val:.2f}", va="center", ha=align, fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_04)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_04)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -523,7 +371,7 @@ def main() -> None:
         plt.xlabel("-log10(p-value)")
         plt.title("Primary Predictors Ranked by Statistical Strength")
 
-    save_chart(OUTPUT_DIR / filename, draw_05)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_05)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -537,8 +385,8 @@ def main() -> None:
     filename = "06_multinomial_q8yes_rrr_forest.png"
 
     def draw_06() -> None:
-        labels = [row["Predictor"] for row in mn_yes]
-        vals = [parse_or_ci(row["Relative risk ratio (95% CI)"]) for row in mn_yes]
+        labels = [str(row["predictor"]) for row in mn_yes]
+        vals = [(safe_float(row.get("rrr")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in mn_yes]
         rrr = np.array([x[0] for x in vals])
         low = np.array([x[1] for x in vals])
         high = np.array([x[2] for x in vals])
@@ -550,7 +398,7 @@ def main() -> None:
         plt.xlabel("Relative risk ratio (log scale)")
         plt.title("Multinomial Model: Q8=Yes vs Reference")
 
-    save_chart(OUTPUT_DIR / filename, draw_06)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_06)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -564,8 +412,8 @@ def main() -> None:
     filename = "07_multinomial_q8unsure_rrr_forest.png"
 
     def draw_07() -> None:
-        labels = [row["Predictor"] for row in mn_unsure]
-        vals = [parse_or_ci(row["Relative risk ratio (95% CI)"]) for row in mn_unsure]
+        labels = [str(row["predictor"]) for row in mn_unsure]
+        vals = [(safe_float(row.get("rrr")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in mn_unsure]
         rrr = np.array([x[0] for x in vals])
         low = np.array([x[1] for x in vals])
         high = np.array([x[2] for x in vals])
@@ -577,7 +425,7 @@ def main() -> None:
         plt.xlabel("Relative risk ratio (log scale)")
         plt.title("Multinomial Model: Q8=Not Sure vs Reference")
 
-    save_chart(OUTPUT_DIR / filename, draw_07)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_07)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -592,10 +440,10 @@ def main() -> None:
 
     def draw_08() -> None:
         keys = ["Gender_Binary", "Q11", "Q12", "Q13"]
-        yes_map = {row["Predictor"]: parse_or_ci(row["Relative risk ratio (95% CI)"])[0] for row in mn_yes}
-        unsure_map = {row["Predictor"]: parse_or_ci(row["Relative risk ratio (95% CI)"])[0] for row in mn_unsure}
-        yes_vals = [yes_map[k] for k in keys]
-        unsure_vals = [unsure_map[k] for k in keys]
+        yes_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_yes}
+        unsure_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_unsure}
+        yes_vals = [yes_map.get(k, np.nan) for k in keys]
+        unsure_vals = [unsure_map.get(k, np.nan) for k in keys]
         x = np.arange(len(keys))
         w = 0.38
         plt.bar(x - w / 2, yes_vals, width=w, color="#4E79A7", label="Q8=Yes")
@@ -606,7 +454,7 @@ def main() -> None:
         plt.title("Multinomial Key Predictors Across Response Profiles")
         plt.legend(frameon=False)
 
-    save_chart(OUTPUT_DIR / filename, draw_08)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_08)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -620,9 +468,9 @@ def main() -> None:
     filename = "09_multinomial_pvalue_heatmap.png"
 
     def draw_09() -> None:
-        labels = [row["Predictor"] for row in mn_yes]
-        yes_p = [parse_pvalue(row["p-value"]) for row in mn_yes]
-        unsure_p = [parse_pvalue(row["p-value"]) for row in mn_unsure]
+        labels = [str(row["predictor"]) for row in mn_yes]
+        yes_p = [safe_float(row.get("p_value")) for row in mn_yes]
+        unsure_p = [safe_float(row.get("p_value")) for row in mn_unsure]
         mat = np.array([[-math.log10(max(v, MIN_PVALUE)) for v in yes_p], [-math.log10(max(v, MIN_PVALUE)) for v in unsure_p]])
         im = plt.imshow(mat, cmap="Blues", aspect="auto")
         plt.yticks([0, 1], ["Q8=Yes", "Q8=Not sure"])
@@ -631,7 +479,7 @@ def main() -> None:
         cbar = plt.colorbar(im)
         cbar.set_label("-log10(p-value)")
 
-    save_chart(OUTPUT_DIR / filename, draw_09)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_09)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -655,7 +503,7 @@ def main() -> None:
         plt.title("Contact Hypothesis: Median Belief Scores")
         plt.legend(frameon=False)
 
-    save_chart(OUTPUT_DIR / filename, draw_10)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_10)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -679,7 +527,7 @@ def main() -> None:
         plt.title("Effect Size Profile for Contact Hypothesis")
         plt.legend(frameon=False)
 
-    save_chart(OUTPUT_DIR / filename, draw_11)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_11)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -705,7 +553,7 @@ def main() -> None:
         plt.title("Contact Hypothesis Test Strength")
         plt.legend(frameon=False)
 
-    save_chart(OUTPUT_DIR / filename, draw_12)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_12)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -727,7 +575,7 @@ def main() -> None:
         plt.ylabel("Silhouette score")
         plt.title("K-Means Cluster Quality Across k Values")
 
-    save_chart(OUTPUT_DIR / filename, draw_13)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_13)
     best_k = k_values[int(np.argmax(silhouette_scores))]
     chart_outputs.append(
         ChartOutput(
@@ -750,7 +598,7 @@ def main() -> None:
         cbar = plt.colorbar(im)
         cbar.set_label("Mean score")
 
-    save_chart(OUTPUT_DIR / filename, draw_14)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_14)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -769,7 +617,7 @@ def main() -> None:
         plt.pie(profile_sizes, labels=labels, autopct="%1.1f%%", startangle=90, colors=colors[: len(labels)], wedgeprops={"linewidth": 1, "edgecolor": "white"})
         plt.title("Distribution of Respondents Across Stigma Profiles")
 
-    save_chart(OUTPUT_DIR / filename, draw_15)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_15)
     largest_profile = profiles[int(np.argmax(profile_sizes))]
     chart_outputs.append(
         ChartOutput(
@@ -792,7 +640,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.8, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_16)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_16)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -814,7 +662,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_17)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_17)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -836,7 +684,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_18)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_18)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -864,7 +712,7 @@ def main() -> None:
         plt.xlim(-100, 100)
         plt.legend(frameon=False, loc="lower right")
 
-    save_chart(OUTPUT_DIR / filename, draw_19)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_19)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -893,7 +741,7 @@ def main() -> None:
                     label = f"{value:.2f}"
                 plt.text(j, i, label, ha="center", va="center", fontsize=7, color="#111111")
 
-    save_chart(OUTPUT_DIR / filename, draw_20)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_20)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -914,7 +762,7 @@ def main() -> None:
         for bar, pct, count in zip(bars, prior_recommend_pct, prior_n):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1.2, f"{pct:.1f}% (n={count})", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_21)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_21)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -936,7 +784,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_22)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_22)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -958,7 +806,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_23)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_23)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -980,7 +828,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_24)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_24)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1002,7 +850,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_25)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_25)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1024,7 +872,7 @@ def main() -> None:
         for bar, val in zip(bars, pct):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.6, f"{val:.1f}%", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_26)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_26)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1062,7 +910,7 @@ def main() -> None:
         )
         plt.suptitle("Main Public Opinion Questions (Donut View)", fontsize=14)
 
-    save_chart(OUTPUT_DIR / filename, draw_27)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_27)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1084,7 +932,7 @@ def main() -> None:
             negative_label="Not Yes",
         )
 
-    save_chart(OUTPUT_DIR / filename, draw_28)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_28)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1107,7 +955,7 @@ def main() -> None:
         for bar, val in zip(bars, values):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1, f"{val:.1f}%", ha="center", va="bottom", fontsize=9)
 
-    save_chart(OUTPUT_DIR / filename, draw_29)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_29)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1128,7 +976,7 @@ def main() -> None:
         for bar, pct, count in zip(bars, prior_recommend_pct, prior_n):
             plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1, f"{pct:.1f}% (n={count})", ha="center", va="bottom", fontsize=8)
 
-    save_chart(OUTPUT_DIR / filename, draw_30)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_30)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1160,7 +1008,7 @@ def main() -> None:
                 val = bar.get_height()
                 plt.text(bar.get_x() + bar.get_width() / 2, val + 0.8, f"{val:.1f}%", ha="center", va="bottom", fontsize=7)
 
-    save_chart(OUTPUT_DIR / filename, draw_31)
+    save_chart(CHART_OUTPUT_DIR / filename, draw_31)
     chart_outputs.append(
         ChartOutput(
             filename=filename,
@@ -1184,12 +1032,12 @@ def main() -> None:
     summary_lines: list[str] = []
     summary_lines.append("# Survey Visualization Summary")
     summary_lines.append("")
-    summary_lines.append("This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `survey_data_results.md`.")
+    summary_lines.append("This is an auto-generated chart summary created by `analysis_pipeline/visualize.py` from `analysis_pipeline/output/analysis_results.json`.")
     summary_lines.append(f"Generated at: {datetime.now(timezone.utc).isoformat()}")
     summary_lines.append("")
 
     for idx, chart in enumerate(chart_outputs, start=1):
-        description_path = OUTPUT_DIR / f"{Path(chart.filename).stem}.md"
+        description_path = CHART_OUTPUT_DIR / f"{Path(chart.filename).stem}.md"
         description_lines = [
             f"# {chart.title}",
             "",
@@ -1215,8 +1063,29 @@ def main() -> None:
 
     SUMMARY_MD.write_text("\n".join(summary_lines).strip() + "\n", encoding="utf-8")
 
-    print(f"Created {len(chart_outputs)} charts in: {OUTPUT_DIR}")
+    manuscript_figure_stems = [
+        "03_primary_adjusted_or_forest",
+        "08_multinomial_key_predictor_comparison",
+        "14_profile_means_heatmap",
+        "19_likert_diverging_q11_q13",
+        "27_donut_main_questions",
+        "31_gender_recommendation_breakdown",
+    ]
+    for stem in manuscript_figure_stems:
+        png_src = CHART_OUTPUT_DIR / f"{stem}.png"
+        md_src = CHART_OUTPUT_DIR / f"{stem}.md"
+        if png_src.exists():
+            shutil.copy(png_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
+        else:
+            print(f"Warning: Could not copy manuscript figure PNG from {png_src} (not found).")
+        if md_src.exists():
+            shutil.copy(md_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
+        else:
+            print(f"Warning: Could not copy manuscript figure markdown from {md_src} (not found).")
+
+    print(f"Created {len(chart_outputs)} charts in: {CHART_OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
+    print(f"Isolated {len(manuscript_figure_stems)} manuscript figures (.png + .md) in: {MANUSCRIPT_FIGURES_DIR}")
 
 
 if __name__ == "__main__":
