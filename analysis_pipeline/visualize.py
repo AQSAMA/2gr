@@ -29,12 +29,18 @@ plt.style.use("seaborn-v0_8-whitegrid")
 
 
 def safe_float(val: Any, default: float = np.nan) -> float:
-    """Convert nullable numeric values to float with a safe default."""
+    """Convert nullable numeric values to float with a safe default.
+
+    If val is not None but not float-convertible, ValueError/TypeError may be raised.
+    """
     return float(val) if val is not None else default
 
 
 def safe_int(val: Any, default: int = 0) -> int:
-    """Convert nullable numeric values to int with a safe default."""
+    """Convert nullable numeric values to int with a safe default.
+
+    If val is not None but not int-convertible, ValueError/TypeError may be raised.
+    """
     return int(val) if val is not None else default
 
 
@@ -436,8 +442,8 @@ def main() -> None:
         keys = ["Gender_Binary", "Q11", "Q12", "Q13"]
         yes_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_yes}
         unsure_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_unsure}
-        yes_vals = [safe_float(yes_map.get(k), default=np.nan) for k in keys]
-        unsure_vals = [safe_float(unsure_map.get(k), default=np.nan) for k in keys]
+        yes_vals = [yes_map.get(k, np.nan) for k in keys]
+        unsure_vals = [unsure_map.get(k, np.nan) for k in keys]
         x = np.arange(len(keys))
         w = 0.38
         plt.bar(x - w / 2, yes_vals, width=w, color="#4E79A7", label="Q8=Yes")
