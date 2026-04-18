@@ -2,7 +2,7 @@
 
 ## A. Background and Context
 
-Iraq’s mental health burden has grown under repeated conflict, displacement, and long-term service disruption. Recent Iraqi-focused evidence describes a sustained rise in trauma-related distress, depression, and anxiety in a population that has faced war, instability, and major social stress over many years (Saied et al., 2023; Younis & Khunda, 2020). Earlier national evidence also showed a high burden of common mental disorders and low treatment uptake, which indicates that need has remained larger than access for more than a decade (Sadik et al., 2010).
+Iraq’s mental health burden has grown over recent decades under repeated conflict, displacement, and long-term service disruption. Recent Iraqi-focused evidence describes a sustained rise in trauma-related distress, depression, and anxiety in a population that has faced war, instability, and major social stress over many years (Saied et al., 2023; Younis & Khunda, 2020). Earlier national evidence also showed a high burden of common mental disorders and low treatment uptake, which indicates that need has remained larger than access for more than a decade (Sadik et al., 2010).
 
 At the same time, service capacity has remained limited. Iraqi mental health care developed under repeated interruption, workforce loss, and uneven infrastructure recovery, leaving specialist services concentrated in few sites and difficult to reach for many families (Saied et al., 2023; Younis & Khunda, 2020). This pattern aligns with broader conflict-era evidence showing that high psychological need can persist while systems struggle to deliver timely and adequate care (Burnam et al., 2009).
 

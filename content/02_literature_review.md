@@ -1,10 +1,10 @@
 # II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
 
-This chapter synthesizes supportive literature for the present Iraqi cross-sectional study. It focuses on four mapped domains: stigma and public attitudes, medication beliefs and acceptance, adherence determinants, and Iraqi or regional service realities. The chapter provides interpretive context for the study design and discussion, while primary study results are reported separately in later chapters.
+This chapter synthesizes supportive literature for the present Iraqi cross-sectional study. It focuses on four domains defined in the study framework: stigma and public attitudes, medication beliefs and acceptance, adherence determinants, and Iraqi or regional service realities. The chapter provides interpretive context for the study design and discussion, while primary study results are reported separately in later chapters.
 
 ## A. Stigma and Public Attitudes
 
-Evidence from Arab and international literature shows that stigma remains a major barrier to treatment use. Conceptual and empirical work describes stigma as a social process that extends from stereotypes to exclusion and delayed care, with effects at public, institutional, and self-directed levels (Zolezzi et al., 2018; Booth et al., 2024). In conservative social settings, stigma is often tied to family reputation and social honor, so treatment decisions are shaped by community judgment as much as by symptom burden (Booth et al., 2024).
+Evidence from Arab and international literature shows that stigma remains a major barrier to treatment use. Conceptual and empirical work describes stigma as a social process that extends from stereotypes to exclusion and delayed care, with effects at public, institutional, and self-directed levels (Zolezzi et al., 2018; Booth et al., 2024). In many conservative settings across the Arab region, stigma is often tied to family reputation and social honor, so treatment decisions are shaped by community judgment as much as by symptom burden (Booth et al., 2024).
 
 Comparative evidence adds an important contrast. Population surveys show that professional psychiatric help can be viewed positively in principle, yet this does not remove social distance or fear-based attitudes toward people with mental illness (Angermeyer et al., 2017). Arab-focused synthesis similarly shows variation across countries and groups, with persistent beliefs linking mental illness to moral or supernatural explanations in some communities, which can weaken early engagement with biomedical care (Zolezzi et al., 2018).
 
