@@ -154,7 +154,7 @@ Maintain approximately 50 references when appropriate for scope, relevance, and 
 
 ## D. Word-Stage Formatting Controls
 Section 4 defines the formatting targets; this subsection clarifies they are finalized during Word export/final formatting.
-1. Roman numerals for preliminary pages and Arabic numerals (standard international digits 0-9; e.g., 1, 2, 3...) from Introduction onward
+1. Roman numerals for preliminary pages and Arabic numerals from Introduction onward
 2. Exact page margins required by the college guideline
 3. Final font hierarchy and spacing controls
 4. Tab-based first-line paragraph indentation
