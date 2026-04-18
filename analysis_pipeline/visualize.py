@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,7 +15,8 @@ import numpy as np
 BASE_DIR = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output"
 INPUT_JSON = OUTPUT_DIR / "analysis_results.json"
-CHART_OUTPUT_DIR = BASE_DIR / "output"
+CHART_OUTPUT_DIR = BASE_DIR / "analysis_pipeline" / "output" / "all_charts"
+MANUSCRIPT_FIGURES_DIR = BASE_DIR / "figures"
 SUMMARY_MD = CHART_OUTPUT_DIR / "chart_summary.md"
 # Floor value prevents log10(0) errors while preserving significance ranking for very small p-values.
 MIN_PVALUE = 1e-12
@@ -84,6 +86,7 @@ def main() -> None:
         raise FileNotFoundError(f"Input JSON not found: {INPUT_JSON}")
 
     CHART_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    MANUSCRIPT_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
     data = json.loads(INPUT_JSON.read_text(encoding="utf-8"))
     n_total = int(data["meta"]["n_total"])
@@ -1044,8 +1047,21 @@ def main() -> None:
 
     SUMMARY_MD.write_text("\n".join(summary_lines).strip() + "\n", encoding="utf-8")
 
+    manuscript_figure_stems = [
+        "03_primary_adjusted_or_forest",
+        "08_multinomial_key_predictor_comparison",
+        "14_profile_means_heatmap",
+        "19_likert_diverging_q11_q13",
+        "27_donut_main_questions",
+        "31_gender_recommendation_breakdown",
+    ]
+    for stem in manuscript_figure_stems:
+        shutil.copy(CHART_OUTPUT_DIR / f"{stem}.png", MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
+        shutil.copy(CHART_OUTPUT_DIR / f"{stem}.md", MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
+
     print(f"Created {len(chart_outputs)} charts in: {CHART_OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
+    print(f"Isolated {len(manuscript_figure_stems)} manuscript figures (.png + .md) in: {MANUSCRIPT_FIGURES_DIR}")
 
 
 if __name__ == "__main__":
