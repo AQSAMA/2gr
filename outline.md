@@ -112,7 +112,7 @@ Appendices
 - Outcome definitions (binary and multinomial recommendation outcomes)
 - Predictor definitions (demographic and belief variables)
 - Explicit variable definition for Q31 as personal psychiatric medication use, treated as binary in this study: Users (Q31=1) and Non-users (Q31=0)
-- Handle Q31 values outside 0/1 and missing responses by complete-case exclusion in contact-hypothesis analyses by default.
+- Handle Q31 values outside 0/1 (unexpected codes or data-entry artifacts) and missing responses by complete-case exclusion in contact-hypothesis analyses by default.
 - If any Q31 recoding is introduced, document it explicitly in Methods and Appendix C before reporting results.
 
 ### D. Data Management and Coding
@@ -168,7 +168,7 @@ Appendices
 
 ### F. Exploratory Results (Secondary)
 **Content:**
-- Contact hypothesis comparisons using exact groups from Q31 (personal psychiatric medication use): Users (Q31=1) vs Non-users (Q31=0)
+- Contact hypothesis comparisons using exact groups from Q31: Users vs Non-users (coding defined in Section III.C)
 - Exploratory profile analysis
 
 **Results Evidence Scope Rule (strict):**
