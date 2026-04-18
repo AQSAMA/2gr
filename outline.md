@@ -1,97 +1,47 @@
 # Research Paper Outline: Psychiatric Medication Use and Public Acceptance in Iraq
+**Type:** Original Cross-Sectional Research Study
 
-**Title:** Psychiatric Medication Use and Public Acceptance in Iraq  
-**Type:** Original Cross-Sectional Research Study  
-**Year:** 2026
+## Core Rule for This Outline
+1. **Study results are reported ONLY from `survey_data_results.md`.**
+2. `sources/` are used strictly for background, framework, and comparison in Chapters I, II, and V.
+3. `figures/` are used to present visual outputs from the analyzed survey dataset in Chapter IV.
 
----
+## I. INTRODUCTION
+*   **A. Background and Context** (The mental health burden in Iraq)
+*   **B. Problem Statement** (The evidence gap regarding public acceptance)
+*   **C. Study Objectives** (1. Evaluate recommendation willingness[Q8]. 2. Identify demographic/cognitive predictors. 3. Explore latent stigma phenotypes.)
+*   **D. Study Significance** (Value of primary empirical data for Iraqi pharmacists and policymakers)
 
-## I. Abstract
-**Purpose:** Provide a structured summary of the study question, design, key results, and conclusion.
+## II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
+*Scope Rule: This chapter gives conceptual and regional context. It does NOT report the new survey as literature.*
+*   **A. Stigma and Public Attitudes** (e.g., Sadik et al., 2010; Booth et al., 2024)
+*   **B. Medication Beliefs and Acceptance** (e.g., Horne et al., 1999)
+*   **C. Adherence and Determinants**
+*   **D. Iraqi and Regional Service Realities**
 
-**Evidence Scope:**
-- Study design and methods from this project workflow.
-- Key numeric findings from `survey_data_results.md` only.
-- No new claims beyond sections II-VI.
+## III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
+*Scope Rule: Delete all previous references to literature search strategies (PubMed, Scopus, etc.). Describe the actual survey.*
+*   **A. Study Design and Setting** (Cross-sectional survey in Iraq)
+*   **B. Participants and Sampling** (N=877, eligibility, recruitment)
+*   **C. Survey Instrument and Variables** (Demographics, Likert-scale core beliefs Q11-Q13, general attitudes Q6-Q9, prior use Q31)
+*   **D. Data Management and Statistical Analysis** (Describe the Python pipeline: Hierarchical Block Logistic Regression, Multinomial Logistic Regression, Mann-Whitney U for Contact Hypothesis, and K-Means clustering K=4)
+*   **E. Ethical Considerations**
 
-## II. Introduction
-**Purpose:** Define the Iraqi mental health context, study problem, and study objectives/hypotheses.
+## IV. RESULTS (PRIMARY SURVEY FINDINGS)
+*Scope Rule: Numeric results here come ONLY from `survey_data_results.md`. Must map the exact figures.*
+*   **A. Sample Profile and Descriptive Statistics** (Integrate `figures/27_donut_main_questions.png`, `figures/31_gender_recommendation_breakdown.png`, `figures/19_likert_diverging_q11_q13.png`)
+*   **B. Primary Analysis: Predictors of Recommendation Willingness** (Hierarchical Logistic Regression - Integrate `figures/03_primary_adjusted_or_forest.png`)
+*   **C. Primary Analysis: Multinomial Analysis of Hesitation** (No/Yes/Not Sure - Integrate `figures/08_multinomial_key_predictor_comparison.png`)
+*   **D. Exploratory Analysis 1: The Contact Hypothesis** (Users vs. Non-Users on core beliefs)
+*   **E. Exploratory Analysis 2: Stigma Phenotypes** (K-means clustering - Integrate `figures/14_profile_means_heatmap.png`)
 
-**Evidence Scope:**
-- Mapped background literature from `sources/` with citations.
-- No new dataset results reported here.
+## V. DISCUSSION
+*   **A. Interpretation of Primary Findings** (What the regressions and clusters mean in the Iraqi context)
+*   **B. Comparison With Iraqi and Regional Literature** (Bridging the N=877 dataset with the sources from Chapter II)
+*   **C. Implications for Pharmacy Practice and Public Health** (Actionable insights for patient counseling)
+*   **D. Strengths and Limitations of the Present Study** (e.g., cross-sectional limits, convenience sampling skewed to university females)
+*   **E. Priority Research Gaps** (Next empirical steps)
 
-## III. Methods
-**Purpose:** Describe how this cross-sectional study was conducted and analyzed.
-
-**Evidence Scope:**
-- This project's actual workflow, dataset, variables, and analysis plan.
-- Source files: repository workflow artifacts and `survey_data_results.md` analysis outputs.
-- No narrative-review search-strategy framing.
-
-**Minimum Subsections:**
-1. Study design and setting
-2. Participants and sampling
-3. Instrument and variables
-4. Data management and statistical analysis
-5. Ethics
-
-## IV. Results
-**Purpose:** Report empirical findings from the primary dataset in a reproducible order.
-
-**Evidence Scope:**
-- Numeric outputs from `survey_data_results.md` only.
-- Figures/tables only if they exist in repository files.
-
-**Required Reporting Strata:**
-1. **Primary (main) analyses**
-   - Core descriptive profile
-   - Pre-specified primary inferential models/tests
-2. **Sensitivity analyses** *(if present)*
-   - Alternative coding/model checks tied to primary analyses
-3. **Exploratory analyses**
-   - Secondary, hypothesis-generating analyses reported separately
-
-## V. Discussion
-**Purpose:** Interpret results in Iraqi context, compare with mapped literature, and state implications.
-
-**Evidence Scope:**
-- This study's findings from Section IV.
-- Mapped literature from `sources/` with citations for comparison and context.
-- Clear separation between what this dataset shows and what literature suggests.
-
-**Minimum Subsections:**
-1. Principal findings
-2. Comparison with Iraqi/regional/international literature
-3. Practical implications for pharmacy and mental health care in Iraq
-4. Strengths and limitations
-
-## VI. Conclusion
-**Purpose:** Provide concise take-home conclusions aligned with the study objectives.
-
-**Evidence Scope:**
-- Synthesis of Sections IV and V only.
-- No new data or unsupported recommendations.
-
-## VII. References
-**Purpose:** Provide complete citation list used in the manuscript.
-
-**Evidence Scope:**
-- Entries must align with in-text citations.
-- Use `references.md` as bibliography authority.
-
-## VIII. Appendices
-**Purpose:** Store supporting material that improves transparency without interrupting main text flow.
-
-**Evidence Scope:**
-- Survey instrument details, variable coding notes, supplementary tables/figures, and additional model output as needed.
-- Appendix content must not contradict main Results.
-
----
-
-## Do-Not-Drift Rules (Mandatory)
-1. Keep this outline structure and section order unchanged unless a dedicated governance PR updates this file.
-2. Do not move numeric dataset findings outside Results (except short, already-reported highlights in Abstract).
-3. Do not insert narrative-review methodology content into Methods.
-4. Keep primary, sensitivity, and exploratory analyses explicitly separated in Results.
-5. Draft each `content/` section only against its purpose and evidence scope defined here.
+## VI. RECOMMENDATIONS & CONCLUSION
+*   **A. Practice and Policy Recommendations** (Tied directly to survey findings, e.g., targeted counseling for phenotype profiles)
+*   **B. Conclusion** (Data-driven final summary of the N=877 cohort)
