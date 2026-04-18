@@ -17,6 +17,10 @@ Therefore:
 2. `sources/` are used for background, framework, and comparison.
 3. `figures/` are used to present and reference visual outputs from the analyzed survey dataset.
 
+**Migration Note:** Existing chapter files under `content/` may still reflect the old structure until rewritten. Use this outline as the canonical target structure.
+
+**Formatting Scope Note:** This outline uses `###` subheadings and bullet lists for structural mapping. In manuscript body chapters under `content/`, present narrative text as paragraphs (no bullet-list narration).
+
 ---
 
 ## I. INTRODUCTION
@@ -130,7 +134,7 @@ It does **not** report the new survey as literature.
 **Figure Support:**
 - `figures/08_multinomial_key_predictor_comparison.png`
 
-### E. The Contact Hypothesis (Users vs. Non-Users)
+### E. The Contact Hypothesis (Users vs Non-Users)
 **Data Source:** `survey_data_results.md`
 **Analysis Focus:** Mann-Whitney U tests and Cliff's Delta effect sizes across core belief items.
 
