@@ -130,12 +130,16 @@ It does **not** report the new survey as literature.
 **Figure Support:**
 - `figures/08_multinomial_key_predictor_comparison.png`
 
-### E. Sensitivity and Exploratory Analyses (Clearly Labeled)
+### E. The Contact Hypothesis (Users vs. Non-Users)
+**Data Source:** `survey_data_results.md`
+**Analysis Focus:** Mann-Whitney U tests and Cliff's Delta effect sizes across core belief items.
+
+### F. Exploratory Stigma Phenotypes (Clearly Labeled)
 **Data Source:** `survey_data_results.md`  
 **Figure Support:**
 - `figures/14_profile_means_heatmap.png`
 
-### F. Results Summary
+### G. Results Summary
 **Purpose:** Summarize main statistically supported findings without interpretation drift.
 
 ---
