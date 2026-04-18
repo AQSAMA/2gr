@@ -32,4 +32,4 @@ Analyses were run on cleaned survey data with complete-case estimation per model
 
 ## G. Ethics and Governance Note
 
-The current statistical results file does not include detailed ethics committee identifiers. Before final submission, the final manuscript should insert the formal ethics approval reference, consent language, and confidentiality procedures from the project documentation.
+Ethics approval number, informed-consent wording, and confidentiality procedures should be reported from the official project records in the final approved thesis copy.

@@ -4,7 +4,7 @@
 
 Iraq has experienced long-term conflict, repeated displacement, and prolonged pressure on health services, and this history has contributed to a high burden of mental disorders and a persistent treatment gap (Saied et al., 2023; Younis & Khunda, 2020). At the same time, psychiatric workforce capacity remains low, which limits specialist access and places greater responsibility on primary care and pharmacy contact points. In this context, medication access alone is not enough. Public acceptance of psychiatric medications, trust in their safety, and social beliefs about mental illness influence whether people accept treatment and whether families support treatment pathways.
 
-Iraqi and regional literature shows that stigma, fear of dependence, and mixed explanatory beliefs can reduce care-seeking and delay professional treatment (Sadik et al., 2010; Elyamani et al., 2021; Booth et al., 2024). However, most available Iraqi evidence before this project focused on specific clinical sites, student populations, or literature syntheses, and there has been limited population-level primary analysis centered on medication recommendation and acceptance patterns.
+Iraqi and regional literature shows that stigma, fear of dependence, and mixed explanatory beliefs can reduce care-seeking and delay professional treatment (Sadik et al., 2010; Elyamani et al., 2021; Booth et al., 2024). Most available Iraqi evidence before this project focused on specific clinical sites, student populations, or literature syntheses. Population-level primary analysis centered on medication recommendation and acceptance patterns has remained limited.
 
 ## B. Problem Statement
 

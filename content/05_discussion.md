@@ -10,7 +10,7 @@ The multinomial analysis adds an important point that binary models cannot show 
 
 The findings are consistent with the Iraqi context where trust, fear, and stigma-related beliefs influence medication behavior. Earlier Iraqi evidence showed high stigma and low confidence in mental health services (Sadik et al., 2010), and the present survey pattern supports the same direction: concerns about overprescribing and medication harms remain central obstacles. At the same time, positive safety beliefs were strongly associated with recommendation behavior, which identifies a concrete communication target for pharmacists and clinicians.
 
-The gender association observed in both primary and multinomial models should be interpreted carefully as an association, not causation. It may reflect social roles, care-seeking patterns, or differential exposure to medication narratives, and should be examined in follow-up studies with broader balancing of participant characteristics.
+The gender association observed in both primary and multinomial models should be interpreted carefully as an association, not causation. It may reflect social roles, care-seeking patterns, or differential exposure to medication narratives, and should be examined in follow-up studies with more balanced gender distribution and stratified sampling.
 
 ## C. Comparison with Supportive Literature
 
