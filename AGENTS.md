@@ -110,6 +110,8 @@ To prevent design drift, apply this hierarchy in every draft:
 
 # 4. TYPOGRAPHY & OUTPUT SPECS
 
+Section 4 defines the required **target** typography/layout specs for the final document. These are finalized during Word export rather than enforced as strict Markdown drafting constraints.
+
 ## A. Document Formatting
 * **Font:** Times New Roman (English).
 * **Size:** 14pt Body, 1.5 Line Spacing.
@@ -117,7 +119,7 @@ To prevent design drift, apply this hierarchy in every draft:
 * **Paragraphs:** Indent the first line of every paragraph (No empty lines between paragraphs).
 
 ## B. Document Structure & Page Breaks
-1. **Major Section Breaks:** To ensure professional formatting when exported to PDF/Word, insert the exact HTML tag `<div style="page-break-after: always;"></div>` at the very end of major sections (e.g., before starting a new main chapter like "II. LITERATURE REVIEW" or "III. METHODOLOGY").
+1. **Major Section Breaks:** To ensure professional formatting when exported to PDF/Word, insert the exact HTML tag `<div style="page-break-after: always;"></div>` at the very end of major sections (e.g., before starting a new major internal section like "III. METHODOLOGY" or "IV. RESULTS"). Internal Sections I/II map to College Chapter One at final output.
 2. **Logical Flow (No Orphans/Widows):** NEVER insert a page break in the middle of a paragraph, in the middle of a bulleted list, or inside a table. 
 3. **Spacing:** Ensure there is a blank line before and after the page break tag so it renders correctly without breaking the markdown syntax.
 
@@ -148,11 +150,11 @@ These are completed in a later dedicated front-matter pass.
 
 ## C. References Policy
 Use APA style and maintain a broad, relevant, and recent evidence base.  
-The minimum reference threshold does not limit continued use of approximately 50 references when they are appropriate.
+Maintain approximately 50 references when appropriate for scope, relevance, and recency; do not force reduction to a minimum-only count.
 
 ## D. Word-Stage Formatting Controls
-The following are final document-production settings that are applied during Word export/final formatting:
-1. Roman numerals for preliminary pages and English numerals from Introduction onward
+Section 4 defines the formatting targets; this subsection clarifies they are finalized during Word export/final formatting.
+1. Roman numerals for preliminary pages and Arabic numerals (1, 2, 3...) from Introduction onward
 2. Exact page margins required by the college guideline
 3. Final font hierarchy and spacing controls
 4. Tab-based first-line paragraph indentation

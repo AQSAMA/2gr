@@ -8,9 +8,9 @@
 
 ---
 
-## 0. FRONT MATTER (DEFERRED FOR THIS PR)
+## 0. FRONT MATTER (DEFERRED IN CURRENT PHASE)
 
-The following sections are recognized by the college project arrangement but are intentionally not drafted in this PR by design:
+The following sections are recognized by the college project arrangement but are intentionally not drafted in this phase by design:
 1. Cover Page
 2. Certification of the Supervisor
 3. Dedication
