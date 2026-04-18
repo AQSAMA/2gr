@@ -6,6 +6,9 @@
 2. `sources/` are used strictly for background, framework, and comparison in Chapters I, II, and V.
 3. `figures/` are used to present visual outputs from the analyzed survey dataset in Chapter IV.
 
+## ABSTRACT
+*Scope Rule: Must summarize Background, Methods, Results (with hard numbers from the dataset), and Conclusion.*
+
 ## I. INTRODUCTION
 *   **A. Background and Context** (The mental health burden in Iraq)
 *   **B. Problem Statement** (The evidence gap regarding public acceptance)
@@ -30,10 +33,11 @@
 ## IV. RESULTS (PRIMARY SURVEY FINDINGS)
 *Scope Rule: Numeric results here come ONLY from `survey_data_results.md`. Must map the exact figures.*
 *   **A. Sample Profile and Descriptive Statistics** (Integrate `figures/27_donut_main_questions.png`, `figures/31_gender_recommendation_breakdown.png`, `figures/19_likert_diverging_q11_q13.png`)
-*   **B. Primary Analysis: Predictors of Recommendation Willingness** (Hierarchical Logistic Regression - Integrate `figures/03_primary_adjusted_or_forest.png`)
-*   **C. Primary Analysis: Multinomial Analysis of Hesitation** (No/Yes/Not Sure - Integrate `figures/08_multinomial_key_predictor_comparison.png`)
-*   **D. Exploratory Analysis 1: The Contact Hypothesis** (Users vs. Non-Users on core beliefs)
-*   **E. Exploratory Analysis 2: Stigma Phenotypes** (K-means clustering - Integrate `figures/14_profile_means_heatmap.png`)
+*   **B. Primary Analysis 1: Predictors of Recommendation Willingness** (Hierarchical Logistic Regression - Integrate `figures/03_primary_adjusted_or_forest.png`)
+*   **C. Primary Analysis 2: Multinomial Analysis of Hesitation** (No/Yes/Not Sure - Integrate `figures/08_multinomial_key_predictor_comparison.png`)
+*   **D. Sensitivity Analysis** (Adding Proximal Beliefs Q6/Q7)
+*   **E. Exploratory Analysis 1: The Contact Hypothesis** (Users vs. Non-Users on core beliefs)
+*   **F. Exploratory Analysis 2: Stigma Phenotypes** (K-means clustering - Integrate `figures/14_profile_means_heatmap.png`)
 
 ## V. DISCUSSION
 *   **A. Interpretation of Primary Findings** (What the regressions and clusters mean in the Iraqi context)
@@ -45,3 +49,10 @@
 ## VI. RECOMMENDATIONS & CONCLUSION
 *   **A. Practice and Policy Recommendations** (Tied directly to survey findings, e.g., targeted counseling for phenotype profiles)
 *   **B. Conclusion** (Data-driven final summary of the N=877 cohort)
+
+## VII. REFERENCES
+*Scope Rule: Must use APA 7th edition and draw exclusively from `references.md`.*
+
+## VIII. APPENDICES
+*   **Appendix A:** Demographics Summary and Additional Tables
+*   **Appendix B:** Survey Instrument Variables
