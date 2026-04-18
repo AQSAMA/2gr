@@ -40,7 +40,7 @@ Do not use: "Delve," "landscape," "tapestry," "realm," "game-changer," "paramoun
 ## B. Section-Level Evidence Scoping (MANDATORY)
 1. **Results section:** Use only `survey_data_results.md` for numeric findings and model outputs.
 2. **Methods section:** Describe the primary survey design, participant profile, variable coding, and statistical analysis workflow; do not describe database search strategies.
-   - Define Q31 explicitly in Methods as personal psychiatric medication use with binary coding used in this project (Users Q31=1, Non-users Q31=0), and state how missing or non-0/1 values are handled.
+   - Define Q31 explicitly in Methods as personal psychiatric medication use with binary coding used in this project (Users Q31=1, Non-users Q31=0), and state that missing/non-0/1 values are excluded by complete-case handling unless a documented recoding plan is pre-specified.
 3. **Introduction and Discussion:** Use section-relevant literature from `sources/` guided by `outline.md` source pools and `content/02_literature_review.md`, then link directly to survey findings.
 4. **Recommendations and Conclusion:** Anchor first in survey findings, then triangulate with supportive literature.
 5. **Results subsection standardization:** Keep lettering/order fixed as A-F (Sample Characteristics, Descriptive Outcomes, Primary Model Results, Multinomial Model Results, Sensitivity Analysis, Exploratory Results).
@@ -57,7 +57,7 @@ For contact-hypothesis reporting, use exact category labels from `survey_data_re
 Use web checks only for limited fact verification (drug trade names, event dates, terminology), never to replace local source evidence.
 
 ## E. Formatting Policy
-1. `###` headings are allowed when a section has at least two distinct subtopics that each need separate paragraph blocks.
+1. `###` headings are allowed for primary subsection labels under each major section.
 2. Bullet points are allowed in `outline.md` as planning scaffolding.
 3. Manuscript body sections in `content/` should be paragraph-based; avoid bullet-list body writing except where structure explicitly requires lists (for example references or appendices).
 4. Use deeper heading levels (`####` or lower) only for repeated structured blocks (for example variable definitions or model components) and keep depth consistent within each chapter.
