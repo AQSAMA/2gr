@@ -1077,11 +1077,11 @@ def main() -> None:
         if png_src.exists():
             shutil.copy(png_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.png")
         else:
-            print(f"Warning: Could not copy {png_src.name} to figures directory (not found).")
+            print(f"Warning: Could not copy manuscript figure PNG from {png_src} (not found).")
         if md_src.exists():
             shutil.copy(md_src, MANUSCRIPT_FIGURES_DIR / f"{stem}.md")
         else:
-            print(f"Warning: Could not copy {md_src.name} to figures directory (not found).")
+            print(f"Warning: Could not copy manuscript figure markdown from {md_src} (not found).")
 
     print(f"Created {len(chart_outputs)} charts in: {CHART_OUTPUT_DIR}")
     print(f"Summary markdown written to: {SUMMARY_MD}")
