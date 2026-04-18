@@ -109,7 +109,8 @@ Appendices
 - Key questionnaire domains
 - Outcome definitions (binary and multinomial recommendation outcomes)
 - Predictor definitions (demographic and belief variables)
-- Explicit variable definition for Q31 as personal psychiatric medication use (coded as user/non-user groups)
+- Explicit variable definition for Q31 as personal psychiatric medication use, treated as binary in this study: Users (Q31=1) and Non-users (Q31=0)
+- Document handling rules for Q31 values outside 0/1 and missing responses (exclude from contact-hypothesis complete-case comparisons unless recoded in a pre-specified way)
 
 ### D. Data Management and Coding
 **Content:**
@@ -239,5 +240,6 @@ Appendices
 3. Avoid narrative-review framing in Methods, Results, and Conclusion.
 4. Keep Iraqi context explicit in interpretation and implications.
 5. Use supportive literature for context and comparison mainly in Introduction and Discussion.
-6. Heading levels are allowed up to `###` in manuscript drafting; use deeper levels only when structurally required.
-7. Bullet points are allowed in this outline for planning, but manuscript body sections in `content/` should be written in cohesive paragraphs.
+6. Heading levels are allowed up to `###` in manuscript drafting; use `###` only when a section has at least two distinct subtopics that each require their own paragraph block.
+7. Use deeper levels (`####` or below) only for fixed structured lists (for example repeated variable definitions or model blocks) and keep hierarchy depth consistent within the same chapter.
+8. Bullet points are allowed in this outline for planning, but manuscript body sections in `content/` should be written in cohesive paragraphs.
