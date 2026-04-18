@@ -2,7 +2,7 @@
 
 ## A. Interpretation of Primary Findings
 
-This cross-sectional survey shows a mixed public position on psychiatric medication in Iraq. Recommendation willingness was higher than acceptance and safety beliefs. Among respondents, 57.65% reported that they would recommend psychiatric medication, 30.72% said no, and 11.62% were not sure. At the same time, only 30.80% considered psychiatric medication acceptable, and only 23.65% considered it safe. This pattern suggests that part of the public supports treatment in principle but still carries personal concern about medication risks.
+This cross-sectional survey demonstrates a gap between willingness to recommend psychiatric medication and personal acceptance and safety beliefs in Iraq. Among respondents, 57.65% reported that they would recommend psychiatric medication, 30.72% said no, and 11.62% were not sure. At the same time, only 30.80% considered psychiatric medication acceptable, and only 23.65% considered it safe. This pattern suggests that part of the public supports treatment in principle but still carries personal concern about medication risks.
 
 Belief items support this interpretation. More than half of respondents agreed that doctors may prescribe psychiatric medication more than necessary (Q11, 51.55% agree), and 67.40% agreed that most psychiatric medications can cause psychological or physical dependence (Q12). In parallel, 51.95% agreed that modern psychiatric medications are safer than older ones (Q13). This combination reflects ambivalence rather than simple rejection: concern about overuse and dependence is high, but confidence in newer treatment options is also present.
 

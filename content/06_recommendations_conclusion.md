@@ -42,7 +42,7 @@ This study adds new Iraq-specific cross-sectional evidence on psychiatric medica
 
 ## B. What the Combined Evidence (Survey + Literature) Indicates for Iraq
 
-When interpreted with mapped Iraqi and regional literature, the survey indicates that medication acceptance in Iraq is shaped by both belief-level and system-level factors. Stigma and fear remain active, but they coexist with openness to treatment. Service structure, prescribing context, and communication quality influence whether this openness converts into sustained acceptance. The combined evidence supports integrated care, pharmacist-centered counseling, and culturally compatible public communication as practical directions for improvement.
+When interpreted with mapped Iraqi and regional literature, the survey indicates that medication acceptance in Iraq is shaped by both belief-level and system-level factors. Stigma and fear persist as barriers, but they coexist with openness to treatment. Service structure, prescribing context, and communication quality influence whether this openness converts into sustained acceptance. The combined evidence supports integrated care, pharmacist-centered counseling, and culturally compatible public communication as practical directions for improvement.
 
 ## C. Closing Evidence-Based Statement
 
