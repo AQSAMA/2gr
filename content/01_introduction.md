@@ -16,7 +16,7 @@ This creates a practical problem for Iraqi pharmacy and mental health practice. 
 
 ## C. Study Aim and Research Questions
 
-This original cross-sectional study aims to assess psychiatric medication use and public acceptance in Iraq, with a focus on the relationship between stigma-related attitudes, beliefs about psychiatric treatment, and willingness to support or recommend formal care.
+This original cross-sectional study aims to assess psychiatric medication use and public acceptance in Iraq. The study focuses on the relationship between stigma-related attitudes, beliefs about psychiatric treatment, and willingness to support or recommend formal care.
 
 The study addresses four research questions. First, what are the prevailing public attitudes in Iraq toward psychiatric medication use and treatment acceptance? Second, how are stigma-related beliefs associated with acceptance or hesitation toward psychiatric medication? Third, how do key social and demographic factors relate to treatment-facing attitudes in this population? Fourth, how can these patterns guide pharmacist-led communication, patient counseling, and public mental health education in Iraq?
 
