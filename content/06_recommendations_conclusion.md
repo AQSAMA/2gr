@@ -2,7 +2,7 @@
 
 ## A. Policy-Level Recommendations
 
-National and governorate mental health policy should prioritize public medication trust as a measurable target, not only service availability. The survey showed a gap between recommendation willingness and personal safety acceptance, with high concern about dependence and overprescribing. Policy communication frameworks should therefore include standardized, evidence-based public messages on psychiatric medication safety, dependence risk, and treatment monitoring.
+National and governorate mental health policy should prioritize public medication trust as a measurable target, not only service availability. The survey showed a gap between recommendation willingness and personal safety acceptance, with high concern about dependence and overprescribing. Policy communication frameworks should include standardized, evidence-based public messages on psychiatric medication safety, dependence risk, and treatment monitoring.
 
 Medication governance should also strengthen rational psychotropic prescribing oversight in hospital and outpatient settings. This recommendation is supported by survey concern patterns and by mapped Iraqi prescribing evidence showing high-dose and polypharmacy exposure in inpatient practice (Nassr & Wadeea, 2026). The aim is to reduce avoidable concern by improving prescribing transparency and consistency with guideline-based care.
 

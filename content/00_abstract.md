@@ -1,6 +1,6 @@
 # ABSTRACT
 
-Background: Public acceptance of psychiatric medication in Iraq affects treatment uptake, adherence, and early help-seeking, yet Iraqi population-level cross-sectional evidence on public acceptance remains limited. This study examined psychiatric medication use attitudes and recommendation behavior in an Iraqi sample and compared findings with mapped Iraqi and regional literature.
+Background: Public acceptance of psychiatric medication in Iraq affects treatment uptake, adherence, and early help-seeking, yet population-level evidence on public acceptance in Iraq remains limited. This study examined psychiatric medication use attitudes and recommendation behavior in an Iraqi sample and compared findings with mapped Iraqi and regional literature.
 
 Methods: A cross-sectional survey (N = 877) was analyzed using descriptive statistics, hierarchical logistic regression for recommendation behavior, multinomial logistic regression preserving No/Yes/Not sure responses, a users versus non-users contact analysis, and exploratory stigma phenotype profiling. Primary quantitative results were derived from the analyzed survey dataset.
 
