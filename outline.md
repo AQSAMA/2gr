@@ -105,6 +105,8 @@ Appendices
 - Final analytic sample reporting (overall and model-specific complete-case samples)
 
 ### C. Survey Instrument and Key Variables
+**Authoring note:** These bullets are drafting instructions for Methods writers, not text to paste verbatim into the manuscript.
+
 **Content:**
 - Key questionnaire domains
 - Outcome definitions (binary and multinomial recommendation outcomes)

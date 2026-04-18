@@ -40,7 +40,9 @@ Do not use: "Delve," "landscape," "tapestry," "realm," "game-changer," "paramoun
 ## B. Section-Level Evidence Scoping (MANDATORY)
 1. **Results section:** Use only `survey_data_results.md` for numeric findings and model outputs.
 2. **Methods section:** Describe the primary survey design, participant profile, variable coding, and statistical analysis workflow; do not describe database search strategies.
-   - Define Q31 explicitly in Methods as personal psychiatric medication use with binary coding used in this project (Users Q31=1, Non-users Q31=0), and state that missing/non-0/1 values are excluded by complete-case handling unless a documented recoding plan is pre-specified.
+   - Define Q31 in Methods as personal psychiatric medication use.
+   - Document project coding as Users=1 and Non-users=0.
+   - State that missing or non-0/1 values are excluded by complete-case handling unless a documented recoding plan is pre-specified.
 3. **Introduction and Discussion:** Use section-relevant literature from `sources/` guided by `outline.md` source pools and `content/02_literature_review.md`, then link directly to survey findings.
 4. **Recommendations and Conclusion:** Anchor first in survey findings, then triangulate with supportive literature.
 5. **Results subsection standardization:** Keep lettering/order fixed as A-F (Sample Characteristics, Descriptive Outcomes, Primary Model Results, Multinomial Model Results, Sensitivity Analysis, Exploratory Results).
@@ -51,7 +53,8 @@ Report analyses in two clearly separated groups:
 2. **Exploratory analyses** (secondary hypothesis-generating analyses)
 
 This separation must match `survey_data_results.md` labeling.
-For contact-hypothesis reporting, use exact category labels from `survey_data_results.md`: **Users (Q31=1)** and **Non-users (Q31=0)**, where Q31 captures personal psychiatric medication use and is treated as binary for this analysis.
+For contact-hypothesis reporting, use the exact category labels from `survey_data_results.md`: **Users** and **Non-users**.
+Document the technical coding separately as Q31=1 for Users and Q31=0 for Non-users.
 
 ## D. Web-Check Exception
 Use web checks only for limited fact verification (drug trade names, event dates, terminology), never to replace local source evidence.
