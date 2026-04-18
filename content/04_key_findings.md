@@ -1,10 +1,10 @@
 # IV. RESULTS
 
-All numeric results in this chapter are reported directly from `survey_data_results.md` for the unified survey dataset (N=877).
+All numeric results in this chapter are reported from the unified survey dataset (N=877).
 
 ## A. Sample Profile and Descriptive Statistics
 
-The sample was predominantly female (71.95%; male 28.05%), young (18–25 years: 74.57%), and university-educated (university 78.92%; postgraduate 13.52%). Most respondents were single (78.44%), while 20.99% were married. Figure support for this section is provided by the mapped visuals `figures/27_donut_main_questions.png`, `figures/31_gender_recommendation_breakdown.png`, and `figures/19_likert_diverging_q11_q13.png`.
+The sample was predominantly female (71.95%; male 28.05%), young (18–25 years: 74.57%), and university-educated (university 78.92%; postgraduate 13.52%). Most respondents were single (78.44%), while 20.99% were married. These distributions are presented visually in Figure 27, Figure 31, and Figure 19.
 
 ## B. Main Outcome Distributions
 
@@ -14,7 +14,7 @@ Belief distributions also showed concern-oriented patterns. For Q11 (doctors pre
 
 ## C. Hierarchical Logistic Regression (Primary Model)
 
-This was the primary confirmatory model. Using complete-case data (n=647), model fit improved across blocks: Block 1 (demographics) had McFadden pseudo R²=0.0040 with LLR p=0.5037; Block 2 (adding prior use) had pseudo R²=0.0116 with LLR p=0.0847; and Block 3 (adding Q11, Q12, Q13, and fear) had pseudo R²=0.0686 with LLR p<0.0001. Figure support is `figures/03_primary_adjusted_or_forest.png`.
+This was the primary confirmatory model. Using complete-case data (n=647), model fit improved across blocks: Block 1 (demographics) had McFadden pseudo R²=0.0040 with LLR p=0.5037; Block 2 (adding prior use) had pseudo R²=0.0116 with LLR p=0.0847; and Block 3 (adding Q11, Q12, Q13, and fear) had pseudo R²=0.0686 with LLR p<0.0001. Figure 03 presents the adjusted odds ratio pattern from the final primary block.
 
 In the final primary block, significant adjusted predictors were Gender_Binary (OR 1.516, 95% CI 1.043 to 2.205, p=0.0294), Q11 (OR 0.830, 95% CI 0.696 to 0.991, p=0.0396), Q13 (OR 1.507, 95% CI 1.248 to 1.820, p<0.0001), and Fear_Binary (OR 0.504, 95% CI 0.358 to 0.711, p<0.0001). Non-significant predictors in the same block were Age_Binary (OR 0.961, p=0.8752), Edu_Binary (OR 1.381, p=0.3005), Married_Binary (OR 1.075, p=0.7904), PriorUse_Binary (OR 1.342, p=0.2645), and Q12 (OR 0.869, p=0.2008). The intercept was not significant (OR 1.128, 95% CI 0.298 to 4.273, p=0.8597).
 
@@ -22,7 +22,7 @@ A confirmatory sensitivity model that added Q6 and Q7 used n=406 and showed McFa
 
 ## D. Multinomial Logistic Regression (No/Yes/Not Sure Structure)
 
-This was the second confirmatory model and preserved the original No/Yes/Not sure outcome structure for Q8. The complete-case sample was n=837, and model log-likelihood was -748.910 (fit type: mle). Figure support is `figures/08_multinomial_key_predictor_comparison.png`.
+This was the second confirmatory model and preserved the original No/Yes/Not sure outcome structure for Q8. The complete-case sample was n=837, and model log-likelihood was -748.910 (fit type: mle). Figure 08 shows the key predictor comparison across multinomial outcome equations.
 
 In the Q8=1 equation, significant predictors were Gender_Binary (RRR 1.558, 95% CI 1.097 to 2.214, p=0.0133), Q12 (RRR 0.794, 95% CI 0.651 to 0.970, p=0.0239), and Q13 (RRR 1.585, 95% CI 1.328 to 1.892, p<0.0001). Other predictors in this equation were not significant: Age_Binary (p=0.8139), Edu_Binary (p=0.5797), Married_Binary (p=0.8903), PriorUse_Binary (p=0.1763), Q11 (p=0.1028), and the constant (p=0.9189).
 
@@ -36,7 +36,7 @@ For Q11, users had a lower median (3.00) than non-users (4.00), with Mann-Whitne
 
 ## F. Exploratory Stigma Phenotypes (Clearly Labeled)
 
-This subsection is exploratory by design. K-means clustering on standardized Q11–Q13 tested k=2, k=3, and k=4, with silhouette scores of 0.274, 0.272, and 0.303, respectively. The selected solution was k=4. Figure support is `figures/14_profile_means_heatmap.png`.
+This subsection is exploratory by design. K-means clustering on standardized Q11–Q13 tested k=2, k=3, and k=4, with silhouette scores of 0.274, 0.272, and 0.303, respectively. The selected solution was k=4. Figure 14 displays the profile mean pattern across Q11–Q13.
 
 The four profiles were: Profile 0 (n=183; Q11 mean 4.404, Q12 mean 4.115, Q13 mean 4.311), Profile 1 (n=230; Q11 mean 2.961, Q12 mean 2.804, Q13 mean 3.578), Profile 2 (n=232; Q11 mean 2.694, Q12 mean 4.250, Q13 mean 3.720), and Profile 3 (n=223; Q11 mean 4.359, Q12 mean 4.291, Q13 mean 2.610).
 

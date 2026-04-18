@@ -2,7 +2,7 @@
 
 ## A. Study Design and Setting
 
-This study used an original cross-sectional survey design to measure public views on psychiatric medications in Iraq at one time point. The analytical dataset contained 877 responses, and all inferential analyses were conducted on this survey dataset as reported in `survey_data_results.md`.
+This study used an original cross-sectional survey design to measure public views on psychiatric medications in Iraq at one time point. The analytical dataset contained 877 responses, and all inferential analyses were conducted on this survey dataset.
 
 ## B. Participants and Sampling
 
