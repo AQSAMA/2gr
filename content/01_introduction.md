@@ -24,6 +24,6 @@ The study addresses four research questions. First, what are the prevailing publ
 
 For Iraqi pharmacists, this study provides locally grounded evidence on how people think about psychiatric medication at the point where treatment decisions are often made. Pharmacists in Iraq frequently serve as accessible first-contact professionals, so understanding acceptance barriers can improve counseling quality, adherence support, and referral conversations.
 
-For clinicians, educators, and policy makers, the study adds current Iraqi cross-sectional evidence that complements existing service and stigma literature. It helps move discussion from general concern about mental health burden toward measurable public-facing barriers that influence medication acceptance in daily practice (Saied et al., 2023; Sadik et al., 2010).
+For clinicians, educators, and policy makers, the study adds current Iraqi cross-sectional evidence that complements existing service and stigma literature. It grounds mental health planning in measurable public-facing barriers that influence medication acceptance in daily practice (Saied et al., 2023; Sadik et al., 2010).
 
 For the wider Iraqi mental health agenda, the study supports more culturally responsive intervention design. By identifying attitude patterns tied to treatment acceptance, it can inform public education, primary care coordination, and community communication strategies in ways that fit Iraqi social realities rather than relying on assumptions from non-Iraqi settings (Younis & Khunda, 2020; Burnam et al., 2009).
