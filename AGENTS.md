@@ -9,6 +9,8 @@
 3. `references.md`: The Master APA Bibliography.
 4. `outline.md`: The approved architectural blueprint for the study.
 
+**Migration Note:** Existing files under `content/` may still follow the previous outline structure until they are rewritten. During migration, treat `outline.md` as the source of truth for target structure.
+
 ---
 
 # 1. THE STYLE GUIDE (THE "SMART STUDENT" PROTOCOL)
@@ -43,8 +45,33 @@
 ## A. Blueprint Adherence
 1.  **Strict Outline:** Follow the structure in `outline.md` exactly.
 2.  **Source Scoping:** Use *only* the specific sources mapped to each section in `outline.md`.
+3.  **File Name Canonical Form:** The instruction file in this repository is `AGENTS.md` (uppercase). Treat references to `agents.md` as referring to this same file.
+4.  **Canonical Results Sequence:** Use this exact order and lettering for `IV. RESULTS` everywhere it is referenced:
+    - IV.A Sample Profile and Descriptive Statistics
+    - IV.B Main Outcome Distributions
+    - IV.C Hierarchical Logistic Regression (Primary Model)
+    - IV.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)
+    - IV.E The Contact Hypothesis (Users vs Non-Users)
+    - IV.F Exploratory Stigma Phenotypes (Clearly Labeled)
+    - IV.G Results Summary
+5.  **Contact Hypothesis Label Rule:** Match category wording to `survey_data_results.md` exactly: **Users vs Non-Users**.
 
-## B. The "Web-Check" Exception (Internet Access Rule)
+## B. Section-Level Evidence Hierarchy (MANDATORY)
+To prevent design drift, apply this hierarchy in every draft:
+
+1. **Primary-data sections** (Methodology, Results, primary-result Discussion, and Conclusion claims about study findings):
+   - Use `survey_data_results.md` as the **sole source of numeric results**.
+   - Use `figures/` files to support visual/result reporting consistency.
+   - Do **not** import numeric outcomes from `sources/` into these sections as if they are study results.
+
+2. **Literature-support sections** (Introduction context, Literature Review, comparative parts of Discussion):
+   - Use only mapped files from `sources/` and `references.md`.
+   - Use literature to interpret and contextualize the survey findings, not to replace them.
+
+3. **Conflict rule:**
+   - If any wording in a draft conflicts with `survey_data_results.md`, revise the draft to match `survey_data_results.md`.
+
+## C. The "Web-Check" Exception (Internet Access Rule)
 **You are permitted to search the web ONLY in these specific cases:**
 1.  **Fact Verification:** To confirm a specific drug trade name in Iraq, a date of a war/event, or a mechanism of action if the source text is ambiguous.
 2.  **Updating Stats:** If a source provides a statistic from pre-2015, you may quickly check if a drastically different 2024 number exists (e.g., from WHO or Iraqi MoH) to add as a contrast note.
@@ -59,12 +86,19 @@
 ## Step 1: Context Loading
 * **Command:** "Read `outline.md` specifically for Section [X]."
 * **Action:** Identify the target section and its mapped sources.
-* **Retrieve:** Read *only* those specific markdown files from `sources/` or `survey_data_results.md` as instructed.
+* **Retrieve:** Read the exact mapped evidence type for that section:
+  * For Results/primary quantitative claims: `survey_data_results.md` (and mapped `figures/`).
+  * For literature synthesis/interpretation: mapped files in `sources/`.
 
 ## Step 2: Drafting
 * Write in Markdown files within `content/`.
 * **Tone Check:** Does this sound like a smart student wrote it? Is it easy to read but scientifically accurate?
-* **Formatting:** Use `# H1`, `## H2`, and standard paragraphs.
+* **Formatting:** For manuscript chapter drafts in `content/`, use `#` and `##` headings with standard paragraphs. `###` is allowed in governance/blueprint documents (for example `outline.md`) when sub-structure needs to be explicit.
+* **Data Check:** In primary-data sections, every reported number must trace directly to `survey_data_results.md`.
+
+## Step 2.1: Heading and List Policy
+* **Manuscript body (`content/`):** Do not use bullet points for narrative text; write cohesive paragraphs.
+* **Outline/governance docs (`outline.md`, `AGENTS.md`):** Bullet points are allowed for structure, mapped sources, and compliance checklists.
 
 ## Step 3: Review
 * **Self-Critique:**
