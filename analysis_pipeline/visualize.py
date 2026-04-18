@@ -380,7 +380,7 @@ def main() -> None:
 
     def draw_06() -> None:
         labels = [str(row["predictor"]) for row in mn_yes]
-        vals = [(float(row["rrr"]), float(row["ci_low"]), float(row["ci_high"])) for row in mn_yes]
+        vals = [(safe_float(row.get("rrr")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in mn_yes]
         rrr = np.array([x[0] for x in vals])
         low = np.array([x[1] for x in vals])
         high = np.array([x[2] for x in vals])
@@ -407,7 +407,7 @@ def main() -> None:
 
     def draw_07() -> None:
         labels = [str(row["predictor"]) for row in mn_unsure]
-        vals = [(float(row["rrr"]), float(row["ci_low"]), float(row["ci_high"])) for row in mn_unsure]
+        vals = [(safe_float(row.get("rrr")), safe_float(row.get("ci_low")), safe_float(row.get("ci_high"))) for row in mn_unsure]
         rrr = np.array([x[0] for x in vals])
         low = np.array([x[1] for x in vals])
         high = np.array([x[2] for x in vals])
@@ -434,8 +434,8 @@ def main() -> None:
 
     def draw_08() -> None:
         keys = ["Gender_Binary", "Q11", "Q12", "Q13"]
-        yes_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_yes}
-        unsure_map = {str(row["predictor"]): float(row["rrr"]) for row in mn_unsure}
+        yes_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_yes}
+        unsure_map = {str(row["predictor"]): safe_float(row.get("rrr"), default=np.nan) for row in mn_unsure}
         yes_vals = [safe_float(yes_map.get(k), default=np.nan) for k in keys]
         unsure_vals = [safe_float(unsure_map.get(k), default=np.nan) for k in keys]
         x = np.arange(len(keys))
@@ -463,8 +463,8 @@ def main() -> None:
 
     def draw_09() -> None:
         labels = [str(row["predictor"]) for row in mn_yes]
-        yes_p = [float(row["p_value"]) for row in mn_yes]
-        unsure_p = [float(row["p_value"]) for row in mn_unsure]
+        yes_p = [safe_float(row.get("p_value")) for row in mn_yes]
+        unsure_p = [safe_float(row.get("p_value")) for row in mn_unsure]
         mat = np.array([[-math.log10(max(v, MIN_PVALUE)) for v in yes_p], [-math.log10(max(v, MIN_PVALUE)) for v in unsure_p]])
         im = plt.imshow(mat, cmap="Blues", aspect="auto")
         plt.yticks([0, 1], ["Q8=Yes", "Q8=Not sure"])
