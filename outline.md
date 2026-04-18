@@ -10,14 +10,14 @@
 
 ## STRUCTURE OVERVIEW (AUTHORITATIVE)
 
-I. Abstract  
-II. Introduction  
-III. Methodology (Cross-Sectional Survey)  
-IV. Results (Primary + Exploratory, from survey dataset)  
-V. Discussion  
-VI. Conclusion  
-VII. References  
-VIII. Appendices
+Abstract  
+I. Introduction  
+II. Methods (Cross-Sectional Survey)  
+III. Results (Primary + Exploratory, from survey dataset)  
+IV. Discussion  
+V. Conclusion  
+References  
+Appendices
 
 ---
 

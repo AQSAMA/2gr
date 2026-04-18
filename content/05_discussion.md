@@ -28,7 +28,7 @@ For public communication, a segmented approach is needed. People with rejection-
 
 A major strength is the use of a relatively large dataset with complementary model families and explicit separation between main and exploratory analyses. This improves interpretive transparency and reduces mixing of confirmatory and hypothesis-generating findings.
 
-Limitations include the cross-sectional design, which prevents causal inference, reliance on self-reported responses, unequal demographic distribution in the sample, and complete-case reduction in some models. In addition, instrument and ethical governance details should be fully documented in the final submitted thesis package.
+Limitations include the cross-sectional design, which prevents causal inference, reliance on self-reported responses, unequal demographic distribution in the sample, and complete-case reduction in some models. The gender imbalance (71.95% female and 28.05% male) may have influenced the stability and generalizability of gender-associated estimates. In addition, instrument and ethical governance details should be fully documented in the final submitted thesis package.
 
 ## F. Future Research
 
