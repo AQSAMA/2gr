@@ -6,7 +6,7 @@ import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,8 +28,14 @@ EXPECTED_CHART_COUNT = 31
 plt.style.use("seaborn-v0_8-whitegrid")
 
 
-def safe_float(val, default=np.nan): return float(val) if val is not None else default
-def safe_int(val, default=0): return int(val) if val is not None else default
+def safe_float(val: Any, default: float = np.nan) -> float:
+    """Convert nullable numeric values to float with a safe default."""
+    return float(val) if val is not None else default
+
+
+def safe_int(val: Any, default: int = 0) -> int:
+    """Convert nullable numeric values to int with a safe default."""
+    return int(val) if val is not None else default
 
 
 @dataclass
