@@ -163,7 +163,7 @@ Appendices
 
 ### F. Exploratory Results (Secondary)
 **Content:**
-- Contact hypothesis comparisons using exact groups: Users (Q31=1) vs Non-users (Q31=0)
+- Contact hypothesis comparisons using exact groups from Q31 (personal psychiatric medication use): Users (Q31=1) vs Non-users (Q31=0)
 - Exploratory profile analysis
 
 **Results Evidence Scope Rule (strict):**

@@ -50,7 +50,7 @@ Report analyses in two clearly separated groups:
 2. **Exploratory analyses** (secondary hypothesis-generating analyses)
 
 This separation must match `survey_data_results.md` labeling.
-For contact-hypothesis reporting, use exact category labels from `survey_data_results.md`: **Users (Q31=1)** and **Non-users (Q31=0)**.
+For contact-hypothesis reporting, use exact category labels from `survey_data_results.md`: **Users (Q31=1)** and **Non-users (Q31=0)**, where Q31 captures personal psychiatric medication use.
 
 ## D. Web-Check Exception
 Use web checks only for limited fact verification (drug trade names, event dates, terminology), never to replace local source evidence.
