@@ -21,6 +21,7 @@ QUESTION_LABELS_JSON = OUTPUT_DIR / "question_labels.json"
 VALUE_LABELS_JSON = OUTPUT_DIR / "value_labels.json"
 ANALYSIS_MD = OUTPUT_DIR / "survey_data_results_comprehensive.md"
 ROOT_ANALYSIS_MD = BASE_DIR / "survey_data_results.md"
+ANALYSIS_JSON = OUTPUT_DIR / "analysis_results.json"
 KMEANS_N_INIT = 50
 KMEANS_RANDOM_STATE = 42
 DEMOGRAPHIC_QUESTION_IDS = ("Q1", "Q2", "Q4", "Q5")
@@ -176,6 +177,28 @@ def extract_multinomial_ci(conf, outcome_col, term):
         low = ci_row[0] if len(ci_row) > 0 else np.nan
         high = ci_row[1] if len(ci_row) > 1 else np.nan
     return low, high
+
+
+def to_builtin(value):
+    if isinstance(value, dict):
+        return {str(k): to_builtin(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [to_builtin(v) for v in value]
+    if isinstance(value, np.ndarray):
+        return [to_builtin(v) for v in value.tolist()]
+    if isinstance(value, pd.Series):
+        return [to_builtin(v) for v in value.tolist()]
+    if isinstance(value, pd.DataFrame):
+        return [to_builtin(row) for row in value.to_dict(orient="records")]
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    if isinstance(value, (np.floating, float)):
+        if pd.isna(value) or np.isinf(value):
+            return None
+        return float(value)
+    if isinstance(value, (np.bool_,)):
+        return bool(value)
+    return value
 
 
 def summarize_logit(model):
@@ -349,6 +372,13 @@ def main():
         value_labels = json.load(f)
 
     n_total = len(df)
+    export_data = {
+        "meta": {
+            "n_total": int(n_total),
+        },
+        "inferential": {},
+        "descriptive": {},
+    }
 
     lines = []
     lines.append(f"# Psychiatric Medication Use and Public Acceptance in Iraq — Unified Survey Analysis (N={n_total})")
@@ -370,14 +400,38 @@ def main():
         prsquared = getattr(m, "prsquared", np.nan)
         llr_pvalue = getattr(m, "llr_pvalue", np.nan)
         lines.append(f"| {name} ({fit_type}) | `{formula}` | {prsquared:.4f} | {fmt_p(llr_pvalue)} |")
+    export_data["inferential"]["hierarchical"] = {
+        "complete_case_n": int(len(d_block)),
+        "blocks": [
+            {
+                "block": name,
+                "formula": formula,
+                "fit_type": fit_type,
+                "mcfadden_pseudo_r2": getattr(m, "prsquared", np.nan),
+                "llr_pvalue": getattr(m, "llr_pvalue", np.nan),
+            }
+            for name, m, formula, fit_type in blocks
+        ],
+    }
 
     lines.append("")
     lines.append("### Final Primary Block (Block 3) — Adjusted Odds Ratios")
     lines.append("")
     lines.append("| Predictor | Adjusted OR (95% CI) | p-value |")
     lines.append("|---|---:|---:|")
-    for term, or_val, low, high, p in summarize_logit(blocks[-1][1]):
+    primary_or_rows = summarize_logit(blocks[-1][1])
+    for term, or_val, low, high, p in primary_or_rows:
         lines.append(f"| {term} | {fmt_or(or_val, low, high)} | {fmt_p(p)} |")
+    export_data["inferential"]["primary_or"] = [
+        {
+            "predictor": term,
+            "adjusted_or": or_val,
+            "ci_low": low,
+            "ci_high": high,
+            "p_value": p,
+        }
+        for term, or_val, low, high, p in primary_or_rows
+    ]
 
     lines.append("")
     lines.append("### Sensitivity Model Adding Proximal Beliefs (Q6/Q7)")
@@ -387,6 +441,22 @@ def main():
     lines.append(f"- McFadden pseudo R²: **{sens_pr2:.4f}**")
     lines.append(f"- Fit type: **{sens_fit_type}**")
     lines.append("- This sensitivity model is reported separately because Q6 and Q7 are conceptually close to Q8 and can dominate explanatory variance.")
+    export_data["inferential"]["sensitivity_model"] = {
+        "complete_case_n": int(len(d_sens)),
+        "fit_type": sens_fit_type,
+        "mcfadden_pseudo_r2": sens_pr2,
+        "formula": sens_model.model.formula if hasattr(sens_model.model, "formula") else None,
+        "adjusted_or": [
+            {
+                "predictor": term,
+                "adjusted_or": or_val,
+                "ci_low": low,
+                "ci_high": high,
+                "p_value": p,
+            }
+            for term, or_val, low, high, p in summarize_logit(sens_model)
+        ],
+    }
 
     # 2) Multinomial logistic retaining Not sure
     lines.append("")
@@ -408,6 +478,7 @@ def main():
         conf = mn_model.conf_int()
     except Exception:
         conf = None
+    multinomial_rows = []
     for equation_idx, outcome_col in enumerate(mn_model.params.columns):
         mapped_outcome = non_ref_categories[equation_idx] if expected_mapping else outcome_col
         for term in mn_model.params.index:
@@ -418,6 +489,26 @@ def main():
             low = safe_exp(ci_low)
             high = safe_exp(ci_high)
             lines.append(f"| Q8={mapped_outcome} vs ref | {term} | {fmt_or(rrr, low, high)} | {fmt_p(float(p))} |")
+            multinomial_rows.append(
+                {
+                    "outcome": int(mapped_outcome) if isinstance(mapped_outcome, (int, np.integer)) else mapped_outcome,
+                    "outcome_column": int(outcome_col) if isinstance(outcome_col, (int, np.integer)) else outcome_col,
+                    "predictor": term,
+                    "beta": beta,
+                    "rrr": rrr,
+                    "ci_low": low,
+                    "ci_high": high,
+                    "p_value": float(p),
+                }
+            )
+    export_data["inferential"]["multinomial"] = {
+        "complete_case_n": int(len(d_mn)),
+        "fit_type": mn_fit_type,
+        "log_likelihood": float(mn_model.llf),
+        "categories": [int(c) for c in mn_categories],
+        "reference_category": int(mn_categories[0]) if mn_categories else None,
+        "rows": multinomial_rows,
+    }
 
     lines.append("")
     lines.append("## Exploratory Analysis (Clearly Labeled)")
@@ -437,6 +528,24 @@ def main():
         lines.append(
             f"| {col} ({english_question_label(col, qlabels)}) | {med_u:.2f} | {med_n:.2f} | {fmt_p(p_u)} | {delta:.3f} | {fmt_p(p_c)} | {cv:.3f} | {n_used} |"
         )
+    export_data["inferential"]["contact_hypothesis"] = {
+        "users_n": int(len(users_df)),
+        "non_users_n": int(len(non_users_df)),
+        "items": [
+            {
+                "item": col,
+                "user_median": med_u,
+                "non_user_median": med_n,
+                "mann_whitney_u_stat": u_stat,
+                "mann_whitney_u_pvalue": p_u,
+                "cliffs_delta": delta,
+                "chi_square_pvalue": p_c,
+                "cramers_v": cv,
+                "n_used": int(n_used),
+            }
+            for col, u_stat, p_u, delta, p_c, cv, n_used, med_u, med_n in contact
+        ],
+    }
 
     # 4) Exploratory stigma profiles
     lines.append("")
@@ -455,6 +564,28 @@ def main():
     for _, row in profile_table.iterrows():
         p = int(row["Profile"])
         lines.append(f"| {p} | {int(sizes[p])} | {row['Q11']:.3f} | {row['Q12']:.3f} | {row['Q13']:.3f} |")
+    profile_means_unrounded = (
+        cluster_df.groupby("Profile")[["Q11", "Q12", "Q13"]]
+        .mean()
+        .reset_index()
+        .sort_values("Profile")
+    )
+    export_data["inferential"]["kmeans"] = {
+        "features": ["Q11", "Q12", "Q13"],
+        "cluster_range": [int(k) for k in CLUSTER_RANGE],
+        "scores": [{"k": int(k), "silhouette_score": sil} for k, sil in cluster_scores],
+        "best_k": int(best_k),
+        "profiles": [
+            {
+                "profile": int(row["Profile"]),
+                "size_n": int(sizes[int(row["Profile"])]),
+                "Q11_mean": row["Q11"],
+                "Q12_mean": row["Q12"],
+                "Q13_mean": row["Q13"],
+            }
+            for _, row in profile_means_unrounded.iterrows()
+        ],
+    }
 
     lines.append("")
     lines.append("## 5) Notes for Manuscript Positioning")
@@ -478,6 +609,7 @@ def main():
         ("Educational level", "Q4", demographics_value_labels.get("Q4", {})),
         ("Marital status", "Q5", demographics_value_labels.get("Q5", {})),
     ]
+    demographics_export = []
     for var_label, col, categories in demographic_specs:
         valid = df[col].dropna()
         denom = len(valid)
@@ -485,12 +617,25 @@ def main():
             count = int((valid == code).sum())
             pct = (count / denom * 100.0) if denom else np.nan
             lines.append(f"| {var_label} | {cat_label} | {count} | {pct:.2f}% |")
+            demographics_export.append(
+                {
+                    "variable": var_label,
+                    "question_id": col,
+                    "category_code": int(code),
+                    "category_label": cat_label,
+                    "count": count,
+                    "percentage": pct,
+                    "denominator": int(denom),
+                }
+            )
+    export_data["descriptive"]["demographics"] = demographics_export
 
     lines.append("")
     lines.append("## Core Beliefs Likert Distribution")
     lines.append("")
     lines.append("| Question | Disagree % | Neutral % | Agree % |")
     lines.append("|---|---:|---:|---:|")
+    likert_export = []
     for qcol in ["Q11", "Q12", "Q13"]:
         valid = df[qcol].dropna()
         denom = len(valid)
@@ -498,6 +643,16 @@ def main():
         neutral_pct = ((valid == 3).sum() / denom * 100.0) if denom else np.nan
         agree_pct = (valid.isin([4, 5]).sum() / denom * 100.0) if denom else np.nan
         lines.append(f"| {qcol} | {disagree_pct:.2f}% | {neutral_pct:.2f}% | {agree_pct:.2f}% |")
+        likert_export.append(
+            {
+                "question_id": qcol,
+                "disagree_pct": disagree_pct,
+                "neutral_pct": neutral_pct,
+                "agree_pct": agree_pct,
+                "denominator": int(denom),
+            }
+        )
+    export_data["descriptive"]["likert"] = likert_export
 
     lines.append("")
     lines.append("## Correlation Matrix: Primary Beliefs")
@@ -519,6 +674,14 @@ def main():
         row_col = corr_cols[row_name]
         row_vals = [f"{corr.loc[row_col, corr_cols[col_name]]:.3f}" for col_name in corr_order]
         lines.append(f"| {row_name} | " + " | ".join(row_vals) + " |")
+    export_data["descriptive"]["correlations"] = {
+        "method": "pearson",
+        "variables": corr_order,
+        "matrix": [
+            [corr.loc[corr_cols[row_name], corr_cols[col_name]] for col_name in corr_order]
+            for row_name in corr_order
+        ],
+    }
 
     lines.append("")
     lines.append("## Acceptance by Prior Use")
@@ -526,11 +689,21 @@ def main():
     lines.append("| Prior Use | Recommend Yes % | Sample n |")
     lines.append("|---|---:|---:|")
     prior_use_specs = [("Yes", 1), ("No", 0)]
+    acceptance_by_prior_use_export = []
     for label, code in prior_use_specs:
         subgroup = df[(df["Q31"] == code) & (df["Q8"].isin([0, 1, 2]))]
         denom = len(subgroup)
         recommend_yes_pct = ((subgroup["Q8"] == 1).sum() / denom * 100.0) if denom else np.nan
         lines.append(f"| {label} | {recommend_yes_pct:.2f}% | {denom} |")
+        acceptance_by_prior_use_export.append(
+            {
+                "prior_use_label": label,
+                "prior_use_code": int(code),
+                "recommend_yes_pct": recommend_yes_pct,
+                "sample_n": int(denom),
+            }
+        )
+    export_data["descriptive"]["acceptance_by_prior_use"] = acceptance_by_prior_use_export
 
     lines.append("")
     lines.append("## General Attitudes Distribution")
@@ -543,6 +716,7 @@ def main():
         ("Recommendation willingness", "Q8"),
         ("Social concerns", "Q9"),
     ]
+    attitudes_export = []
     for label, col in attitude_specs:
         valid = df[df[col].isin([0, 1, 2])][col]
         denom = len(valid)
@@ -553,6 +727,20 @@ def main():
         unsure_pct = (unsure_n / denom * 100.0) if denom else np.nan
         no_pct = (no_n / denom * 100.0) if denom else np.nan
         lines.append(f"| {label} | {yes_n} | {yes_pct:.2f}% | {unsure_n} | {unsure_pct:.2f}% | {no_n} | {no_pct:.2f}% |")
+        attitudes_export.append(
+            {
+                "question_label": label,
+                "question_id": col,
+                "yes_n": yes_n,
+                "yes_pct": yes_pct,
+                "not_sure_n": unsure_n,
+                "not_sure_pct": unsure_pct,
+                "no_n": no_n,
+                "no_pct": no_pct,
+                "sample_n": int(denom),
+            }
+        )
+    export_data["descriptive"]["attitudes"] = attitudes_export
 
     lines.append("")
     lines.append("## Recommendation by Gender")
@@ -564,6 +752,7 @@ def main():
         ("Male", 1),
         ("Female", 2),
     ]
+    gender_crosstabs_export = []
     for fallback_label, gender_code in gender_specs:
         gender_label = gender_label_map.get(gender_code, fallback_label)
         subgroup = df[(df["Q2"] == gender_code) & (df["Q8"].isin([0, 1, 2]))]["Q8"]
@@ -577,12 +766,28 @@ def main():
         lines.append(
             f"| {gender_label} | {yes_n} | {yes_pct:.2f}% | {unsure_n} | {unsure_pct:.2f}% | {no_n} | {no_pct:.2f}% | {denom} |"
         )
+        gender_crosstabs_export.append(
+            {
+                "gender_label": gender_label,
+                "gender_code": int(gender_code),
+                "yes_n": yes_n,
+                "yes_pct": yes_pct,
+                "not_sure_n": unsure_n,
+                "not_sure_pct": unsure_pct,
+                "no_n": no_n,
+                "no_pct": no_pct,
+                "sample_n": int(denom),
+            }
+        )
+    export_data["descriptive"]["gender_crosstabs"] = gender_crosstabs_export
 
     output_text = "\n".join(lines) + "\n"
     ANALYSIS_MD.write_text(output_text, encoding="utf-8")
     ROOT_ANALYSIS_MD.write_text(output_text, encoding="utf-8")
+    ANALYSIS_JSON.write_text(json.dumps(to_builtin(export_data), ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(f"Unified analysis written to: {ANALYSIS_MD}")
     print(f"Root analysis file updated: {ROOT_ANALYSIS_MD}")
+    print(f"Structured analysis JSON written to: {ANALYSIS_JSON}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,811 @@
+{
+  "meta": {
+    "n_total": 877
+  },
+  "inferential": {
+    "hierarchical": {
+      "complete_case_n": 647,
+      "blocks": [
+        {
+          "block": "Block 1",
+          "formula": "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary",
+          "fit_type": "mle",
+          "mcfadden_pseudo_r2": 0.0039990498185187295,
+          "llr_pvalue": 0.5037235468468545
+        },
+        {
+          "block": "Block 2",
+          "formula": "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary",
+          "fit_type": "mle",
+          "mcfadden_pseudo_r2": 0.011619605947983613,
+          "llr_pvalue": 0.0846913856059485
+        },
+        {
+          "block": "Block 3",
+          "formula": "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary",
+          "fit_type": "mle",
+          "mcfadden_pseudo_r2": 0.06864233275800224,
+          "llr_pvalue": 4.607557873463747e-09
+        }
+      ]
+    },
+    "primary_or": [
+      {
+        "predictor": "Intercept",
+        "adjusted_or": 1.1276739715811561,
+        "ci_low": 0.29759579409175235,
+        "ci_high": 4.273073112685032,
+        "p_value": 0.8596803497107202
+      },
+      {
+        "predictor": "Age_Binary",
+        "adjusted_or": 0.9608253179884326,
+        "ci_low": 0.5834160222703075,
+        "ci_high": 1.582379051050202,
+        "p_value": 0.8752459383501772
+      },
+      {
+        "predictor": "Gender_Binary",
+        "adjusted_or": 1.5161761505944464,
+        "ci_low": 1.0425934057517812,
+        "ci_high": 2.2048769030663578,
+        "p_value": 0.02938568251532387
+      },
+      {
+        "predictor": "Edu_Binary",
+        "adjusted_or": 1.3805140798921391,
+        "ci_low": 0.7497954983741538,
+        "ci_high": 2.541785231990578,
+        "p_value": 0.3004953137664179
+      },
+      {
+        "predictor": "Married_Binary",
+        "adjusted_or": 1.0746088578919588,
+        "ci_low": 0.6321334247444174,
+        "ci_high": 1.826804519831805,
+        "p_value": 0.7903989368828761
+      },
+      {
+        "predictor": "PriorUse_Binary",
+        "adjusted_or": 1.342454360813177,
+        "ci_low": 0.8002813711513836,
+        "ci_high": 2.2519376007384397,
+        "p_value": 0.2644955762393485
+      },
+      {
+        "predictor": "Q11",
+        "adjusted_or": 0.8303629977132427,
+        "ci_low": 0.6956425625088721,
+        "ci_high": 0.9911738371565338,
+        "p_value": 0.039578891019225036
+      },
+      {
+        "predictor": "Q12",
+        "adjusted_or": 0.8689626225239722,
+        "ci_low": 0.7007247636212474,
+        "ci_high": 1.0775929131453965,
+        "p_value": 0.20078983080474477
+      },
+      {
+        "predictor": "Q13",
+        "adjusted_or": 1.506808634106848,
+        "ci_low": 1.247755594284569,
+        "ci_high": 1.8196450252108671,
+        "p_value": 2.0474265810741193e-05
+      },
+      {
+        "predictor": "Fear_Binary",
+        "adjusted_or": 0.5043849681323082,
+        "ci_low": 0.35777295526815106,
+        "ci_high": 0.711077213444357,
+        "p_value": 9.389497697135633e-05
+      }
+    ],
+    "sensitivity_model": {
+      "complete_case_n": 406,
+      "fit_type": "mle",
+      "mcfadden_pseudo_r2": 0.24397063767565264,
+      "formula": "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary + Safe_Binary + Acceptable_Binary",
+      "adjusted_or": [
+        {
+          "predictor": "Intercept",
+          "adjusted_or": 0.39838999309889894,
+          "ci_low": 0.053394909598141804,
+          "ci_high": 2.972466622677159,
+          "p_value": 0.36943053381340374
+        },
+        {
+          "predictor": "Age_Binary",
+          "adjusted_or": 1.0470433689819343,
+          "ci_low": 0.5026814705845587,
+          "ci_high": 2.1809035754872217,
+          "p_value": 0.9022725830668105
+        },
+        {
+          "predictor": "Gender_Binary",
+          "adjusted_or": 1.8156291843767225,
+          "ci_low": 1.0614817230176923,
+          "ci_high": 3.105573335534048,
+          "p_value": 0.029418743170088045
+        },
+        {
+          "predictor": "Edu_Binary",
+          "adjusted_or": 0.7204163636531064,
+          "ci_low": 0.26558504507691333,
+          "ci_high": 1.954175307080497,
+          "p_value": 0.5195239835851767
+        },
+        {
+          "predictor": "Married_Binary",
+          "adjusted_or": 1.1145801095497856,
+          "ci_low": 0.506108954335017,
+          "ci_high": 2.4545877127115268,
+          "p_value": 0.7876937296474794
+        },
+        {
+          "predictor": "PriorUse_Binary",
+          "adjusted_or": 0.6617589679173608,
+          "ci_low": 0.3189982264289606,
+          "ci_high": 1.3728130608167326,
+          "p_value": 0.26747519111271
+        },
+        {
+          "predictor": "Q11",
+          "adjusted_or": 0.8883380947035457,
+          "ci_low": 0.6927550168215315,
+          "ci_high": 1.1391394523885872,
+          "p_value": 0.3507147705266135
+        },
+        {
+          "predictor": "Q12",
+          "adjusted_or": 0.8379372041877189,
+          "ci_low": 0.6197138746109826,
+          "ci_high": 1.1330047412649742,
+          "p_value": 0.25068039546999943
+        },
+        {
+          "predictor": "Q13",
+          "adjusted_or": 1.543403370641815,
+          "ci_low": 1.1686521456887429,
+          "ci_high": 2.038325923839924,
+          "p_value": 0.0022266998296153234
+        },
+        {
+          "predictor": "Fear_Binary",
+          "adjusted_or": 0.8786473628169577,
+          "ci_low": 0.5341253401555188,
+          "ci_high": 1.445393300307393,
+          "p_value": 0.6104601539747979
+        },
+        {
+          "predictor": "Safe_Binary",
+          "adjusted_or": 6.759389613042014,
+          "ci_low": 3.58777926803782,
+          "ci_high": 12.734715412380446,
+          "p_value": 3.3570750928940245e-09
+        },
+        {
+          "predictor": "Acceptable_Binary",
+          "adjusted_or": 3.7143536037677265,
+          "ci_low": 2.093300915501184,
+          "ci_high": 6.590749849511778,
+          "p_value": 7.297672269025625e-06
+        }
+      ]
+    },
+    "multinomial": {
+      "complete_case_n": 837,
+      "fit_type": "mle",
+      "log_likelihood": -748.9101795588208,
+      "categories": [
+        0,
+        1,
+        2
+      ],
+      "reference_category": 0,
+      "rows": [
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "const",
+          "beta": -0.06569802871652727,
+          "rrr": 0.9364135916158255,
+          "ci_low": 0.2643781899130905,
+          "ci_high": 3.316727506346516,
+          "p_value": 0.9189018129613157
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Age_Binary",
+          "beta": -0.05495924791392856,
+          "rrr": 0.9465237199836386,
+          "ci_low": 0.5989136614353271,
+          "ci_high": 1.4958869870234357,
+          "p_value": 0.8139311681928789
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Gender_Binary",
+          "beta": 0.4436655173247431,
+          "rrr": 1.5584091375783498,
+          "ci_low": 1.0969327016020158,
+          "ci_high": 2.214027384306064,
+          "p_value": 0.013272929552624187
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Edu_Binary",
+          "beta": 0.16296664701414046,
+          "rrr": 1.176997432655073,
+          "ci_low": 0.6611637569287734,
+          "ci_high": 2.0952796367903037,
+          "p_value": 0.5796907882244224
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Married_Binary",
+          "beta": -0.03379974794449347,
+          "rrr": 0.9667650819495848,
+          "ci_low": 0.5981029067211928,
+          "ci_high": 1.5626654095374088,
+          "p_value": 0.8902738364101672
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "PriorUse_Binary",
+          "beta": 0.32727209991219397,
+          "rrr": 1.387178877083385,
+          "ci_low": 0.8631895061363296,
+          "ci_high": 2.229250035301528,
+          "p_value": 0.17633349110924512
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Q11",
+          "beta": -0.13583827273515983,
+          "rrr": 0.8729838063558316,
+          "ci_low": 0.7415503600404882,
+          "ci_high": 1.0277127046609562,
+          "p_value": 0.10275920870465302
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Q12",
+          "beta": -0.23010797020958904,
+          "rrr": 0.7944478211747436,
+          "ci_low": 0.650642131559326,
+          "ci_high": 0.9700376135444725,
+          "p_value": 0.023911689329368175
+        },
+        {
+          "outcome": 1,
+          "outcome_column": 0,
+          "predictor": "Q13",
+          "beta": 0.46055014967684743,
+          "rrr": 1.5849457025510083,
+          "ci_low": 1.3280480282941487,
+          "ci_high": 1.8915376752312125,
+          "p_value": 3.318461866383348e-07
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "const",
+          "beta": -1.19105549735584,
+          "rrr": 0.30390032872988654,
+          "ci_low": 0.04587636174148177,
+          "ci_high": 2.0131371864788616,
+          "p_value": 0.21695849818388568
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Age_Binary",
+          "beta": 0.08989775646835,
+          "rrr": 1.0940624171811155,
+          "ci_low": 0.549039991319357,
+          "ci_high": 2.180119101728509,
+          "p_value": 0.7982991113455835
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Gender_Binary",
+          "beta": 0.7752576170603246,
+          "rrr": 2.171151380779952,
+          "ci_low": 1.2105032785694125,
+          "ci_high": 3.894164023936914,
+          "p_value": 0.009299090080485217
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Edu_Binary",
+          "beta": 0.2625672062159941,
+          "rrr": 1.3002638510453446,
+          "ci_low": 0.526483808027913,
+          "ci_high": 3.2112784031634143,
+          "p_value": 0.569214820488833
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Married_Binary",
+          "beta": 0.538142713907131,
+          "rrr": 1.712822704365788,
+          "ci_low": 0.8632087268317294,
+          "ci_high": 3.3986700150250306,
+          "p_value": 0.12374954109242832
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "PriorUse_Binary",
+          "beta": 0.3371120628777241,
+          "rrr": 1.4008960433845896,
+          "ci_low": 0.7036495847695977,
+          "ci_high": 2.7890441021338765,
+          "p_value": 0.3372861443160796
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Q11",
+          "beta": -0.16761605230750595,
+          "rrr": 0.845678468656071,
+          "ci_low": 0.6619187228871687,
+          "ci_high": 1.0804530036996494,
+          "p_value": 0.1799453921894102
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Q12",
+          "beta": -0.11653823331971606,
+          "rrr": 0.8899960688219317,
+          "ci_low": 0.6604893519335255,
+          "ci_high": 1.1992517369125009,
+          "p_value": 0.44375225755054426
+        },
+        {
+          "outcome": 2,
+          "outcome_column": 1,
+          "predictor": "Q13",
+          "beta": 0.062168432111817926,
+          "rrr": 1.0641415652454724,
+          "ci_low": 0.8198117280468958,
+          "ci_high": 1.381289425537844,
+          "p_value": 0.6404137395653786
+        }
+      ]
+    },
+    "contact_hypothesis": {
+      "users_n": 127,
+      "non_users_n": 716,
+      "items": [
+        {
+          "item": "Q11",
+          "user_median": 3.0,
+          "non_user_median": 4.0,
+          "mann_whitney_u_stat": 40562.5,
+          "mann_whitney_u_pvalue": 0.042839106790031896,
+          "cliffs_delta": -0.10784982184489508,
+          "chi_square_pvalue": 0.11702046815491264,
+          "cramers_v": 0.09357872763458962,
+          "n_used": 843
+        },
+        {
+          "item": "Q12",
+          "user_median": 4.0,
+          "non_user_median": 4.0,
+          "mann_whitney_u_stat": 39934.5,
+          "mann_whitney_u_pvalue": 0.03169958238616992,
+          "cliffs_delta": -0.11221155128718154,
+          "chi_square_pvalue": 0.04280916641865627,
+          "cramers_v": 0.10835606629715089,
+          "n_used": 840
+        },
+        {
+          "item": "Q13",
+          "user_median": 4.0,
+          "non_user_median": 3.0,
+          "mann_whitney_u_stat": 54386.0,
+          "mann_whitney_u_pvalue": 0.00017055590732634375,
+          "cliffs_delta": 0.1978635537690656,
+          "chi_square_pvalue": 0.002667431824399925,
+          "cramers_v": 0.13904333352833836,
+          "n_used": 842
+        }
+      ]
+    },
+    "kmeans": {
+      "features": [
+        "Q11",
+        "Q12",
+        "Q13"
+      ],
+      "cluster_range": [
+        2,
+        3,
+        4
+      ],
+      "scores": [
+        {
+          "k": 2,
+          "silhouette_score": 0.2741074743106842
+        },
+        {
+          "k": 3,
+          "silhouette_score": 0.27194031866012275
+        },
+        {
+          "k": 4,
+          "silhouette_score": 0.3025055725217987
+        }
+      ],
+      "best_k": 4,
+      "profiles": [
+        {
+          "profile": 0,
+          "size_n": 183,
+          "Q11_mean": 4.404371584699454,
+          "Q12_mean": 4.114754098360656,
+          "Q13_mean": 4.311475409836065
+        },
+        {
+          "profile": 1,
+          "size_n": 230,
+          "Q11_mean": 2.9608695652173913,
+          "Q12_mean": 2.8043478260869565,
+          "Q13_mean": 3.5782608695652174
+        },
+        {
+          "profile": 2,
+          "size_n": 232,
+          "Q11_mean": 2.6939655172413794,
+          "Q12_mean": 4.25,
+          "Q13_mean": 3.7198275862068964
+        },
+        {
+          "profile": 3,
+          "size_n": 223,
+          "Q11_mean": 4.358744394618834,
+          "Q12_mean": 4.291479820627803,
+          "Q13_mean": 2.609865470852018
+        }
+      ]
+    }
+  },
+  "descriptive": {
+    "demographics": [
+      {
+        "variable": "Gender",
+        "question_id": "Q2",
+        "category_code": 1,
+        "category_label": "Male",
+        "count": 244,
+        "percentage": 28.045977011494255,
+        "denominator": 870
+      },
+      {
+        "variable": "Gender",
+        "question_id": "Q2",
+        "category_code": 2,
+        "category_label": "Female",
+        "count": 626,
+        "percentage": 71.95402298850576,
+        "denominator": 870
+      },
+      {
+        "variable": "Age",
+        "question_id": "Q1",
+        "category_code": 1,
+        "category_label": "18-25",
+        "count": 651,
+        "percentage": 74.5704467353952,
+        "denominator": 873
+      },
+      {
+        "variable": "Age",
+        "question_id": "Q1",
+        "category_code": 2,
+        "category_label": "26-35",
+        "count": 153,
+        "percentage": 17.525773195876287,
+        "denominator": 873
+      },
+      {
+        "variable": "Age",
+        "question_id": "Q1",
+        "category_code": 3,
+        "category_label": "36-45",
+        "count": 44,
+        "percentage": 5.040091638029782,
+        "denominator": 873
+      },
+      {
+        "variable": "Age",
+        "question_id": "Q1",
+        "category_code": 4,
+        "category_label": "46-60",
+        "count": 24,
+        "percentage": 2.7491408934707904,
+        "denominator": 873
+      },
+      {
+        "variable": "Age",
+        "question_id": "Q1",
+        "category_code": 5,
+        "category_label": ">60",
+        "count": 1,
+        "percentage": 0.11454753722794961,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 1,
+        "category_label": "Primary",
+        "count": 5,
+        "percentage": 0.572737686139748,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 2,
+        "category_label": "Middle School",
+        "count": 0,
+        "percentage": 0.0,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 3,
+        "category_label": "High School",
+        "count": 61,
+        "percentage": 6.987399770904926,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 4,
+        "category_label": "Institute/Diploma",
+        "count": 0,
+        "percentage": 0.0,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 5,
+        "category_label": "University",
+        "count": 689,
+        "percentage": 78.92325315005728,
+        "denominator": 873
+      },
+      {
+        "variable": "Educational level",
+        "question_id": "Q4",
+        "category_code": 6,
+        "category_label": "Postgraduate",
+        "count": 118,
+        "percentage": 13.516609392898053,
+        "denominator": 873
+      },
+      {
+        "variable": "Marital status",
+        "question_id": "Q5",
+        "category_code": 1,
+        "category_label": "Single",
+        "count": 684,
+        "percentage": 78.44036697247707,
+        "denominator": 872
+      },
+      {
+        "variable": "Marital status",
+        "question_id": "Q5",
+        "category_code": 2,
+        "category_label": "Married",
+        "count": 183,
+        "percentage": 20.98623853211009,
+        "denominator": 872
+      },
+      {
+        "variable": "Marital status",
+        "question_id": "Q5",
+        "category_code": 3,
+        "category_label": "Divorced",
+        "count": 3,
+        "percentage": 0.34403669724770647,
+        "denominator": 872
+      },
+      {
+        "variable": "Marital status",
+        "question_id": "Q5",
+        "category_code": 4,
+        "category_label": "Widowed",
+        "count": 2,
+        "percentage": 0.22935779816513763,
+        "denominator": 872
+      }
+    ],
+    "likert": [
+      {
+        "question_id": "Q11",
+        "disagree_pct": 13.777267508610791,
+        "neutral_pct": 34.672789896670494,
+        "agree_pct": 51.549942594718715,
+        "denominator": 871
+      },
+      {
+        "question_id": "Q12",
+        "disagree_pct": 4.953917050691245,
+        "neutral_pct": 27.64976958525346,
+        "agree_pct": 67.3963133640553,
+        "denominator": 868
+      },
+      {
+        "question_id": "Q13",
+        "disagree_pct": 12.183908045977011,
+        "neutral_pct": 35.86206896551724,
+        "agree_pct": 51.95402298850574,
+        "denominator": 870
+      }
+    ],
+    "correlations": {
+      "method": "pearson",
+      "variables": [
+        "Q11",
+        "Q12",
+        "Q13",
+        "Concern",
+        "Acceptance",
+        "Recommend"
+      ],
+      "matrix": [
+        [
+          1.0,
+          0.26863553826144904,
+          -0.06638153531398759,
+          0.05875824839020761,
+          -0.08512375710234764,
+          -0.0860694567848087
+        ],
+        [
+          0.26863553826144904,
+          1.0,
+          -0.038442360721923925,
+          0.05797144076748724,
+          -0.16333495564154893,
+          -0.08685624196044027
+        ],
+        [
+          -0.06638153531398759,
+          -0.038442360721923925,
+          1.0,
+          -0.10471457035910159,
+          0.026404442440747276,
+          0.07738684804700877
+        ],
+        [
+          0.05875824839020761,
+          0.05797144076748724,
+          -0.10471457035910159,
+          1.0,
+          -0.040454549320437384,
+          -0.042098521925526586
+        ],
+        [
+          -0.08512375710234764,
+          -0.16333495564154893,
+          0.026404442440747276,
+          -0.040454549320437384,
+          1.0,
+          0.23166143671540965
+        ],
+        [
+          -0.0860694567848087,
+          -0.08685624196044027,
+          0.07738684804700877,
+          -0.042098521925526586,
+          0.23166143671540965,
+          1.0
+        ]
+      ]
+    },
+    "acceptance_by_prior_use": [
+      {
+        "prior_use_label": "Yes",
+        "prior_use_code": 1,
+        "recommend_yes_pct": 65.07936507936508,
+        "sample_n": 126
+      },
+      {
+        "prior_use_label": "No",
+        "prior_use_code": 0,
+        "recommend_yes_pct": 55.8041958041958,
+        "sample_n": 715
+      }
+    ],
+    "attitudes": [
+      {
+        "question_label": "Safety perception",
+        "question_id": "Q6",
+        "yes_n": 206,
+        "yes_pct": 23.65097588978186,
+        "not_sure_n": 272,
+        "not_sure_pct": 31.228473019517793,
+        "no_n": 393,
+        "no_pct": 45.120551090700346,
+        "sample_n": 871
+      },
+      {
+        "question_label": "Acceptability",
+        "question_id": "Q7",
+        "yes_n": 268,
+        "yes_pct": 30.804597701149426,
+        "not_sure_n": 154,
+        "not_sure_pct": 17.70114942528736,
+        "no_n": 448,
+        "no_pct": 51.49425287356322,
+        "sample_n": 870
+      },
+      {
+        "question_label": "Recommendation willingness",
+        "question_id": "Q8",
+        "yes_n": 501,
+        "yes_pct": 57.65247410817032,
+        "not_sure_n": 101,
+        "not_sure_pct": 11.622554660529344,
+        "no_n": 267,
+        "no_pct": 30.724971231300348,
+        "sample_n": 869
+      },
+      {
+        "question_label": "Social concerns",
+        "question_id": "Q9",
+        "yes_n": 329,
+        "yes_pct": 37.772675086107924,
+        "not_sure_n": 114,
+        "not_sure_pct": 13.088404133180253,
+        "no_n": 428,
+        "no_pct": 49.13892078071183,
+        "sample_n": 871
+      }
+    ],
+    "gender_crosstabs": [
+      {
+        "gender_label": "Male",
+        "gender_code": 1,
+        "yes_n": 136,
+        "yes_pct": 55.96707818930041,
+        "not_sure_n": 20,
+        "not_sure_pct": 8.23045267489712,
+        "no_n": 87,
+        "no_pct": 35.80246913580247,
+        "sample_n": 243
+      },
+      {
+        "gender_label": "Female",
+        "gender_code": 2,
+        "yes_n": 365,
+        "yes_pct": 58.4,
+        "not_sure_n": 81,
+        "not_sure_pct": 12.959999999999999,
+        "no_n": 179,
+        "no_pct": 28.64,
+        "sample_n": 625
+      }
+    ]
+  }
+}
