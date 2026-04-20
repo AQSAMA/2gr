@@ -2,7 +2,7 @@
 
 ## A. Study Design and Setting
 
-This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the study data-processing outputs. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
+This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in `survey_data_results.md` and `analysis_pipeline/output/cleaning_report.md`. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
 
 ## B. Participants and Sampling
 
@@ -10,7 +10,7 @@ The study analyzed all available respondent records retained after preprocessing
 
 ## C. Survey Instrument
 
-The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, disease-model acceptability, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
+The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, acceptability of psychiatric medication in comparison with treatment for chronic medical conditions, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
 
 The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block had high missingness and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
 
