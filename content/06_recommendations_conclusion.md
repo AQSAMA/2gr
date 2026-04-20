@@ -2,7 +2,7 @@
 
 ## A. Policy-Level Recommendations
 
-The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and primary care directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.
+The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and Primary Care Directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.
 
 National guidance should also formalize integrated mental health care in primary care settings, with defined roles for psychiatrists, primary care physicians, and pharmacists. Regional evidence supports integrated models for improving access and outcomes in resource-limited systems (Cubillos et al., 2021; Okasha et al., 2025). For Iraq, this model can reduce specialist bottlenecks and create earlier treatment contact points.
 
@@ -20,7 +20,7 @@ Primary care teams should create a simple referral-feedback loop between clinics
 
 Pharmacy and medical curricula in Iraq should include practical training on stigma-sensitive communication about psychiatric medication. Students should learn how to address dependence concerns, social blame, and family objections in clear Arabic and English clinical language. This recommendation is supported by local and regional evidence showing that stigma remains present even among highly educated groups (Hussein Alwan et al., 2025; Elyamani et al., 2021).
 
-Public education campaigns should prioritize message testing before national rollout. Because the survey identified different belief profiles, one uniform message will likely have limited impact. Campaigns should adapt tone and content to subgroups with high fear, high dependence concern, or high distrust of prescribing.
+Public education campaigns should prioritize message testing before national rollout. Because the survey identified exploratory belief profiles, one uniform message will likely have limited impact. Campaigns should adapt tone and content to subgroups with high fear, high dependence concern, or high distrust of prescribing.
 
 ## D. Research Recommendations
 
@@ -32,7 +32,7 @@ Researchers should also conduct repeated cross-sectional surveys with harmonized
 
 ## A. What the Cross-Sectional Study Adds
 
-This study adds current Iraqi primary data showing that public acceptance of psychiatric medication is not binary. Many respondents supported recommending treatment, yet large proportions still doubted safety and social acceptability. The strongest predictors were attitudinal beliefs and fear rather than most demographic variables, which identifies practical targets for intervention.
+This study adds current Iraqi primary data showing that public acceptance of psychiatric medication is not binary. Many respondents supported recommending treatment, yet large proportions still doubted safety and social acceptability. Key predictors were attitudinal beliefs and fear rather than most demographic variables, which identifies practical targets for intervention.
 
 ## B. What the Combined Evidence (Survey + Literature) Indicates for Iraq
 
