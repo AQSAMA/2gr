@@ -4,13 +4,13 @@
 
 The final survey dataset included 877 respondents. Gender distribution was 71.95% female (n=626) and 28.05% male (n=244). Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1). Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5). Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2).
 
-Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11, 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12, 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13, 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. Visual summaries of the main question structure, gender-stratified recommendation pattern, and diverging Likert distributions are shown in `../figures/27_donut_main_questions.png`, `../figures/31_gender_recommendation_breakdown.png`, and `../figures/19_likert_diverging_q11_q13.png`.
+Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11, 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12, 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13, 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in `../figures/27_donut_main_questions.png`. The gender-stratified recommendation pattern is shown in `../figures/31_gender_recommendation_breakdown.png`. The diverging Likert distribution for Q11 and Q13 is shown in `../figures/19_likert_diverging_q11_q13.png`.
 
 ## IV.B Main Outcome Distributions
 
 The primary attitude outcomes showed mixed acceptance patterns. For safety perception, 23.65% answered yes, 31.23% answered not sure, and 45.12% answered no. For acceptability, 30.80% answered yes, 17.70% answered not sure, and 51.49% answered no. For recommendation willingness, 57.65% answered yes, 11.62% answered not sure, and 30.72% answered no. For social concerns, 37.77% answered yes, 13.09% answered not sure, and 49.14% answered no.
 
-Bivariate correlation patterns among core variables were modest in magnitude. Q11 and Q12 were positively correlated (r=0.269), while Q13 had small negative correlations with Q11 (r=-0.066) and Q12 (r=-0.038). Recommendation had small negative correlations with Q11 (r=-0.086) and Q12 (r=-0.087), and a small positive correlation with Q13 (r=0.077). Acceptance and recommendation were positively correlated (r=0.232). Concern showed weak correlations with all listed variables, including recommendation (r=-0.042).
+Bivariate correlations among core variables were as follows: Q11 with Q12, r=0.269; Q13 with Q11, r=-0.066; Q13 with Q12, r=-0.038; recommendation with Q11, r=-0.086; recommendation with Q12, r=-0.087; recommendation with Q13, r=0.077; acceptance with recommendation, r=0.232; and concern with recommendation, r=-0.042.
 
 ## IV.C Hierarchical Logistic Regression (Primary Model)
 
@@ -32,7 +32,7 @@ For the second non-reference equation (Q8=2 vs reference), gender remained stati
 
 The contact analysis compared Users vs Non-Users using prior use status (users n=127, non-users n=716). Nonparametric tests showed statistically significant group differences across all three core belief items.
 
-For Q11, the user median was 3.00 and the non-user median was 4.00 (Mann-Whitney U p=0.0428), with Cliff’s delta -0.108 and chi-square p=0.1170 (Cramer’s V=0.094, N=843). For Q12, both medians were 4.00 but distributional difference remained significant (Mann-Whitney U p=0.0317), with Cliff’s delta -0.112 and chi-square p=0.0428 (Cramer’s V=0.108, N=840). For Q13, the user median was 4.00 and the non-user median was 3.00 (Mann-Whitney U p=0.0002), with Cliff’s delta 0.198 and chi-square p=0.0027 (Cramer’s V=0.139, N=842).
+For Q11, the user median was 3.00 and the non-user median was 4.00, with Mann-Whitney U p=0.0428, Cliff’s delta -0.108, chi-square p=0.1170, Cramer’s V=0.094, and N=843. For Q12, both medians were 4.00, with Mann-Whitney U p=0.0317, Cliff’s delta -0.112, chi-square p=0.0428, Cramer’s V=0.108, and N=840. For Q13, the user median was 4.00 and the non-user median was 3.00, with Mann-Whitney U p=0.0002, Cliff’s delta 0.198, chi-square p=0.0027, Cramer’s V=0.139, and N=842.
 
 ## IV.F Exploratory Stigma Phenotypes (Clearly Labeled)
 
