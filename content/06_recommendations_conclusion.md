@@ -2,7 +2,7 @@
 
 ## A. Policy-Level Recommendations
 
-The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers, so policy messaging should move beyond general awareness and directly address these beliefs with standardized, evidence-based language.
+The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and primary care directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.
 
 National guidance should also formalize integrated mental health care in primary care settings, with defined roles for psychiatrists, primary care physicians, and pharmacists. Regional evidence supports integrated models for improving access and outcomes in resource-limited systems (Cubillos et al., 2021; Okasha et al., 2025). For Iraq, this model can reduce specialist bottlenecks and create earlier treatment contact points.
 
@@ -10,9 +10,9 @@ Policy should also support public campaigns that include religious and community
 
 ## B. Practice-Level Recommendations (Pharmacists, Physicians, Primary Care)
 
-Pharmacists should implement structured counseling at first dispensing and refill visits for psychiatric medications. Counseling should cover expected benefits, common adverse effects, dependence myths, and signs that require physician follow-up. The present survey findings justify this focus because beliefs on overprescribing, dependence, and safety were statistically linked to recommendation behavior.
+Pharmacists should implement structured counseling at first dispensing and refill visits for psychiatric medications. Counseling should cover expected benefits, common adverse effects, misconceptions about inevitable addiction, and signs that require physician follow-up. The present survey findings justify this focus because beliefs on overprescribing, dependence, and safety were statistically linked to recommendation behavior.
 
-Physicians should use brief shared-decision communication in outpatient and inpatient settings, especially when introducing or changing treatment. Clear explanation of why a specific medicine is selected can reduce overprescribing suspicion and improve trust. In hospital settings, prescribing audits should monitor high-dose and polypharmacy patterns, given documented Iraqi concerns about prescribing intensity in inpatient care (Nassr & Wadeea, 2026).
+Physicians should use brief shared-decision communication in outpatient and inpatient settings, especially when introducing or changing treatment. Clear explanation of why a specific medicine is selected can reduce overprescribing suspicion and improve trust. In hospital settings, monthly prescribing audits led by senior psychiatrists and clinical pharmacists should monitor high-dose and polypharmacy patterns. Audit findings should trigger direct prescriber feedback and case-review meetings for outlier patterns, given documented Iraqi concerns about prescribing intensity in inpatient care (Nassr & Wadeea, 2026).
 
 Primary care teams should create a simple referral-feedback loop between clinics and community pharmacies so patients receive consistent messages. Inconsistency across providers can strengthen uncertainty, which remained visible in the multinomial model.
 
