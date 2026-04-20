@@ -3,12 +3,12 @@
 ## A. Study Design and Setting
 
 This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the study’s unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
-The available study files did not report a single field setting or a clearly dated data-collection period, so those metadata were not available in the source files.
+The available study files did not report a defined study location or a clearly dated data-collection period, so those metadata were not available in the source files.
 
 ## B. Participants and Sampling
 
 The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. Preprocessing removed the questionnaire label row, normalized text encoding and spacing, mapped Arabic response options to numeric categories, and checked unmapped values before analysis. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
-The available source documents did not include explicit participant eligibility criteria or recruitment-channel details, so this section reports the achieved analytic sample rather than a protocol-level enrollment flow.
+The available source documents did not include explicit participant eligibility criteria or recruitment methods, so this section reports the achieved analytic sample rather than a protocol-level enrollment flow.
 
 ## C. Survey Instrument
 
@@ -44,6 +44,7 @@ Fifth, we conducted exploratory stigma-phenotype profiling using k-means cluster
 
 The analysis used de-identified survey data and reported aggregate findings only. No personal identifiers were used in the analytic outputs. The available dataset was handled as anonymized observational data for academic research use.
 Formal ethics-approval metadata and explicit participant-consent documentation were not included in the provided study files.
+Despite this documentation gap, the analysis followed ethical principles for anonymized secondary-data use and aggregate-only reporting.
 
 ## G. Methodological Limitations
 
