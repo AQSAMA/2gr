@@ -2,7 +2,7 @@
 
 ## A. Background and Context
 
-Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability, and this history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).
+Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability. This history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).
 
 At the same time, service capacity did not expand at the same pace as need. Iraqi psychiatry moved through periods of growth and then major workforce loss, especially after conflict-related migration waves, which left a long gap between population demand and specialist availability (Younis & Khunda, 2020; Sadik et al., 2010).
 

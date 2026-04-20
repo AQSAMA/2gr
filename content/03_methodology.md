@@ -6,13 +6,13 @@ This study used an original cross-sectional survey design to examine psychiatric
 
 ## B. Participants and Sampling
 
-The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
+The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. Preprocessing removed the questionnaire label row, normalized text encoding and spacing, mapped Arabic response options to numeric categories, and checked unmapped values before analysis. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
 
 ## C. Survey Instrument
 
 The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, acceptability of psychiatric medication in comparison with treatment for chronic medical conditions, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
 
-The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block had high missingness and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
+The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block had high missingness, approximately 84% to 85% across those items, and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
 
 ## D. Variables and Operational Definitions
 
@@ -28,7 +28,7 @@ Data management followed a predefined cleaning pipeline. First, the source sprea
 
 Missingness was quantified per variable. Core variables used in the main models had low missingness, while subgroup medication-belief items had high missingness. Therefore, each inferential model used complete-case records for its own covariate set rather than global listwise deletion across all questionnaire items.
 
-The analysis sequence followed the unified survey results protocol. We first estimated hierarchical logistic regression in three blocks for recommendation willingness, progressing from demographic factors to prior medication use and then to belief variables and concern indicator. The complete-case sample for this primary hierarchical model set was 647 respondents. We reported adjusted odds ratios with 95% confidence intervals, model likelihood-ratio p-values, and McFadden pseudo R-squared values.
+The analysis sequence followed the project’s documented analysis workflow used to generate the unified survey results report. We first estimated hierarchical logistic regression in three blocks for recommendation willingness, progressing from demographic factors to prior medication use and then to belief variables and concern indicator. The complete-case sample for this primary hierarchical model set was 647 respondents. We reported adjusted odds ratios with 95% confidence intervals, model likelihood-ratio p-values, and McFadden pseudo R-squared values.
 
 Second, we estimated a sensitivity logistic model that added perceived safety and acceptability items to test robustness while acknowledging their conceptual proximity to the recommendation outcome. The sensitivity complete-case sample was 406 respondents.
 
