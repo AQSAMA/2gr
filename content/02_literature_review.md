@@ -28,7 +28,7 @@ Family and caregiver context adds another layer that is highly relevant to Iraqi
 
 ## D. Iraqi and Regional Service Realities
 
-Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Wadeea, 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.
+Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Raghad F., 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.
 
 Community and student-level Iraqi evidence reflects parallel concerns. Research in Basra medical-group students reports measurable psychotropic drug use patterns alongside anxiety and depression burden, suggesting that even health-educated populations may face unresolved medication and mental health challenges (Kadhim et al., 2024). At the care-seeking level, Iraqi psychiatric-clinic evidence indicates frequent prior or concurrent use of faith-healing pathways, often before psychiatric consultation, which can delay formal treatment and fragment continuity of care (Younis et al., 2020).
 

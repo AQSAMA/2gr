@@ -3,16 +3,18 @@
 ## A. Study Design and Setting
 
 This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the study’s unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
+The available study files did not report a single field setting or a clearly dated data-collection period, so those metadata are currently unavailable in this draft.
 
 ## B. Participants and Sampling
 
 The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. Preprocessing removed the questionnaire label row, normalized text encoding and spacing, mapped Arabic response options to numeric categories, and checked unmapped values before analysis. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
+The available source documents did not provide explicit participant eligibility criteria or recruitment-channel details, so this section reports the achieved analytic sample rather than a protocol-level enrollment flow.
 
 ## C. Survey Instrument
 
 The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, acceptability of psychiatric medication in comparison with treatment for chronic medical conditions, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
 
-The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block had high missingness, approximately 84% to 85% across those items, and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
+The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block showed substantial missingness and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
 
 ## D. Variables and Operational Definitions
 
@@ -34,13 +36,14 @@ Second, we estimated a sensitivity logistic model that added perceived safety an
 
 Third, we estimated multinomial logistic regression to preserve the no, yes, and not sure structure of recommendation responses and reported relative risk ratios with 95% confidence intervals. The multinomial complete-case sample was 837 respondents.
 
-Fourth, we tested the contact hypothesis as users versus non-users by comparing core belief items with Mann-Whitney U tests and Cliff’s delta effect sizes, with supplementary chi-square and Cramer’s V statistics for association structure.
+Fourth, we tested the contact hypothesis as Users vs Non-Users by comparing core belief items with Mann-Whitney U tests and Cliff’s delta effect sizes, with supplementary chi-square and Cramer’s V statistics for association structure.
 
 Fifth, we conducted exploratory stigma-phenotype profiling using k-means clustering on standardized core belief items, selected cluster number by silhouette score, and reported cluster means and sizes as exploratory findings.
 
 ## F. Ethical Considerations
 
 The analysis used de-identified survey data and reported aggregate findings only. No personal identifiers were used in the analytic outputs. The available dataset was handled as anonymized observational data for academic research use.
+Formal ethics-approval metadata and explicit participant-consent documentation were not available in the provided study files for this manuscript pass.
 
 ## G. Methodological Limitations
 
