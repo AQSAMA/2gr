@@ -115,7 +115,7 @@ Section 4 defines the required **target** typography/layout specs for the final 
 ## A. Document Formatting
 * **Font:** Times New Roman (English).
 * **Size:** 14pt Body, 1.5 Line Spacing.
-* **Margins:** 3cm (Binding edge), 2cm (Others).
+* **Margins:** 1.5 cm on all sides (Top, Bottom, Right, Left) for the final submitted thesis.
 * **Paragraphs:** Indent the first line of every paragraph (No empty lines between paragraphs).
 
 ## B. Document Structure & Page Breaks
@@ -145,6 +145,7 @@ The following items are intentionally deferred in this phase and are not drafted
 5. Table of Contents
 6. List of Figures
 7. List of Tables
+8. List of Abbreviations
 
 These are completed in a later dedicated front-matter pass.
 
@@ -155,7 +156,7 @@ Maintain approximately 50 references when appropriate for scope, relevance, and 
 ## D. Word-Stage Formatting Controls
 Section 4 defines the formatting targets; this subsection clarifies they are finalized during Word export/final formatting.
 1. Roman numerals for preliminary pages and Arabic numerals from Introduction onward
-2. Exact page margins required by the college guideline
+2. Exact page margins required by the college guideline (1.5 cm on all sides)
 3. Final font hierarchy and spacing controls
 4. Tab-based first-line paragraph indentation
 5. Final table/figure caption placement polish

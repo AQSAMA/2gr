@@ -18,6 +18,7 @@ The following sections are recognized by the college project arrangement but are
 5. Table of Contents
 6. List of Figures
 7. List of Tables
+8. List of Abbreviations
 
 ---
 
