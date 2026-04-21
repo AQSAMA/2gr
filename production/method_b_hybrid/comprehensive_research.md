@@ -6,6 +6,8 @@ The sample was mostly female (about 72%), aged 18–25 years (about 75%), and un
 
 These findings indicate ambivalent public attitudes rather than uniform rejection. The main barriers are fear, mistrust, and dependence concerns, more than demographics. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.
 
+[[CHAPTER_TITLE:Chapter One]]
+
 # I. INTRODUCTION
 
 ## A. Background and Context
@@ -72,6 +74,8 @@ Community and student-level Iraqi evidence reflects parallel concerns. Research 
 
 Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.
 
+[[CHAPTER_TITLE:Chapter Two]]
+
 # III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
 
 ## A. Study Design and Setting
@@ -124,13 +128,20 @@ Despite this documentation gap, the analysis followed ethical principles for ano
 
 Because the design is cross-sectional, associations should not be interpreted as causal effects. Complete-case modeling can reduce sample size for specific analyses and may introduce selection effects if missingness is not random. The achieved sample was dominated by younger and university-educated respondents, which may limit generalizability to older or less-educated Iraqi populations. Some instrument blocks had substantial missingness, so primary inference relied on the most complete and policy-relevant core variables.
 
+[[CHAPTER_TITLE:Chapter Three]]
+
 # IV. RESULTS
 
 ## IV.A Sample Profile and Descriptive Statistics
 
 The final survey dataset included 877 respondents. Demographic percentages were calculated from valid responses for each variable, not from the full sample in all cases (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244). Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1). Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5). Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2).
 
-Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11, 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12, 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13, 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in [figures/27_donut_main_questions.png](../figures/27_donut_main_questions.png). The gender-stratified recommendation pattern is shown in [figures/31_gender_recommendation_breakdown.png](../figures/31_gender_recommendation_breakdown.png). The diverging Likert distribution for Q11 and Q13 is shown in [figures/19_likert_diverging_q11_q13.png](../figures/19_likert_diverging_q11_q13.png).
+Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11, 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12, 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13, 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in figures/27_donut_main_questions.png. The gender-stratified recommendation pattern is shown in figures/31_gender_recommendation_breakdown.png. The diverging Likert distribution for Q11 and Q13 is shown in figures/19_likert_diverging_q11_q13.png.
+
+![figures/27_donut_main_questions.png](../figures/27_donut_main_questions.png)
+![figures/31_gender_recommendation_breakdown.png](../figures/31_gender_recommendation_breakdown.png)
+![figures/19_likert_diverging_q11_q13.png](../figures/19_likert_diverging_q11_q13.png)
+
 
 ## IV.B Main Outcome Distributions
 
@@ -142,7 +153,10 @@ Bivariate correlations among core variables were as follows: Q11 with Q12, r=0.2
 
 The primary hierarchical logistic regression used a binary recommendation outcome (Q8 yes vs no) with complete-case n=647. Model fit improved across blocks, with McFadden pseudo R² increasing from 0.0040 in Block 1 to 0.0116 in Block 2 and 0.0686 in Block 3. The Block 1 likelihood ratio p-value was 0.5037, Block 2 p-value was 0.0847, and Block 3 p-value was <0.0001.
 
-In the final primary block, gender, Q11, Q13, and fear were statistically significant predictors. Gender had adjusted OR 1.516 (95% CI 1.043 to 2.205, p=0.0294). Q11 had adjusted OR 0.830 (95% CI 0.696 to 0.991, p=0.0396). Q13 had adjusted OR 1.507 (95% CI 1.248 to 1.820, p<0.0001). Fear had adjusted OR 0.504 (95% CI 0.358 to 0.711, p<0.0001). Age, educational level, marital status, prior use, and Q12 were not statistically significant in this final block. The adjusted effect profile is visualized in [figures/03_primary_adjusted_or_forest.png](../figures/03_primary_adjusted_or_forest.png).
+In the final primary block, gender, Q11, Q13, and fear were statistically significant predictors. Gender had adjusted OR 1.516 (95% CI 1.043 to 2.205, p=0.0294). Q11 had adjusted OR 0.830 (95% CI 0.696 to 0.991, p=0.0396). Q13 had adjusted OR 1.507 (95% CI 1.248 to 1.820, p<0.0001). Fear had adjusted OR 0.504 (95% CI 0.358 to 0.711, p<0.0001). Age, educational level, marital status, prior use, and Q12 were not statistically significant in this final block. The adjusted effect profile is visualized in figures/03_primary_adjusted_or_forest.png.
+
+![figures/03_primary_adjusted_or_forest.png](../figures/03_primary_adjusted_or_forest.png)
+
 
 A separate sensitivity model that added Q6 and Q7 used complete-case n=406 and produced McFadden pseudo R² of 0.2440 (fit type: mle). This model was reported as a sensitivity analysis because Q6 and Q7 are proximal to the recommendation outcome.
 
@@ -152,7 +166,10 @@ Multinomial logistic regression preserved the three-category recommendation stru
 
 For the first non-reference equation (Q8=1 Yes vs reference No), gender was positively associated with response likelihood (RRR 1.558, 95% CI 1.097 to 2.214, p=0.0133), Q12 was inversely associated (RRR 0.794, 95% CI 0.651 to 0.970, p=0.0239), and Q13 was positively associated (RRR 1.585, 95% CI 1.328 to 1.892, p<0.0001). Other predictors in this equation were not statistically significant.
 
-For the second non-reference equation (Q8=2 Not sure vs reference No), gender remained statistically significant (RRR 2.171, 95% CI 1.211 to 3.894, p=0.0093), while age, education, marital status, prior use, Q11, Q12, and Q13 were not statistically significant. The comparative predictor pattern is displayed in [figures/08_multinomial_key_predictor_comparison.png](../figures/08_multinomial_key_predictor_comparison.png).
+For the second non-reference equation (Q8=2 Not sure vs reference No), gender remained statistically significant (RRR 2.171, 95% CI 1.211 to 3.894, p=0.0093), while age, education, marital status, prior use, Q11, Q12, and Q13 were not statistically significant. The comparative predictor pattern is displayed in figures/08_multinomial_key_predictor_comparison.png.
+
+![figures/08_multinomial_key_predictor_comparison.png](../figures/08_multinomial_key_predictor_comparison.png)
+
 
 ## IV.E The Contact Hypothesis (Users vs Non-Users)
 
@@ -164,13 +181,18 @@ For Q11, the Users median was 3.00 and the Non-Users median was 4.00, with Mann-
 
 Exploratory k-means clustering on standardized Q11–Q13 evaluated k=2, k=3, and k=4. Silhouette scores were 0.274 for k=2, 0.272 for k=3, and 0.303 for k=4, so k=4 was selected by maximum silhouette criterion.
 
-The four profiles had the following mean structures. Profile 0 (n=183) showed Q11 mean 4.404, Q12 mean 4.115, and Q13 mean 4.311. Profile 1 (n=230) showed Q11 mean 2.961, Q12 mean 2.804, and Q13 mean 3.578. Profile 2 (n=232) showed Q11 mean 2.694, Q12 mean 4.250, and Q13 mean 3.720. Profile 3 (n=223) showed Q11 mean 4.359, Q12 mean 4.291, and Q13 mean 2.610. Profile-level mean contrasts are shown in [figures/14_profile_means_heatmap.png](../figures/14_profile_means_heatmap.png).
+The four profiles had the following mean structures. Profile 0 (n=183) showed Q11 mean 4.404, Q12 mean 4.115, and Q13 mean 4.311. Profile 1 (n=230) showed Q11 mean 2.961, Q12 mean 2.804, and Q13 mean 3.578. Profile 2 (n=232) showed Q11 mean 2.694, Q12 mean 4.250, and Q13 mean 3.720. Profile 3 (n=223) showed Q11 mean 4.359, Q12 mean 4.291, and Q13 mean 2.610. Profile-level mean contrasts are shown in figures/14_profile_means_heatmap.png.
+
+![figures/14_profile_means_heatmap.png](../figures/14_profile_means_heatmap.png)
+
 
 ## IV.G Results Summary
 
 The survey included 877 participants and showed a sample pattern with higher female representation and concentration in younger, university-educated, and single respondents based on variable-specific valid denominators. In descriptive outcomes, recommendation willingness had the highest yes proportion (57.65%), while safety and acceptability showed higher no proportions than yes proportions. In the primary hierarchical logistic model (n=647), the strongest statistically supported predictors in the final block were gender, Q11, Q13, and fear. In the multinomial model (n=837), gender remained significant in both non-reference equations, while Q13 and Q12 were significant in one non-reference equation only. In Users vs Non-Users analyses, Mann-Whitney tests were significant for Q11, Q12, and Q13, and chi-square tests were significant for Q12 and Q13 only. Exploratory phenotype analysis identified a four-profile solution with the highest silhouette score among tested cluster counts.
 
 <div class="page-break"></div>
+
+[[CHAPTER_TITLE:Chapter Four]]
 
 # V. DISCUSSION
 
@@ -215,6 +237,8 @@ Future Iraqi research should test whether targeted pharmacist-led counseling can
 The exploratory stigma phenotypes identified in this study also need confirmatory work. Subsequent studies should validate these profiles with larger and more demographically balanced samples, then evaluate whether each profile responds differently to educational messages, clinician communication style, and family involvement. This would allow Iraq to move from general anti-stigma messaging toward stratified interventions that match the dominant belief pattern in each subgroup.
 
 <div class="page-break"></div>
+
+[[CHAPTER_TITLE:Chapter Five]]
 
 # VI. RECOMMENDATIONS
 

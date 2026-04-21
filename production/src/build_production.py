@@ -41,6 +41,15 @@ CONTENT_FILES = [
 ]
 
 
+CHAPTER_INSERTIONS = [
+    ("# I. INTRODUCTION", "Chapter One"),
+    ("# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)", "Chapter Two"),
+    ("# IV. RESULTS", "Chapter Three"),
+    ("# V. DISCUSSION", "Chapter Four"),
+    ("# VI. RECOMMENDATIONS", "Chapter Five"),
+]
+
+
 def ensure_dirs() -> None:
     for d in [ASSEMBLED_DIR, METHOD_A_DIR, METHOD_B_DIR, PROD_FIGURES_DIR]:
         d.mkdir(parents=True, exist_ok=True)
@@ -57,6 +66,38 @@ def normalize_page_breaks(text: str) -> str:
         '<div style="page-break-after: always;"></div>',
         '<div class="page-break"></div>',
     )
+
+
+def inject_chapter_title_pages(text: str) -> str:
+    for heading, chapter_name in CHAPTER_INSERTIONS:
+        marker = f"\n\n[[CHAPTER_TITLE:{chapter_name}]]\n\n{heading}"
+        text = text.replace(f"\n\n{heading}", marker, 1)
+    return text
+
+
+def transform_inline_figure_links(text: str) -> str:
+    pattern = re.compile(r"\[([^\]]+\.(?:png|jpg|jpeg|webp))\]\(([^)]+\.(?:png|jpg|jpeg|webp))\)")
+    out_lines: list[str] = []
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if not line or line.lstrip().startswith("!"):
+            out_lines.append(line)
+            continue
+
+        matches = list(pattern.finditer(line))
+        if not matches:
+            out_lines.append(line)
+            continue
+
+        cleaned = pattern.sub(lambda m: m.group(1), line)
+        out_lines.append(cleaned)
+        out_lines.append("")
+        for m in matches:
+            out_lines.append(f"![{m.group(1)}]({m.group(2)})")
+        out_lines.append("")
+
+    return "\n".join(out_lines)
 
 
 def collect_figure_md_files() -> list[Path]:
@@ -92,6 +133,8 @@ def assemble_markdown() -> Path:
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
+    merged = inject_chapter_title_pages(merged)
+    merged = transform_inline_figure_links(merged)
 
     out_path = ASSEMBLED_DIR / "comprehensive_research.md"
     out_path.write_text(merged, encoding="utf-8")
@@ -112,9 +155,18 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
             yield ("pagebreak", "")
             continue
 
+        chapter_title = re.match(r"^\[\[CHAPTER_TITLE:(.+)\]\]$", line.strip())
+        if chapter_title:
+            if paragraph_lines:
+                yield ("paragraph", " ".join(paragraph_lines).strip())
+                paragraph_lines = []
+            yield ("chaptertitle", chapter_title.group(1).strip())
+            continue
+
         h1 = re.match(r"^#\s+(.+)$", line)
         h2 = re.match(r"^##\s+(.+)$", line)
         img = re.match(r"^!\[([^\]]*)\]\(([^\)]+)\)", line.strip())
+        ordered_item = re.match(r"^\s*\d+\.\s+.+$", line)
 
         if h1:
             if paragraph_lines:
@@ -133,6 +185,12 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("image", f"{img.group(1)}|||{img.group(2)}")
+            continue
+        if ordered_item:
+            if paragraph_lines:
+                yield ("paragraph", " ".join(paragraph_lines).strip())
+                paragraph_lines = []
+            yield ("paragraph", line.strip())
             continue
 
         if not line.strip():
@@ -163,22 +221,56 @@ def build_docx(md_path: Path, out_path: Path) -> None:
     normal.font.size = Pt(14)
     normal.paragraph_format.line_spacing = 1.5
     normal.paragraph_format.first_line_indent = Inches(0.5)
+    heading_1 = doc.styles["Heading 1"]
+    heading_1.font.name = "Times New Roman"
+    heading_1._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    heading_1.font.size = Pt(18)
+    heading_2 = doc.styles["Heading 2"]
+    heading_2.font.name = "Times New Roman"
+    heading_2._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    heading_2.font.size = Pt(16)
 
+    started = False
+    chapter_just_emitted = False
     for kind, data in iter_markdown_blocks(text):
+        if kind == "chaptertitle":
+            if started:
+                doc.add_page_break()
+            p = doc.add_paragraph(data)
+            p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            p.paragraph_format.first_line_indent = Inches(0)
+            p.paragraph_format.line_spacing = 1.0
+            run = p.runs[0]
+            run.font.name = "Times New Roman"
+            run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+            run.font.size = Pt(36)
+            run.bold = True
+            doc.add_page_break()
+            started = True
+            chapter_just_emitted = True
+            continue
         if kind == "h1":
+            if started and not chapter_just_emitted:
+                doc.add_page_break()
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 1"]
             p.paragraph_format.first_line_indent = Inches(0)
+            started = True
+            chapter_just_emitted = False
             continue
         if kind == "h2":
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 2"]
             p.paragraph_format.first_line_indent = Inches(0)
+            started = True
+            chapter_just_emitted = False
             continue
         if kind == "paragraph":
             p = doc.add_paragraph(data)
             p.paragraph_format.line_spacing = 1.5
             p.paragraph_format.first_line_indent = Inches(0.5)
+            started = True
+            chapter_just_emitted = False
             continue
         if kind == "image":
             _, rel_path = data.split("|||", 1)
@@ -188,9 +280,13 @@ def build_docx(md_path: Path, out_path: Path) -> None:
                 p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                 run = p.add_run()
                 run.add_picture(str(img_path), width=Inches(6.3))
+            started = True
+            chapter_just_emitted = False
             continue
         if kind == "pagebreak":
             doc.add_page_break()
+            started = True
+            chapter_just_emitted = False
 
     doc.save(out_path)
 
@@ -216,7 +312,14 @@ def build_tex(md_path: Path, out_path: Path) -> None:
     body: list[str] = []
 
     for kind, data in iter_markdown_blocks(text):
-        if kind == "h1":
+        if kind == "chaptertitle":
+            body.append("\\newpage")
+            body.append("\\begin{center}\\vspace*{0.42\\textheight}")
+            body.append("{\\LARGE \\textbf{" + escape_latex(data) + "}}")
+            body.append("\\end{center}")
+            body.append("\\newpage")
+        elif kind == "h1":
+            body.append("\\newpage")
             body.append(f"\\section*{{{escape_latex(data)}}}")
         elif kind == "h2":
             body.append(f"\\subsection*{{{escape_latex(data)}}}")
@@ -311,13 +414,40 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
     )
 
     story = []
+    started = False
+    chapter_just_emitted = False
     for kind, data in iter_markdown_blocks(text):
-        if kind == "h1":
+        if kind == "chaptertitle":
+            if started:
+                story.append(PageBreak())
+            chapter_style = ParagraphStyle(
+                "ChapterTitle",
+                parent=styles["Heading1"],
+                fontName="Times-Bold",
+                fontSize=36,
+                leading=42,
+                alignment=1,
+                spaceBefore=260,
+                spaceAfter=260,
+            )
+            story.append(Paragraph(data, chapter_style))
+            story.append(PageBreak())
+            started = True
+            chapter_just_emitted = True
+        elif kind == "h1":
+            if started and not chapter_just_emitted:
+                story.append(PageBreak())
             story.append(Paragraph(data, h1))
+            started = True
+            chapter_just_emitted = False
         elif kind == "h2":
             story.append(Paragraph(data, h2))
+            started = True
+            chapter_just_emitted = False
         elif kind == "paragraph":
             story.append(Paragraph(data, body))
+            started = True
+            chapter_just_emitted = False
         elif kind == "image":
             _, rel_path = data.split("|||", 1)
             img_path = (md_path.parent / rel_path).resolve()
@@ -333,8 +463,12 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
                 story.append(Spacer(1, 8))
                 story.append(img)
                 story.append(Spacer(1, 8))
+            started = True
+            chapter_just_emitted = False
         elif kind == "pagebreak":
             story.append(PageBreak())
+            started = True
+            chapter_just_emitted = False
 
     doc.build(story)
 
@@ -342,6 +476,11 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
 def build_pdf_xhtml2pdf(md_path: Path, out_pdf: Path, out_html: Path) -> None:
     css = (PROD_ROOT / "templates" / "print.css").read_text(encoding="utf-8")
     md_text = md_path.read_text(encoding="utf-8")
+    md_text = re.sub(
+        r"\[\[CHAPTER_TITLE:(.+?)\]\]",
+        r'<div class="page-break"></div><div class="chapter-title">\1</div><div class="page-break"></div>',
+        md_text,
+    )
     html_body = markdown2.markdown(md_text, extras=["tables", "fenced-code-blocks", "cuddled-lists"])
     html = (
         "<html><head><meta charset='utf-8'><style>"
@@ -356,21 +495,19 @@ def build_pdf_xhtml2pdf(md_path: Path, out_pdf: Path, out_html: Path) -> None:
         pisa.CreatePDF(src=html, dest=f, path=str(md_path.parent))
 
 
-def build_with_pandoc(md_path: Path, out_docx: Path, out_tex: Path) -> None:
+def build_with_pandoc(md_path: Path, out_tex: Path) -> None:
+    md_text = md_path.read_text(encoding="utf-8")
+    md_text = re.sub(r"\[\[CHAPTER_TITLE:(.+?)\]\]", r"\n\n# \1\n\n<div class=\"page-break\"></div>\n\n", md_text)
+    tmp_md = METHOD_B_DIR / "_pandoc_input.md"
+    tmp_md.write_text(md_text, encoding="utf-8")
     pypandoc.convert_file(
-        str(md_path),
-        to="docx",
-        format="md",
-        outputfile=str(out_docx),
-        extra_args=["--resource-path", str(md_path.parent)],
-    )
-    pypandoc.convert_file(
-        str(md_path),
+        str(tmp_md),
         to="latex",
         format="md",
         outputfile=str(out_tex),
         extra_args=["--resource-path", str(md_path.parent)],
     )
+    tmp_md.unlink(missing_ok=True)
 
 
 def run_method_a(md_path: Path) -> None:
@@ -380,7 +517,8 @@ def run_method_a(md_path: Path) -> None:
 
 
 def run_method_b(md_path: Path) -> None:
-    build_with_pandoc(md_path, METHOD_B_DIR / "research_method_b.docx", METHOD_B_DIR / "research_method_b.tex")
+    build_docx(md_path, METHOD_B_DIR / "research_method_b.docx")
+    build_with_pandoc(md_path, METHOD_B_DIR / "research_method_b.tex")
     build_pdf_xhtml2pdf(md_path, METHOD_B_DIR / "research_method_b.pdf", METHOD_B_DIR / "research_method_b.html")
 
 
