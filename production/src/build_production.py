@@ -15,7 +15,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak, CondPageBreak
 import markdown2
 from xhtml2pdf import pisa
 import pypandoc
@@ -106,11 +106,6 @@ def transform_inline_figure_links(text: str) -> str:
     return "\n".join(out_lines)
 
 
-def collect_figure_md_files() -> list[Path]:
-    files = sorted(FIGURES_DIR.glob("*.md"), key=lambda p: p.name)
-    return files
-
-
 def rewrite_local_figure_links(md: str) -> str:
     def repl(match: re.Match[str]) -> str:
         alt = match.group(1)
@@ -132,11 +127,6 @@ def assemble_markdown() -> Path:
     parts.append("# VIII. REFERENCES")
     parts.append(REFERENCES_FILE.read_text(encoding="utf-8").strip())
 
-    for fig_md in collect_figure_md_files():
-        fig_text = fig_md.read_text(encoding="utf-8")
-        fig_text = rewrite_local_figure_links(fig_text)
-        parts.append(fig_text.strip())
-
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
     merged = inject_chapter_title_pages(merged)
@@ -147,6 +137,25 @@ def assemble_markdown() -> Path:
     shutil.copy2(out_path, METHOD_A_DIR / "comprehensive_research.md")
     shutil.copy2(out_path, METHOD_B_DIR / "comprehensive_research.md")
     return out_path
+
+
+def normalize_blocks(blocks: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    normalized: list[tuple[str, str]] = []
+    for i, (kind, data) in enumerate(blocks):
+        next_kind = blocks[i + 1][0] if i + 1 < len(blocks) else None
+        if kind == "pagebreak":
+            if not normalized:
+                continue
+            prev_kind = normalized[-1][0]
+            if prev_kind == "pagebreak":
+                continue
+            if next_kind in {"pagebreak", "chaptertitle"}:
+                continue
+        normalized.append((kind, data))
+
+    while normalized and normalized[-1][0] == "pagebreak":
+        normalized.pop()
+    return normalized
 
 
 def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
@@ -213,13 +222,14 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
 
 def build_docx(md_path: Path, out_path: Path) -> None:
     text = md_path.read_text(encoding="utf-8")
+    blocks = normalize_blocks(list(iter_markdown_blocks(text)))
     doc = Document()
 
     section = doc.sections[0]
-    section.left_margin = Cm(3)
-    section.right_margin = Cm(2)
-    section.top_margin = Cm(2)
-    section.bottom_margin = Cm(2)
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
 
     normal = doc.styles["Normal"]
     normal.font.name = "Times New Roman"
@@ -238,10 +248,11 @@ def build_docx(md_path: Path, out_path: Path) -> None:
 
     started = False
     chapter_just_emitted = False
+    last_emitted_pagebreak = False
     in_references = False
-    for kind, data in iter_markdown_blocks(text):
+    for kind, data in blocks:
         if kind == "chaptertitle":
-            if started:
+            if started and not last_emitted_pagebreak:
                 doc.add_page_break()
             p = doc.add_paragraph(data)
             p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
@@ -255,27 +266,33 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             doc.add_page_break()
             started = True
             chapter_just_emitted = True
+            last_emitted_pagebreak = True
             continue
         if kind == "h1":
-            if started and not chapter_just_emitted:
+            if started and not chapter_just_emitted and not last_emitted_pagebreak:
                 doc.add_page_break()
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 1"]
             p.paragraph_format.first_line_indent = Inches(0)
+            p.paragraph_format.keep_with_next = True
             in_references = data.strip().upper() == "VIII. REFERENCES"
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
             continue
         if kind == "h2":
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 2"]
             p.paragraph_format.first_line_indent = Inches(0)
+            p.paragraph_format.keep_with_next = True
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
             continue
         if kind == "paragraph":
             p = doc.add_paragraph(data)
             p.paragraph_format.line_spacing = 1.5
+            p.paragraph_format.widow_control = True
             if in_references:
                 p.paragraph_format.first_line_indent = Inches(0)
                 p.paragraph_format.space_after = Pt(8)
@@ -283,6 +300,7 @@ def build_docx(md_path: Path, out_path: Path) -> None:
                 p.paragraph_format.first_line_indent = Inches(0.5)
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
             continue
         if kind == "image":
             _, rel_path = data.split("|||", 1)
@@ -294,11 +312,14 @@ def build_docx(md_path: Path, out_path: Path) -> None:
                 run.add_picture(str(img_path), width=Inches(6.3))
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
             continue
         if kind == "pagebreak":
-            doc.add_page_break()
-            started = True
+            if not last_emitted_pagebreak:
+                doc.add_page_break()
+                started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = True
 
     doc.save(out_path)
 
@@ -321,22 +342,42 @@ def escape_latex(text: str) -> str:
 
 def build_tex(md_path: Path, out_path: Path) -> None:
     text = md_path.read_text(encoding="utf-8")
+    blocks = normalize_blocks(list(iter_markdown_blocks(text)))
     body: list[str] = []
+    started = False
+    chapter_just_emitted = False
+    last_emitted_pagebreak = False
 
-    for kind, data in iter_markdown_blocks(text):
+    for kind, data in blocks:
         if kind == "chaptertitle":
-            body.append("\\newpage")
+            if started and not last_emitted_pagebreak:
+                body.append("\\newpage")
             body.append("\\begin{center}\\vspace*{0.42\\textheight}")
             body.append("{\\LARGE \\textbf{" + escape_latex(data) + "}}")
             body.append("\\end{center}")
             body.append("\\newpage")
+            started = True
+            chapter_just_emitted = True
+            last_emitted_pagebreak = True
         elif kind == "h1":
-            body.append("\\newpage")
+            if started and not chapter_just_emitted and not last_emitted_pagebreak:
+                body.append("\\newpage")
+            body.append("\\Needspace{5\\baselineskip}")
             body.append(f"\\section*{{{escape_latex(data)}}}")
+            started = True
+            chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "h2":
+            body.append("\\Needspace{5\\baselineskip}")
             body.append(f"\\subsection*{{{escape_latex(data)}}}")
+            started = True
+            chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "paragraph":
             body.append(escape_latex(data) + "\n")
+            started = True
+            chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "image":
             alt, rel_path = data.split("|||", 1)
             rel = rel_path.replace('\\', '/')
@@ -347,19 +388,30 @@ def build_tex(md_path: Path, out_path: Path) -> None:
                 f"\\caption*{{{escape_latex(alt)}}}\n"
                 "\\end{figure}"
             )
+            started = True
+            chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "pagebreak":
-            body.append("\\newpage")
+            if not last_emitted_pagebreak:
+                body.append("\\newpage")
+                started = True
+            chapter_just_emitted = False
+            last_emitted_pagebreak = True
 
     tex = (
         "\\documentclass[12pt,a4paper]{article}\n"
-        "\\usepackage[left=3cm,right=2cm,top=2cm,bottom=2cm]{geometry}\n"
+        "\\usepackage[left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm]{geometry}\n"
         "\\usepackage{setspace}\n"
         "\\usepackage{graphicx}\n"
+        "\\usepackage{needspace}\n"
         "\\usepackage[T1]{fontenc}\n"
         "\\usepackage[utf8]{inputenc}\n"
         "\\usepackage{mathptmx}\n"
         "\\setstretch{1.5}\n"
         "\\setlength{\\parindent}{0.5in}\n"
+        "\\clubpenalty=10000\n"
+        "\\widowpenalty=10000\n"
+        "\\displaywidowpenalty=10000\n"
         "\\begin{document}\n\n"
         + "\n\n".join(body)
         + "\n\n\\end{document}\n"
@@ -386,13 +438,14 @@ def _fit_image_width(img_path: Path, max_width_cm: float = 16.0) -> float:
 
 def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
     text = md_path.read_text(encoding="utf-8")
+    blocks = normalize_blocks(list(iter_markdown_blocks(text)))
     doc = SimpleDocTemplate(
         str(out_path),
         pagesize=A4,
-        leftMargin=3 * cm,
-        rightMargin=2 * cm,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm,
+        leftMargin=1.5 * cm,
+        rightMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
     )
 
     styles = getSampleStyleSheet()
@@ -436,10 +489,11 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
     story = []
     started = False
     chapter_just_emitted = False
+    last_emitted_pagebreak = False
     in_references = False
-    for kind, data in iter_markdown_blocks(text):
+    for kind, data in blocks:
         if kind == "chaptertitle":
-            if started:
+            if started and not last_emitted_pagebreak:
                 story.append(PageBreak())
             chapter_style = ParagraphStyle(
                 "ChapterTitle",
@@ -455,21 +509,27 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             story.append(PageBreak())
             started = True
             chapter_just_emitted = True
+            last_emitted_pagebreak = True
         elif kind == "h1":
-            if started and not chapter_just_emitted:
+            if started and not chapter_just_emitted and not last_emitted_pagebreak:
                 story.append(PageBreak())
+            story.append(CondPageBreak(h1.leading + (4 * body.leading)))
             story.append(Paragraph(data, h1))
             in_references = data.strip().upper() == "VIII. REFERENCES"
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "h2":
+            story.append(CondPageBreak(h2.leading + (4 * body.leading)))
             story.append(Paragraph(data, h2))
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "paragraph":
             story.append(Paragraph(data, refs if in_references else body))
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "image":
             _, rel_path = data.split("|||", 1)
             img_path = (md_path.parent / rel_path).resolve()
@@ -487,10 +547,13 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
                 story.append(Spacer(1, 8))
             started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = False
         elif kind == "pagebreak":
-            story.append(PageBreak())
-            started = True
+            if not last_emitted_pagebreak:
+                story.append(PageBreak())
+                started = True
             chapter_just_emitted = False
+            last_emitted_pagebreak = True
 
     doc.build(story)
 

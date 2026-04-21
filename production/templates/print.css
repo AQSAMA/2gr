@@ -1,9 +1,9 @@
 @page {
   size: A4;
-  margin-top: 2cm;
-  margin-right: 2cm;
-  margin-bottom: 2cm;
-  margin-left: 3cm;
+  margin-top: 1.5cm;
+  margin-right: 1.5cm;
+  margin-bottom: 1.5cm;
+  margin-left: 1.5cm;
 }
 
 body {
@@ -17,12 +17,16 @@ p {
   margin: 0 0 0.55em 0;
   overflow-wrap: normal;
   word-break: normal;
+  orphans: 4;
+  widows: 4;
 }
 
 h1, h2 {
   margin-top: 0.8em;
   margin-bottom: 0.4em;
   text-indent: 0;
+  page-break-after: avoid;
+  page-break-inside: avoid;
 }
 
 h1 { font-size: 18pt; }
