@@ -126,6 +126,8 @@ def assemble_markdown() -> Path:
 
     parts.append("# VIII. REFERENCES")
     parts.append(REFERENCES_FILE.read_text(encoding="utf-8").strip())
+    # Figures are intentionally not appended as a standalone section at the end.
+    # They are expected to appear inline via links in chapter content.
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
@@ -140,6 +142,14 @@ def assemble_markdown() -> Path:
 
 
 def normalize_blocks(blocks: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """Normalize markdown blocks to prevent renderer-level blank-page artifacts.
+
+    Rules:
+    - Drop leading page breaks.
+    - Collapse duplicate consecutive page breaks.
+    - Drop page breaks that appear immediately before chapter title markers.
+    - Drop trailing page breaks.
+    """
     normalized: list[tuple[str, str]] = []
     for i, (kind, data) in enumerate(blocks):
         next_kind = blocks[i + 1][0] if i + 1 < len(blocks) else None

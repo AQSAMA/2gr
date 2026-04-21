@@ -17,6 +17,7 @@ p {
   margin: 0 0 0.55em 0;
   overflow-wrap: normal;
   word-break: normal;
+  /* Keep at least 4 lines with paragraph blocks for polished heading flow. */
   orphans: 4;
   widows: 4;
 }
