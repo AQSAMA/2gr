@@ -1,0 +1,6 @@
+python-docx==1.1.2
+reportlab==4.2.2
+markdown2==2.5.3
+xhtml2pdf==0.2.17
+pypandoc-binary==1.15
+Pillow==10.4.0
