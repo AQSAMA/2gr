@@ -9,14 +9,14 @@
 body {
   font-family: "Times New Roman", serif;
   font-size: 14pt;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 p {
   text-indent: 0.5in;
-  margin: 0 0 0.25em 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  margin: 0 0 0.55em 0;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 h1, h2 {
@@ -32,7 +32,7 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 0.6em auto;
+  margin: 0.7em auto;
 }
 
 .page-break {
@@ -44,5 +44,5 @@ img {
   font-size: 36pt;
   font-weight: 700;
   text-align: center;
-  margin-top: 11cm;
+  margin-top: 10.5cm;
 }

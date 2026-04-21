@@ -5,6 +5,7 @@ import re
 import shutil
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import unquote
 
 from docx import Document
 from docx.shared import Pt, Inches, Cm
@@ -79,6 +80,11 @@ def transform_inline_figure_links(text: str) -> str:
     pattern = re.compile(r"\[([^\]]+\.(?:png|jpg|jpeg|webp))\]\(([^)]+\.(?:png|jpg|jpeg|webp))\)")
     out_lines: list[str] = []
 
+    def friendly_label(raw_path: str) -> str:
+        filename = Path(unquote(raw_path.strip())).name
+        stem = Path(filename).stem
+        return stem.replace("_", " ").strip() or "figure"
+
     for raw_line in text.splitlines():
         line = raw_line.rstrip()
         if not line or line.lstrip().startswith("!"):
@@ -90,11 +96,11 @@ def transform_inline_figure_links(text: str) -> str:
             out_lines.append(line)
             continue
 
-        cleaned = pattern.sub(lambda m: m.group(1), line)
+        cleaned = pattern.sub(lambda _: "the corresponding figure below", line)
         out_lines.append(cleaned)
         out_lines.append("")
         for m in matches:
-            out_lines.append(f"![{m.group(1)}]({m.group(2)})")
+            out_lines.append(f"![{friendly_label(m.group(2))}]({m.group(2)})")
         out_lines.append("")
 
     return "\n".join(out_lines)
@@ -232,6 +238,7 @@ def build_docx(md_path: Path, out_path: Path) -> None:
 
     started = False
     chapter_just_emitted = False
+    in_references = False
     for kind, data in iter_markdown_blocks(text):
         if kind == "chaptertitle":
             if started:
@@ -255,6 +262,7 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 1"]
             p.paragraph_format.first_line_indent = Inches(0)
+            in_references = data.strip().upper() == "VIII. REFERENCES"
             started = True
             chapter_just_emitted = False
             continue
@@ -268,7 +276,11 @@ def build_docx(md_path: Path, out_path: Path) -> None:
         if kind == "paragraph":
             p = doc.add_paragraph(data)
             p.paragraph_format.line_spacing = 1.5
-            p.paragraph_format.first_line_indent = Inches(0.5)
+            if in_references:
+                p.paragraph_format.first_line_indent = Inches(0)
+                p.paragraph_format.space_after = Pt(8)
+            else:
+                p.paragraph_format.first_line_indent = Inches(0.5)
             started = True
             chapter_just_emitted = False
             continue
@@ -412,10 +424,19 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
         spaceBefore=2,
         spaceAfter=4,
     )
+    refs = ParagraphStyle(
+        "Refs",
+        parent=body,
+        firstLineIndent=0,
+        leftIndent=0,
+        spaceBefore=1,
+        spaceAfter=8,
+    )
 
     story = []
     started = False
     chapter_just_emitted = False
+    in_references = False
     for kind, data in iter_markdown_blocks(text):
         if kind == "chaptertitle":
             if started:
@@ -438,6 +459,7 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             if started and not chapter_just_emitted:
                 story.append(PageBreak())
             story.append(Paragraph(data, h1))
+            in_references = data.strip().upper() == "VIII. REFERENCES"
             started = True
             chapter_just_emitted = False
         elif kind == "h2":
@@ -445,7 +467,7 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             started = True
             chapter_just_emitted = False
         elif kind == "paragraph":
-            story.append(Paragraph(data, body))
+            story.append(Paragraph(data, refs if in_references else body))
             started = True
             chapter_just_emitted = False
         elif kind == "image":
@@ -482,6 +504,15 @@ def build_pdf_xhtml2pdf(md_path: Path, out_pdf: Path, out_html: Path) -> None:
         md_text,
     )
     html_body = markdown2.markdown(md_text, extras=["tables", "fenced-code-blocks", "cuddled-lists"])
+    html_body = re.sub(
+        r'(<img[^>]+src=")([^":]+?)(")',
+        lambda m: (
+            m.group(1)
+            + str((md_path.parent / unquote(m.group(2))).resolve())
+            + m.group(3)
+        ),
+        html_body,
+    )
     html = (
         "<html><head><meta charset='utf-8'><style>"
         + css
