@@ -323,7 +323,13 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             img_path = (md_path.parent / rel_path).resolve()
             if img_path.exists():
                 width = _fit_image_width(img_path)
-                img = Image(str(img_path), width=width, preserveAspectRatio=True, hAlign="CENTER")
+                img_reader = ImageReader(str(img_path))
+                iw, ih = img_reader.getSize()
+                if iw > 0:
+                    height = width * (ih / iw)
+                else:
+                    height = 8 * cm
+                img = Image(str(img_path), width=width, height=height, hAlign="CENTER")
                 story.append(Spacer(1, 8))
                 story.append(img)
                 story.append(Spacer(1, 8))
