@@ -1,0 +1,5 @@
+# Generated production outputs (built by CI)
+production/assembled/
+production/figures/
+production/method_a_python/
+production/method_b_hybrid/

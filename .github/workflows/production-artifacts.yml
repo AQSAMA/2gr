@@ -1,0 +1,56 @@
+name: Build production artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'content/**'
+      - 'figures/**'
+      - 'references.md'
+      - 'production/src/**'
+      - 'production/templates/**'
+      - 'production/requirements.txt'
+      - '.github/workflows/production-artifacts.yml'
+  pull_request:
+    paths:
+      - 'content/**'
+      - 'figures/**'
+      - 'references.md'
+      - 'production/src/**'
+      - 'production/templates/**'
+      - 'production/requirements.txt'
+      - '.github/workflows/production-artifacts.yml'
+
+jobs:
+  build-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r production/requirements.txt
+
+      - name: Build production outputs
+        run: python production/src/build_production.py
+
+      - name: Upload production folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-artifacts
+          path: |
+            production/assembled
+            production/figures
+            production/method_a_python
+            production/method_b_hybrid
+          if-no-files-found: error
