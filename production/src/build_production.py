@@ -8,6 +8,7 @@ from typing import Iterable
 from urllib.parse import unquote
 
 from docx import Document
+from docx.oxml import OxmlElement
 from docx.shared import Pt, Inches, Cm
 from docx.oxml.ns import qn
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -127,6 +128,55 @@ def transform_inline_figure_links(text: str) -> str:
     return "\n".join(out_lines)
 
 
+def normalize_figure_captions(text: str) -> str:
+    out_lines: list[str] = []
+    image_pattern = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$")
+    caption_pattern = re.compile(r"^\*\*Caption:\*\*\s*(.+?)\s*$")
+    figure_no = 0
+    last_image_out_idx: int | None = None
+    last_caption_consumed = True
+
+    def build_image_line(caption: str, path: str) -> str:
+        return f"![{caption}]({path})"
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        img_match = image_pattern.match(line.strip())
+        cap_match = caption_pattern.match(line.strip())
+
+        if img_match:
+            figure_no += 1
+            alt = img_match.group(1).strip() or "Figure"
+            path = img_match.group(2).strip()
+            normalized_caption = f"Figure {figure_no}. {alt}"
+            out_lines.append(build_image_line(normalized_caption, path))
+            last_image_out_idx = len(out_lines) - 1
+            last_caption_consumed = False
+            continue
+
+        if cap_match and last_image_out_idx is not None and not last_caption_consumed:
+            caption_text = cap_match.group(1).strip()
+            image_line = out_lines[last_image_out_idx]
+            existing = image_pattern.match(image_line)
+            if existing:
+                path = existing.group(2).strip()
+                current_label = existing.group(1).strip()
+                num_match = re.match(r"^Figure\s+(\d+)\.\s*", current_label)
+                if num_match:
+                    figure_number = num_match.group(1)
+                    normalized_caption = f"Figure {figure_number}. {caption_text}"
+                    out_lines[last_image_out_idx] = build_image_line(normalized_caption, path)
+                    last_caption_consumed = True
+                    continue
+
+        out_lines.append(line)
+        if line.strip():
+            last_image_out_idx = None
+            last_caption_consumed = True
+
+    return "\n".join(out_lines)
+
+
 def collect_figure_md_files() -> list[Path]:
     files = sorted(FIGURES_DIR.glob("*.md"), key=lambda p: p.name)
     return files
@@ -163,6 +213,7 @@ def assemble_markdown() -> Path:
     merged = inject_front_matter_pages(merged)
     merged = inject_chapter_title_pages(merged)
     merged = transform_inline_figure_links(merged)
+    merged = normalize_figure_captions(merged)
 
     out_path = ASSEMBLED_DIR / "comprehensive_research.md"
     out_path.write_text(merged, encoding="utf-8")
@@ -266,7 +317,62 @@ def build_docx(md_path: Path, out_path: Path) -> None:
     heading_2._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
     heading_2.font.size = Pt(16)
 
-    def add_centered_title_page(title: str, subtitle: str | None = None, with_rules: bool = False) -> None:
+    def add_field_run(paragraph, instruction: str) -> None:
+        run = paragraph.add_run()
+        fld_begin = OxmlElement("w:fldChar")
+        fld_begin.set(qn("w:fldCharType"), "begin")
+        run._r.append(fld_begin)
+
+        instr = OxmlElement("w:instrText")
+        instr.set(qn("xml:space"), "preserve")
+        instr.text = instruction
+        run._r.append(instr)
+
+        fld_sep = OxmlElement("w:fldChar")
+        fld_sep.set(qn("w:fldCharType"), "separate")
+        run._r.append(fld_sep)
+
+        result = OxmlElement("w:t")
+        result.text = " "
+        run._r.append(result)
+
+        fld_end = OxmlElement("w:fldChar")
+        fld_end.set(qn("w:fldCharType"), "end")
+        run._r.append(fld_end)
+
+    def add_auto_list_field(page_title: str) -> None:
+        mapping = {
+            "Table of Contents": r'TOC \o "1-3" \h \z \u',
+            "List of Figures": r'TOC \h \z \c "Figure"',
+            "List of Tables": r'TOC \h \z \c "Table"',
+        }
+        field_code = mapping.get(page_title)
+        if not field_code:
+            return
+        p = doc.add_paragraph()
+        p.paragraph_format.first_line_indent = Inches(0)
+        add_field_run(p, field_code)
+
+    def add_figure_caption(caption_text: str) -> None:
+        cleaned = re.sub(r"^Figure\s+\d+\.\s*", "", caption_text).strip()
+        p = doc.add_paragraph()
+        p.style = doc.styles["Caption"]
+        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        p.paragraph_format.first_line_indent = Inches(0)
+        run_label = p.add_run("Figure ")
+        run_label.font.name = "Times New Roman"
+        run_label._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        add_field_run(p, r"SEQ Figure \* ARABIC")
+        run_tail = p.add_run(f". {cleaned}")
+        run_tail.font.name = "Times New Roman"
+        run_tail._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+
+    def add_centered_title_page(
+        title: str,
+        subtitle: str | None = None,
+        with_rules: bool = False,
+        add_page_break: bool = True,
+    ) -> None:
         p = doc.add_paragraph()
         p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         p.paragraph_format.first_line_indent = Inches(0)
@@ -308,14 +414,19 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             rule_bottom._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
             rule_bottom.font.size = Pt(18)
 
-        doc.add_page_break()
+        if add_page_break:
+            doc.add_page_break()
 
     started = False
     chapter_just_emitted = False
     in_references = False
     for kind, data in iter_markdown_blocks(text):
         if kind == "frontmatter":
-            add_centered_title_page(data, with_rules=False)
+            is_auto_list = data in {"Table of Contents", "List of Figures", "List of Tables"}
+            add_centered_title_page(data, with_rules=False, add_page_break=not is_auto_list)
+            if is_auto_list:
+                add_auto_list_field(data)
+                doc.add_page_break()
             started = True
             chapter_just_emitted = False
             continue
@@ -354,13 +465,14 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             chapter_just_emitted = False
             continue
         if kind == "image":
-            _, rel_path = data.split("|||", 1)
+            alt, rel_path = data.split("|||", 1)
             img_path = (md_path.parent / rel_path).resolve()
             if img_path.exists():
                 p = doc.add_paragraph()
                 p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                 run = p.add_run()
                 run.add_picture(str(img_path), width=Inches(6.3))
+                add_figure_caption(alt)
             started = True
             chapter_just_emitted = False
             continue
@@ -398,6 +510,12 @@ def build_tex(md_path: Path, out_path: Path) -> None:
             body.append("\\begin{center}\\vspace*{0.42\\textheight}")
             body.append("{\\Large \\textbf{" + escape_latex(data) + "}}")
             body.append("\\end{center}")
+            if data == "Table of Contents":
+                body.append("\\tableofcontents")
+            elif data == "List of Figures":
+                body.append("\\listoffigures")
+            elif data == "List of Tables":
+                body.append("\\listoftables")
             body.append("\\newpage")
         elif kind == "chaptertitle":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
@@ -423,7 +541,7 @@ def build_tex(md_path: Path, out_path: Path) -> None:
                 "\\begin{figure}[h!]\n"
                 "\\centering\n"
                 f"\\includegraphics[width=0.9\\textwidth]{{{escape_latex(rel)}}}\n"
-                f"\\caption*{{{escape_latex(alt)}}}\n"
+                f"\\caption{{{escape_latex(alt)}}}\n"
                 "\\end{figure}"
             )
         elif kind == "pagebreak":
@@ -666,7 +784,7 @@ def build_with_pandoc(md_path: Path, out_tex: Path) -> None:
         to="latex",
         format="md",
         outputfile=str(out_tex),
-        extra_args=["--resource-path", str(md_path.parent)],
+        extra_args=["--resource-path", str(md_path.parent), "--toc", "--list-of-figures", "--list-of-tables"],
     )
     tmp_md.unlink(missing_ok=True)
 
