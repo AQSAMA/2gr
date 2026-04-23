@@ -44,5 +44,34 @@ img {
   font-size: 36pt;
   font-weight: 700;
   text-align: center;
-  margin-top: 10.5cm;
+  margin-top: 0.2cm;
+}
+
+.chapter-subtitle {
+  font-family: "Times New Roman", serif;
+  font-size: 18pt;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 0.2cm;
+}
+
+.chapter-rule {
+  font-family: "Times New Roman", serif;
+  font-size: 16pt;
+  text-align: center;
+  margin-top: 0.2cm;
+}
+
+.chapter-title-page {
+  display: block;
+  text-align: center;
+  margin-top: 10cm;
+}
+
+.front-matter-page {
+  font-family: "Times New Roman", serif;
+  font-size: 28pt;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 11cm;
 }
