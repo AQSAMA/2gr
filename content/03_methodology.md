@@ -20,6 +20,8 @@ The survey instrument included 29 variables covering demographics, public attitu
 
 The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block showed substantial missingness and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
 
+To make code references explicit for readers, the study used a fixed question-code map in all chapters. Q6 referred to perceived safety of psychiatric medication, Q7 referred to acceptability of psychiatric medication relative to treatment for chronic medical illness, Q8 referred to willingness to recommend psychiatric medication, and Q9 referred to social concern about interacting with a person using psychiatric medication. Q11 referred to the statement that doctors prescribe psychiatric medications more than necessary, Q12 referred to the statement that most psychiatric medications cause psychological or physical dependence, Q13 referred to the statement that modern psychiatric medications are safer than older ones, and Q31 identified prior psychiatric medication use status.
+
 ## D. Variables and Operational Definitions
 
 The primary outcome for the main binary logistic models was recommendation willingness, coded from the recommendation item as yes versus no. In the multinomial model, the same outcome preserved three response categories: no, yes, and not sure.

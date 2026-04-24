@@ -39,6 +39,7 @@ CONTENT_FILES = [
     "04_results.md",
     "05_discussion.md",
     "06_recommendations_conclusion.md",
+    "07_appendix_a_study_questionnaire.md",
 ]
 
 
