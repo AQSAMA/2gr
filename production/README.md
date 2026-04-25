@@ -46,6 +46,12 @@ python production/src/build_production.py
 ## Caption normalization
 - Figure captions are normalized and ordered automatically during assembly.
 - Captions are exported in consistent `Figure N. ...` format so ToC/LoF generation remains stable across runs.
+## Operations (CI/CD)
+The workflow in `.github/workflows/production.yml` runs on every `push` and `pull_request`, executes `python production/src/build_production.py`, and uploads the generated outputs as run artifacts in the Actions **Artifacts** panel.
+
+When a tag push (for example `v1.0.0`) or a published GitHub Release event occurs, the same build runs again and DOCX/PDF/TEX/MD outputs are uploaded as Release assets on the matching tag/release page.
+
+CI only builds and publishes artifacts/assets; it does not commit generated binary files back to the repository.
 
 ## Notes
 - The pipeline does not modify any file in `content/`, `sources/`, `figures/`, or other repository paths.
