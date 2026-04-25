@@ -1,0 +1,5 @@
+# Generated production binaries (built in CI artifacts)
+production/method_a_python/*.pdf
+production/method_a_python/*.docx
+production/method_b_hybrid/*.pdf
+production/method_b_hybrid/*.docx

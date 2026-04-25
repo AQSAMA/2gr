@@ -1,12 +1,44 @@
+[[FRONT_MATTER:Cover Page]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:Certification of the Supervisor]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:Dedication]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:Acknowledgment]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:Table of Contents]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:List of Figures]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:List of Tables]]
+
+<div class="page-break"></div>
+
+[[FRONT_MATTER:List of Abbreviations]]
+
+<div class="page-break"></div>
+
 # ABSTRACT
 
-Psychiatric medication acceptance in Iraq remains a public health challenge because mental health need is high while treatment hesitation persists. This study examined psychiatric medication use and public acceptance in Iraq using an original cross-sectional survey and literature review. We analyzed responses from 877 participants. The analysis used descriptive statistics, hierarchical logistic regression, multinomial logistic regression, and exploratory Users vs Non-Users and stigma-phenotype analyses.
+Psychiatric medication acceptance in Iraq remains a public health challenge because mental health needs are high while treatment hesitation persists. This study examined psychiatric medication use and public acceptance in Iraq using an original cross-sectional survey with supportive literature context. We analyzed responses from 877 participants using descriptive statistics, hierarchical logistic regression, multinomial logistic regression, Users vs Non-Users comparisons, and exploratory stigma-phenotype analysis.
 
-The sample was mostly female (about 72%), aged 18–25 years (about 75%), and university educated (about 79%). Recommendation willingness was 57.65%, with 11.62% not sure and 30.72% unwilling. Safety and acceptability were lower: only 23.65% viewed psychiatric medication as safe and 30.80% as acceptable, while unsafe and unacceptable responses were 45.12% and 51.49%, respectively. In the primary hierarchical model (complete-case n=647), recommendation was positively associated with female gender (adjusted OR 1.516) and belief that modern medications are safer than older ones (Q13: adjusted OR 1.507). Recommendation was negatively associated with fear (adjusted OR 0.504) and belief that doctors prescribe more than necessary (Q11: adjusted OR 0.830). In multinomial analysis (n=837), dependence concern (Q12) was associated with an RRR below 1 for “Yes” vs “No” recommendation (RRR 0.794). In the Users vs Non-Users analysis, users showed more favorable beliefs than non-users, especially on modern medication safety.
+The sample was mostly female, young, and university educated. Public attitudes were mixed: recommendation willingness was higher than perceived safety and acceptability, showing that many respondents were open to treatment in principle but still worried about medication risks. In adjusted models, recommendation was more likely among women and among respondents who trusted newer psychiatric medications, and less likely among those with stronger fear and overprescribing concerns. In the multinomial model, dependence concern reduced the likelihood of clear recommendation. Users also reported more favorable beliefs than non-users, especially for confidence in modern medications.
 
-These findings indicate ambivalent public attitudes rather than uniform rejection. The main barriers are fear, mistrust, and dependence concerns, more than demographics. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.
+These findings indicate ambivalent public attitudes rather than uniform rejection. The strongest barriers were fear, mistrust, and dependence concerns, more than most demographic factors. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.
 
-[[CHAPTER_TITLE:Chapter One]]
+[[CHAPTER_TITLE:Chapter One|||Introduction]]
 
 # I. INTRODUCTION
 
@@ -74,25 +106,31 @@ Community and student-level Iraqi evidence reflects parallel concerns. Research 
 
 Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.
 
-[[CHAPTER_TITLE:Chapter Two]]
+[[CHAPTER_TITLE:Chapter Two|||Materials and Methods]]
 
 # III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
 
 ## A. Study Design and Setting
 
-This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the study’s unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
-The available study files did not report a defined study location or a clearly dated data-collection period.
+This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
+
+The available materials indicate an Iraq-focused online questionnaire dataset with Arabic item wording translated into English for analysis. The dataset does not include governorate identifiers, institution identifiers, or site-level fields, so the setting is reported as an Iraq-wide online sample rather than a facility-based sample.
+
+**Reporting constraints:** The available project files did not provide a verifiable calendar field or protocol record for the exact data-collection month/year range, did not document the original dissemination channels in a reproducible log, and did not include a formal eligibility sheet beyond what can be inferred from the final dataset structure.
 
 ## B. Participants and Sampling
 
 The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. Preprocessing removed the questionnaire label row, normalized text encoding and spacing, mapped Arabic response options to numeric categories, and checked unmapped values before analysis. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
-The available source documents did not include explicit participant eligibility criteria or recruitment methods. Therefore, this section reports the achieved analytic sample rather than a protocol-level enrollment flow.
+
+Based on the observed dataset structure and cleaning workflow, inclusion for the analytic dataset required a valid respondent row under the 29-variable questionnaire schema after removal of the non-respondent label row. Exclusion at preprocessing level applied to the label row and any non-mappable residual text entries; no unmapped text values remained after cleaning. For model estimation, additional model-specific exclusion was applied through complete-case handling when required covariates or outcomes were missing. Recruitment is therefore reported as an achieved online non-probability sample captured in the dataset, with no recoverable record of platform-specific invitation channels.
 
 ## C. Survey Instrument
 
 The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, acceptability of psychiatric medication in comparison with treatment for chronic medical conditions, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
 
 The instrument also included an extended block of personal medication-belief items. In the cleaned data, this extended block showed substantial missingness and reflected a subgroup module, so the primary inferential models focused on the core variables that were broadly available across the full sample.
+
+To make code references explicit for readers, the study used a fixed question-code map in all chapters. Q6 referred to perceived safety of psychiatric medication, Q7 referred to acceptability of psychiatric medication relative to treatment for chronic medical illness, Q8 referred to willingness to recommend psychiatric medication, and Q9 referred to social concern about interacting with a person using psychiatric medication. Q11 referred to the statement that doctors prescribe psychiatric medications more than necessary, Q12 referred to the statement that most psychiatric medications cause psychological or physical dependence, Q13 referred to the statement that modern psychiatric medications are safer than older ones, and Q31 identified prior psychiatric medication use status.
 
 ## D. Variables and Operational Definitions
 
@@ -108,7 +146,7 @@ Data management followed a predefined cleaning pipeline. First, the source sprea
 
 Missingness was quantified per variable. Core variables used in the main models had low missingness, while subgroup medication-belief items had high missingness. Therefore, each inferential model used complete-case records for its own covariate set rather than global listwise deletion across all questionnaire items.
 
-The analysis sequence followed the project’s documented analysis workflow used to generate the unified survey results report. We first estimated hierarchical logistic regression in three blocks for recommendation willingness, progressing from demographic factors to prior medication use and then to belief variables and concern indicator. The complete-case sample for this primary hierarchical model set was 647 respondents. We reported adjusted odds ratios with 95% confidence intervals, model likelihood-ratio p-values, and McFadden pseudo R-squared values.
+The analysis sequence followed the project’s documented workflow used to generate the unified survey results report. We first estimated hierarchical logistic regression in three blocks for recommendation willingness, progressing from demographic factors to prior medication use and then to belief variables and concern indicator. The complete-case sample for this primary hierarchical model set was 647 respondents. We reported adjusted odds ratios with 95% confidence intervals, model likelihood-ratio p-values, and McFadden pseudo R-squared values.
 
 Second, we estimated a sensitivity logistic model that added perceived safety and acceptability items to test robustness while acknowledging their conceptual proximity to the recommendation outcome. The sensitivity complete-case sample was 406 respondents.
 
@@ -120,15 +158,13 @@ Fifth, we conducted exploratory stigma-phenotype profiling using k-means cluster
 
 ## F. Ethical Considerations
 
-The analysis used de-identified survey data and reported aggregate findings only. No personal identifiers were used in the analytic outputs. The available dataset was handled as anonymized observational data for academic research use.
-Formal ethics-approval metadata and explicit participant-consent documentation were not included in the available study files.
-Despite this documentation gap, the analysis followed ethical principles for anonymized secondary-data use and aggregate-only reporting.
+The analysis used de-identified survey data and reported aggregate findings only. No personal identifiers were used in the analytic outputs. The available dataset was handled as anonymized observational data for academic research use, and reporting was limited to group-level summaries.
 
 ## G. Methodological Limitations
 
 Because the design is cross-sectional, associations should not be interpreted as causal effects. Complete-case modeling can reduce sample size for specific analyses and may introduce selection effects if missingness is not random. The achieved sample was dominated by younger and university-educated respondents, which may limit generalizability to older or less-educated Iraqi populations. Some instrument blocks had substantial missingness, so primary inference relied on the most complete and policy-relevant core variables.
 
-[[CHAPTER_TITLE:Chapter Three]]
+[[CHAPTER_TITLE:Chapter Three|||Results]]
 
 # IV. RESULTS
 
@@ -136,29 +172,31 @@ Because the design is cross-sectional, associations should not be interpreted as
 
 The final survey dataset included 877 respondents. Demographic percentages were calculated from valid responses for each variable, not from the full sample in all cases (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244). Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1). Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5). Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2).
 
-Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11, 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12, 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13, 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in the corresponding figure below. The gender-stratified recommendation pattern is shown in the corresponding figure below. The diverging Likert distribution for Q11 and Q13 is shown in the corresponding figure below.
+To keep model reporting readable, the study uses stable questionnaire labels across sections. Q6 refers to safety perception, Q7 to acceptability, Q8 to willingness to recommend psychiatric medication, and Q9 to social concern. Q11 refers to perceived overprescribing, Q12 to dependence concern, Q13 to confidence in newer medications, and Q31 to prior psychiatric medication use status. A full item map is provided in Appendix A.
 
-![27 donut main questions](../figures/27_donut_main_questions.png)
-![31 gender recommendation breakdown](../figures/31_gender_recommendation_breakdown.png)
-![19 likert diverging q11 q13](../figures/19_likert_diverging_q11_q13.png)
+Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11 (doctors prescribe psychiatric medications more than necessary), 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12 (most psychiatric medications cause psychological or physical dependence), 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13 (modern psychiatric medications are safer than older ones), 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in the corresponding figure below. The gender-stratified recommendation pattern is shown in the corresponding figure below. The diverging Likert distribution for Q11 and Q13 is shown in the corresponding figure below.
+
+![Figure 1. 27 donut main questions](../figures/27_donut_main_questions.png)
+![Figure 2. 31 gender recommendation breakdown](../figures/31_gender_recommendation_breakdown.png)
+![Figure 3. 19 likert diverging q11 q13](../figures/19_likert_diverging_q11_q13.png)
 
 
 ## IV.B Main Outcome Distributions
 
-The primary attitude outcomes showed mixed acceptance patterns. For safety perception, 23.65% answered yes, 31.23% answered not sure, and 45.12% answered no. For acceptability, 30.80% answered yes, 17.70% answered not sure, and 51.49% answered no. For recommendation willingness, 57.65% answered yes, 11.62% answered not sure, and 30.72% answered no. For social concerns, 37.77% answered yes, 13.09% answered not sure, and 49.14% answered no.
+The primary attitude outcomes showed mixed acceptance patterns. For Q6 (safety perception), 23.65% answered yes, 31.23% answered not sure, and 45.12% answered no. For Q7 (acceptability), 30.80% answered yes, 17.70% answered not sure, and 51.49% answered no. For Q8 (recommendation willingness), 57.65% answered yes, 11.62% answered not sure, and 30.72% answered no. For Q9 (social concern), 37.77% answered yes, 13.09% answered not sure, and 49.14% answered no.
 
 Bivariate correlations among core variables were as follows: Q11 with Q12, r=0.269; Q13 with Q11, r=-0.066; Q13 with Q12, r=-0.038; recommendation with Q11, r=-0.086; recommendation with Q12, r=-0.087; recommendation with Q13, r=0.077; acceptance with recommendation, r=0.232; and concern with recommendation, r=-0.042.
 
 ## IV.C Hierarchical Logistic Regression (Primary Model)
 
-The primary hierarchical logistic regression used a binary recommendation outcome (Q8 yes vs no) with complete-case n=647. Model fit improved across blocks, with McFadden pseudo R² increasing from 0.0040 in Block 1 to 0.0116 in Block 2 and 0.0686 in Block 3. The Block 1 likelihood ratio p-value was 0.5037, Block 2 p-value was 0.0847, and Block 3 p-value was <0.0001.
+The primary hierarchical logistic regression used a binary recommendation outcome (Q8, willingness to recommend psychiatric medication, yes vs no) with complete-case n=647. Model fit improved across blocks, with McFadden pseudo R² increasing from 0.0040 in Block 1 to 0.0116 in Block 2 and 0.0686 in Block 3. The Block 1 likelihood ratio p-value was 0.5037, Block 2 p-value was 0.0847, and Block 3 p-value was <0.0001.
 
 In the final primary block, gender, Q11, Q13, and fear were statistically significant predictors. Gender had adjusted OR 1.516 (95% CI 1.043 to 2.205, p=0.0294). Q11 had adjusted OR 0.830 (95% CI 0.696 to 0.991, p=0.0396). Q13 had adjusted OR 1.507 (95% CI 1.248 to 1.820, p<0.0001). Fear had adjusted OR 0.504 (95% CI 0.358 to 0.711, p<0.0001). Age, educational level, marital status, prior use, and Q12 were not statistically significant in this final block. The adjusted effect profile is visualized in the corresponding figure below.
 
-![03 primary adjusted or forest](../figures/03_primary_adjusted_or_forest.png)
+![Figure 4. 03 primary adjusted or forest](../figures/03_primary_adjusted_or_forest.png)
 
 
-A separate sensitivity model that added Q6 and Q7 used complete-case n=406 and produced McFadden pseudo R² of 0.2440 (fit type: mle). This model was reported as a sensitivity analysis because Q6 and Q7 are proximal to the recommendation outcome.
+A separate sensitivity model that added Q6 (safety perception) and Q7 (acceptability) used complete-case n=406 and produced McFadden pseudo R² of 0.2440 (fit type: mle). This model was reported as a sensitivity analysis because Q6 and Q7 are proximal to the recommendation outcome.
 
 ## IV.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)
 
@@ -168,12 +206,12 @@ For the first non-reference equation (Q8=1 Yes vs reference No), gender was posi
 
 For the second non-reference equation (Q8=2 Not sure vs reference No), gender remained statistically significant (RRR 2.171, 95% CI 1.211 to 3.894, p=0.0093), while age, education, marital status, prior use, Q11, Q12, and Q13 were not statistically significant. The comparative predictor pattern is displayed in the corresponding figure below.
 
-![08 multinomial key predictor comparison](../figures/08_multinomial_key_predictor_comparison.png)
+![Figure 5. 08 multinomial key predictor comparison](../figures/08_multinomial_key_predictor_comparison.png)
 
 
 ## IV.E The Contact Hypothesis (Users vs Non-Users)
 
-The contact analysis compared Users vs Non-Users using prior use status (Users n=127, Non-Users n=716). Mann-Whitney U tests were statistically significant for Q11, Q12, and Q13, while chi-square tests were statistically significant for Q12 and Q13 but not for Q11.
+The contact analysis compared Users vs Non-Users using prior use status from Q31 (Users n=127, Non-Users n=716). Mann-Whitney U tests were statistically significant for Q11, Q12, and Q13, while chi-square tests were statistically significant for Q12 and Q13 but not for Q11.
 
 For Q11, the Users median was 3.00 and the Non-Users median was 4.00, with Mann-Whitney U p=0.0428, Cliff’s delta -0.108, chi-square p=0.1170, Cramer’s V=0.094, and N=843. For Q12, both medians were 4.00, with Mann-Whitney U p=0.0317, Cliff’s delta -0.112, chi-square p=0.0428, Cramer’s V=0.108, and N=840. For Q13, the Users median was 4.00 and the Non-Users median was 3.00, with Mann-Whitney U p=0.0002, Cliff’s delta 0.198, chi-square p=0.0027, Cramer’s V=0.139, and N=842.
 
@@ -183,7 +221,7 @@ Exploratory k-means clustering on standardized Q11–Q13 evaluated k=2, k=3, and
 
 The four profiles had the following mean structures. Profile 0 (n=183) showed Q11 mean 4.404, Q12 mean 4.115, and Q13 mean 4.311. Profile 1 (n=230) showed Q11 mean 2.961, Q12 mean 2.804, and Q13 mean 3.578. Profile 2 (n=232) showed Q11 mean 2.694, Q12 mean 4.250, and Q13 mean 3.720. Profile 3 (n=223) showed Q11 mean 4.359, Q12 mean 4.291, and Q13 mean 2.610. Profile-level mean contrasts are shown in the corresponding figure below.
 
-![14 profile means heatmap](../figures/14_profile_means_heatmap.png)
+![Figure 6. 14 profile means heatmap](../figures/14_profile_means_heatmap.png)
 
 
 ## IV.G Results Summary
@@ -192,7 +230,7 @@ The survey included 877 participants and showed a sample pattern with higher fem
 
 <div class="page-break"></div>
 
-[[CHAPTER_TITLE:Chapter Four]]
+[[CHAPTER_TITLE:Chapter Four|||Discussion]]
 
 # V. DISCUSSION
 
@@ -200,11 +238,11 @@ The survey included 877 participants and showed a sample pattern with higher fem
 
 This cross-sectional survey shows a mixed public position toward psychiatric medication in Iraq rather than uniform rejection or uniform support. Recommendation willingness was 57.65%, while 11.62% were not sure and 30.72% were against recommendation. Acceptability was lower: 30.80% considered psychiatric medication acceptable, 17.70% were not sure, and 51.49% considered it unacceptable. Safety perception was similarly low: 23.65% considered medication safe, 31.23% were not sure, and 45.12% considered it unsafe. This pattern suggests that many respondents accept medication in selected situations but still carry safety concerns and social hesitation.
 
-The primary regression results clarify which beliefs matter most in this ambivalence. In the hierarchical logistic model, female gender increased the odds of recommending medication (adjusted OR 1.516, p=0.0294). Agreement that modern psychiatric medicines are safer than older ones (Q13) showed a strong positive association (adjusted OR 1.507, p<0.0001). By contrast, fear reduced recommendation odds (adjusted OR 0.504, p<0.0001), and stronger belief that doctors overprescribe (Q11) also reduced recommendation (adjusted OR 0.830, p=0.0396). These findings show that recommendation behavior in Iraq is shaped more by trust and safety perception than by basic demographics.
+The primary regression results clarify which beliefs matter most in this ambivalence. In the hierarchical logistic model, female gender increased the odds of recommending medication (adjusted OR 1.516, p=0.0294). Agreement that modern psychiatric medicines are safer than older ones (Q13) showed a strong positive association (adjusted OR 1.507, p<0.0001). By contrast, fear reduced recommendation odds (adjusted OR 0.504, p<0.0001), and stronger belief that doctors prescribe psychiatric medications more than necessary (Q11) also reduced recommendation (adjusted OR 0.830, p=0.0396). These findings show that recommendation behavior in Iraq is shaped more by trust and safety perception than by basic demographics.
 
-The multinomial model adds useful detail for hesitant respondents. For recommendation “Yes” vs “No” (reference category), Q13 remained a strong positive predictor (RRR 1.585, p<0.0001), while dependence concerns (Q12) were associated with an RRR below 1 for “Yes” vs “No” (RRR 0.794, p=0.0239). For the “Not sure” category, gender remained significant (RRR 2.171, p=0.0093), but most attitudinal predictors were weaker. This indicates that uncertainty is not only a neutral midpoint; it reflects unresolved risk beliefs that require targeted communication.
+The multinomial model adds useful detail for hesitant respondents. For recommendation “Yes” vs “No” (reference category), Q13 remained a strong positive predictor (RRR 1.585, p<0.0001), while dependence concerns measured by Q12 (most psychiatric medications cause psychological or physical dependence) were associated with an RRR below 1 for “Yes” vs “No” (RRR 0.794, p=0.0239). For the “Not sure” category, gender remained significant (RRR 2.171, p=0.0093), but most attitudinal predictors were weaker. This indicates that uncertainty is not only a neutral midpoint; it reflects unresolved risk beliefs that require targeted communication.
 
-The Users vs Non-Users analysis supports a contact effect. Compared with non-users, users reported lower overprescribing concerns (Q11 median 3 vs 4, p=0.0428) and lower dependence concern intensity (Q12 p=0.0317), and they were more likely to agree that modern medications are safer (Q13 median 4 vs 3, p=0.0002). Effect sizes were small overall, with the largest difference on Q13 (Cliff’s delta 0.198, a small-to-moderate effect showing more positive safety beliefs among users). In practical terms, direct or family-level exposure to psychiatric medication appears to improve trust, but it does not fully remove stigma.
+The Users vs Non-Users analysis supports a contact effect. Compared with non-users, users reported lower overprescribing concerns on Q11 (median 3 vs 4, p=0.0428) and lower dependence concern intensity (Q12 p=0.0317), and they were more likely to agree that modern medications are safer (Q13 median 4 vs 3, p=0.0002). Effect sizes were small overall, with the largest difference on Q13 (Cliff’s delta 0.198, a small-to-moderate effect showing more positive safety beliefs among users). In practical terms, direct or family-level exposure to psychiatric medication appears to improve trust, but it does not fully remove stigma.
 
 ## B. Comparison With Iraqi and Regional Literature
 
@@ -238,7 +276,7 @@ The exploratory stigma phenotypes identified in this study also need confirmator
 
 <div class="page-break"></div>
 
-[[CHAPTER_TITLE:Chapter Five]]
+[[CHAPTER_TITLE:Chapter Five|||Conclusions and Suggestions]]
 
 # VI. RECOMMENDATIONS
 
@@ -285,6 +323,25 @@ The evidence also indicates that pharmacists are positioned to close this gap. I
 ## C. Closing Evidence-Based Statement
 
 The evidence from this study supports a clear national direction for Iraq: improve psychiatric medication acceptance by reducing fear, correcting dependence myths, and strengthening trust in modern treatment through integrated, pharmacist-inclusive care. If policy and practice align around these targets, Iraq can reduce treatment delay, improve adherence pathways, and narrow the mental health treatment gap.
+
+<div class="page-break"></div>
+
+# Appendix A. Study Questionnaire Codes Used in Main Analyses
+
+This appendix defines every questionnaire code that appears in the manuscript narrative, tables, figures, and model descriptions. The wording below summarizes the English analysis labels used in the project outputs, with minor paraphrasing for readability, so that readers can interpret Q-code references directly.
+
+| Code | Survey item used in analysis reporting | Response structure in analysis |
+|---|---|---|
+| Q6 | Safety perception of psychiatric medication | Yes / Not sure / No |
+| Q7 | Acceptability of psychiatric medication compared with treatment for chronic medical illness | Yes / Not sure / No |
+| Q8 | Willingness to recommend psychiatric medication | Yes / Not sure / No (binary Yes vs No in primary model) |
+| Q9 | Social concern about interacting with a person using psychiatric medication | Yes / Not sure / No |
+| Q11 | Doctors prescribe psychiatric medications more than necessary | 5-point Likert (disagree to agree) |
+| Q12 | Most psychiatric medications cause psychological or physical dependence | 5-point Likert (disagree to agree) |
+| Q13 | Modern psychiatric medications are safer than older ones | 5-point Likert (disagree to agree) |
+| Q31 | Prior psychiatric medication use status | Yes / No |
+
+Readers can use this code map together with the Results chapter to interpret model terms and subgroup comparisons without ambiguity.
 
 <div class="page-break"></div>
 
@@ -342,63 +399,3 @@ Younis, Maha S., Riyadh K. Lafta, and Saba Dhiaa. “Faith Healers Are Taking ov
 Younis, Maha Sulaiman, and Riyadh Khudhiar Lafta. “The Plight of Women in Iraq: Gender Disparity, Violence, and Mental Health.” International Journal of Social Psychiatry 67, no. 8 (2021): 977–83. https://doi.org/10.1177/00207640211003602.
 Zolezzi, Monica, Maha Alamri, Shahd Shaar, and Daniel Rainkie. “Stigma Associated with Mental Illness and Its Treatment in the Arab Culture: A Systematic Review.” International Journal of Social Psychiatry 64, no. 6 (2018): 597–609. https://doi.org/10.1177/0020764018789200.
 Zygmunt, Annette, Mark Olfson, Carol A. Boyer, and David Mechanic. “Interventions to Improve Medication Adherence in Schizophrenia.” American Journal of Psychiatry 159, no. 10 (2002): 1653–64. https://doi.org/10.1176/appi.ajp.159.10.1653.
-
-# Primary adjusted OR forest plot
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Primary adjusted OR forest plot](../figures/03_primary_adjusted_or_forest.png)
-
-**Caption:** Adjusted odds ratios with 95% confidence intervals for Block 3 predictors.
-
-**Quick analysis:** 4 predictors are statistically significant at p<0.05, with clear protective and risk-direction effects.
-
-# Multinomial key predictor comparison
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Multinomial key predictor comparison](../figures/08_multinomial_key_predictor_comparison.png)
-
-**Caption:** Side-by-side RRR values for key predictors across Yes and Not sure outcomes.
-
-**Quick analysis:** Q13 shows a larger relative risk ratio for Yes responses, whereas Q11 and Q12 have relative risk ratios closer to 1.0 in the Not sure equation.
-
-# Profile means heatmap
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Profile means heatmap](../figures/14_profile_means_heatmap.png)
-
-**Caption:** Heatmap of profile-level means across Q11, Q12, and Q13.
-
-**Quick analysis:** Profiles show distinct belief combinations, especially around confidence in newer medications (Q13).
-
-# Diverging Likert chart (Q11–Q13)
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Diverging Likert chart (Q11–Q13)](../figures/19_likert_diverging_q11_q13.png)
-
-**Caption:** Disagree/Neutral/Agree percentages for Q11, Q12, and Q13.
-
-**Quick analysis:** Q11 and Q12 lean toward agreement with concern-focused statements, while Q13 shows stronger positive confidence in newer medications.
-
-# Donut charts for main questions
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Donut charts for main questions](../figures/27_donut_main_questions.png)
-
-**Caption:** Donut infographic view for safety, acceptability, and recommendation responses.
-
-**Quick analysis:** This compact format gives a quick social-media-style snapshot of the three core public opinion outcomes.
-
-# Gender breakdown of recommendation opinions
-
-This chart is part of the survey analysis for *Psychiatric Medication Use and Public Acceptance in Iraq*.
-
-![Gender breakdown of recommendation opinions](../figures/31_gender_recommendation_breakdown.png)
-
-**Caption:** Within-gender distribution of Yes/Not sure/No responses for recommendation.
-
-**Quick analysis:** The side-by-side format highlights how recommendation sentiment differs between women and men.
