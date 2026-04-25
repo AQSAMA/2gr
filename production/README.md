@@ -23,6 +23,29 @@ python -m pip install -r production/requirements.txt
 python production/src/build_production.py
 ```
 
+## Automatic ToC / List of Figures / List of Tables behavior
+- The pipeline exports heading and caption structures so generated files can build navigation lists automatically.
+- DOCX outputs include field codes for:
+  - Table of Contents (`Heading 1` to `Heading 3`)
+  - List of Figures (Figure sequence captions)
+  - List of Tables (Table sequence captions)
+- LaTeX/Pandoc path is generated with `--toc`, `--list-of-figures`, and `--list-of-tables`.
+
+## Refresh instructions after each content update
+1. Re-run the build command:
+   ```bash
+   python production/src/build_production.py
+   ```
+2. Open the generated DOCX file in Word (`production/method_a_python/research_method_a.docx` or `production/method_b_hybrid/research_method_b.docx`).
+3. Select all (`Ctrl+A`) and update fields (`F9`) to refresh:
+   - Table of Contents
+   - List of Figures
+   - List of Tables
+4. Save the document after field refresh if you need a final submission copy.
+
+## Caption normalization
+- Figure captions are normalized and ordered automatically during assembly.
+- Captions are exported in consistent `Figure N. ...` format so ToC/LoF generation remains stable across runs.
 ## Operations (CI/CD)
 The workflow in `.github/workflows/production.yml` runs on every `push` and `pull_request`, executes `python production/src/build_production.py`, and uploads the generated outputs as run artifacts in the Actions **Artifacts** panel.
 
