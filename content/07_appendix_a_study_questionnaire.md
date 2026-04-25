@@ -1,6 +1,6 @@
 # Appendix A. Study Questionnaire Codes Used in Main Analyses
 
-This appendix defines every questionnaire code that appears in the manuscript narrative, tables, figures, and model descriptions. The wording below follows the English analysis wording used in the project outputs so that readers can interpret Q-code references directly.
+This appendix defines every questionnaire code that appears in the manuscript narrative, tables, figures, and model descriptions. The wording below summarizes the English analysis labels used in the project outputs, with minor paraphrasing for readability, so that readers can interpret Q-code references directly.
 
 | Code | Survey item used in analysis reporting | Response structure in analysis |
 |---|---|---|
