@@ -225,14 +225,6 @@ Use `references.md` as the master APA bibliography source.
 
 ---
 
-## APPENDICES
-
-### Appendix A: Supplementary Tables/Figures
-### Appendix B: Survey Instrument (if allowed)
-### Appendix C: Variable Coding/Model Notes
-
----
-
 ## Working Consistency Checks (Pre-Draft QA)
 
 Before finalizing any chapter draft, verify:
