@@ -1,6 +1,6 @@
 # Production Pipeline
 
-This folder contains a self-contained production pipeline that keeps source research text unchanged and generates publication-ready outputs in multiple methods.
+This folder contains a self-contained production pipeline that keeps source research text unchanged and generates publication-ready outputs using one unified Python production path.
 
 ## Input sources used
 - `/home/runner/work/2gr/2gr/content/*.md`
@@ -12,9 +12,6 @@ This folder contains a self-contained production pipeline that keeps source rese
 - `method_a_python/research_method_a.pdf`
 - `method_a_python/research_method_a.docx`
 - `method_a_python/research_method_a.tex`
-- `method_b_hybrid/research_method_b.pdf`
-- `method_b_hybrid/research_method_b.docx`
-- `method_b_hybrid/research_method_b.tex`
 
 ## Run
 ```bash
@@ -36,7 +33,7 @@ python production/src/build_production.py
    ```bash
    python production/src/build_production.py
    ```
-2. Open the generated DOCX file in Word (`production/method_a_python/research_method_a.docx` or `production/method_b_hybrid/research_method_b.docx`).
+2. Open the generated DOCX file in Word (`production/method_a_python/research_method_a.docx`).
 3. Select all (`Ctrl+A`) and update fields (`F9`) to refresh:
    - Table of Contents
    - List of Figures
