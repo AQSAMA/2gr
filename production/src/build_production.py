@@ -42,9 +42,7 @@ CONTENT_FILES = [
     "06_recommendations_conclusion.md",
 ]
 
-APPENDIX_FILES = [
-    "07_appendix_a_study_questionnaire.md",
-]
+APPENDIX_FILES: list[str] = []
 
 
 FRONT_MATTER_PAGES = [
