@@ -5,7 +5,7 @@ This folder contains a self-contained production pipeline that keeps source rese
 ## Input sources used
 - `/home/runner/work/2gr/2gr/content/*.md`
 - `/home/runner/work/2gr/2gr/references.md`
-- `/home/runner/work/2gr/2gr/figures/*.{md,png}`
+- `/home/runner/work/2gr/2gr/figures/*.png`
 
 ## Outputs
 - `assembled/comprehensive_research.md`

@@ -204,13 +204,13 @@ def assemble_markdown() -> Path:
         text = (CONTENT_DIR / name).read_text(encoding="utf-8")
         parts.append(text.strip())
 
+    for name in APPENDIX_FILES:
+        appendix_path = CONTENT_DIR / name
+        if appendix_path.exists():
+            parts.append(appendix_path.read_text(encoding="utf-8").strip())
+
     parts.append("# VIII. REFERENCES")
     parts.append(REFERENCES_FILE.read_text(encoding="utf-8").strip())
-
-    for fig_md in collect_figure_md_files():
-        fig_text = fig_md.read_text(encoding="utf-8")
-        fig_text = rewrite_local_figure_links(fig_text)
-        parts.append(fig_text.strip())
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
@@ -301,10 +301,10 @@ def build_docx(md_path: Path, out_path: Path) -> None:
     doc = Document()
 
     section = doc.sections[0]
-    section.left_margin = Cm(3)
-    section.right_margin = Cm(2)
-    section.top_margin = Cm(2)
-    section.bottom_margin = Cm(2)
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
 
     normal = doc.styles["Normal"]
     normal.font.name = "Times New Roman"
@@ -590,10 +590,10 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
     doc = SimpleDocTemplate(
         str(out_path),
         pagesize=A4,
-        leftMargin=3 * cm,
-        rightMargin=2 * cm,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm,
+        leftMargin=1.5 * cm,
+        rightMargin=1.5 * cm,
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
     )
 
     styles = getSampleStyleSheet()
