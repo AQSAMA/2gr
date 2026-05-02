@@ -20,13 +20,9 @@ python -m pip install -r production/requirements.txt
 python production/src/build_production.py
 ```
 
-## Automatic ToC / List of Figures / List of Tables behavior
-- The pipeline exports heading and caption structures so generated files can build navigation lists automatically.
-- DOCX outputs include field codes for:
-  - Table of Contents (`Heading 1` to `Heading 3`)
-  - List of Figures (Figure sequence captions)
-  - List of Tables (Table sequence captions)
-- LaTeX/Pandoc path is generated with `--toc`, `--list-of-figures`, and `--list-of-tables`.
+## Cover and front-matter behavior
+- Front-matter pages are authored in `content/00_cover.md` as the single source for cover-related material.
+- DOCX outputs still allow field refresh for navigation lists when needed in final formatting.
 
 ## Refresh instructions after each content update
 1. Re-run the build command:

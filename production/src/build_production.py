@@ -31,10 +31,8 @@ METHOD_A_DIR = PROD_ROOT / "method_a_python"
 PROD_FIGURES_DIR = PROD_ROOT / "figures"
 
 CONTENT_FILES = [
+    "00_cover.md",
     "00_abstract.md",
-    "00a_list_of_figures.md",
-    "00b_list_of_tables.md",
-    "00c_list_of_abbreviations.md",
     "01_introduction.md",
     "02_literature_review.md",
     "03_methodology.md",
@@ -46,16 +44,7 @@ CONTENT_FILES = [
 APPENDIX_FILES: list[str] = []
 
 
-FRONT_MATTER_PAGES = [
-    "Cover Page",
-    "Certification of the Supervisor",
-    "Dedication",
-    "Acknowledgment",
-    "Table of Contents",
-    "List of Figures",
-    "List of Tables",
-    "List of Abbreviations",
-]
+FRONT_MATTER_PAGES: list[str] = []
 
 
 CHAPTER_INSERTIONS = [
@@ -213,7 +202,6 @@ def assemble_markdown() -> Path:
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
-    merged = inject_front_matter_pages(merged)
     merged = inject_chapter_title_pages(merged)
     merged = transform_inline_figure_links(merged)
     merged = normalize_figure_captions(merged)
