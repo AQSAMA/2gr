@@ -17,8 +17,6 @@ from reportlab.lib.units import cm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
-import markdown2
-from xhtml2pdf import pisa
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -721,42 +719,6 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             chapter_just_emitted = False
 
     doc.build(story)
-
-
-def build_pdf_xhtml2pdf(md_path: Path, out_pdf: Path, out_html: Path) -> None:
-    css = (PROD_ROOT / "templates" / "print.css").read_text(encoding="utf-8")
-    md_text = md_path.read_text(encoding="utf-8")
-    md_text = re.sub(
-        r"\[\[FRONT_MATTER:(.+?)\]\]",
-        r'<div class="page-break"></div><div class="front-matter-page">\1</div>',
-        md_text,
-    )
-    md_text = re.sub(
-        r"\[\[CHAPTER_TITLE:(.+?)\|\|\|(.+?)\]\]",
-        r'<div class="page-break"></div><div class="chapter-title-page"><div class="chapter-rule">────────────</div><div class="chapter-title">\1</div><div class="chapter-subtitle">\2</div><div class="chapter-rule">────────────</div></div><div class="page-break"></div>',
-        md_text,
-    )
-    html_body = markdown2.markdown(md_text, extras=["tables", "fenced-code-blocks", "cuddled-lists"])
-    html_body = re.sub(
-        r'(<img[^>]+src=")([^":]+?)(")',
-        lambda m: (
-            m.group(1)
-            + str((md_path.parent / unquote(m.group(2))).resolve())
-            + m.group(3)
-        ),
-        html_body,
-    )
-    html = (
-        "<html><head><meta charset='utf-8'><style>"
-        + css
-        + "</style></head><body>"
-        + html_body
-        + "</body></html>"
-    )
-
-    out_html.write_text(html, encoding="utf-8")
-    with out_pdf.open("wb") as f:
-        pisa.CreatePDF(src=html, dest=f, path=str(md_path.parent))
 
 
 def run_method_a(md_path: Path) -> None:
