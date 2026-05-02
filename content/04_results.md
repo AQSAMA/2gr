@@ -38,7 +38,7 @@ For Q11, the Users median was 3.00 and the Non-Users median was 4.00, with Mann-
 
 ## IV.F Exploratory Stigma Phenotypes (Clearly Labeled)
 
-Exploratory k-means clustering on standardized Q11–Q13 evaluated k=2, k=3, and k=4. Silhouette scores were 0.274 for k=2, 0.272 for k=3, and 0.303 for k=4, so k=4 was selected by maximum silhouette criterion.
+Exploratory k-means clustering on standardized Q11–Q13 evaluated k=2, k=3, and k=4. Silhouette scores were 0.274 for k=2, 0.272 for k=3, and 0.303 for k=4, so k=4 was selected by maximum silhouette criterion. These k-means profiles are data-driven exploratory groupings, not confirmed latent classes. The silhouette values indicate relative fit among the tested k values in this dataset, and they do not establish a definitive underlying class structure.
 
 The four profiles had the following mean structures. Profile 0 (n=183) showed Q11 mean 4.404, Q12 mean 4.115, and Q13 mean 4.311. Profile 1 (n=230) showed Q11 mean 2.961, Q12 mean 2.804, and Q13 mean 3.578. Profile 2 (n=232) showed Q11 mean 2.694, Q12 mean 4.250, and Q13 mean 3.720. Profile 3 (n=223) showed Q11 mean 4.359, Q12 mean 4.291, and Q13 mean 2.610. Profile-level mean contrasts are shown in [figures/14_profile_means_heatmap.png](../figures/14_profile_means_heatmap.png).
 
