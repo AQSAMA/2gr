@@ -17,9 +17,6 @@ from reportlab.lib.units import cm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
-import markdown2
-from xhtml2pdf import pisa
-import pypandoc
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -29,10 +26,10 @@ FIGURES_DIR = REPO_ROOT / "figures"
 REFERENCES_FILE = REPO_ROOT / "references.md"
 ASSEMBLED_DIR = PROD_ROOT / "assembled"
 METHOD_A_DIR = PROD_ROOT / "method_a_python"
-METHOD_B_DIR = PROD_ROOT / "method_b_hybrid"
 PROD_FIGURES_DIR = PROD_ROOT / "figures"
 
 CONTENT_FILES = [
+    "00_cover.md",
     "00_abstract.md",
     "01_introduction.md",
     "02_literature_review.md",
@@ -45,16 +42,7 @@ CONTENT_FILES = [
 APPENDIX_FILES: list[str] = []
 
 
-FRONT_MATTER_PAGES = [
-    "Cover Page",
-    "Certification of the Supervisor",
-    "Dedication",
-    "Acknowledgment",
-    "Table of Contents",
-    "List of Figures",
-    "List of Tables",
-    "List of Abbreviations",
-]
+FRONT_MATTER_PAGES: list[str] = []
 
 
 CHAPTER_INSERTIONS = [
@@ -67,7 +55,7 @@ CHAPTER_INSERTIONS = [
 
 
 def ensure_dirs() -> None:
-    for d in [ASSEMBLED_DIR, METHOD_A_DIR, METHOD_B_DIR, PROD_FIGURES_DIR]:
+    for d in [ASSEMBLED_DIR, METHOD_A_DIR, PROD_FIGURES_DIR]:
         d.mkdir(parents=True, exist_ok=True)
 
 
@@ -212,7 +200,6 @@ def assemble_markdown() -> Path:
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
-    merged = inject_front_matter_pages(merged)
     merged = inject_chapter_title_pages(merged)
     merged = transform_inline_figure_links(merged)
     merged = normalize_figure_captions(merged)
@@ -220,7 +207,6 @@ def assemble_markdown() -> Path:
     out_path = ASSEMBLED_DIR / "comprehensive_research.md"
     out_path.write_text(merged, encoding="utf-8")
     shutil.copy2(out_path, METHOD_A_DIR / "comprehensive_research.md")
-    shutil.copy2(out_path, METHOD_B_DIR / "comprehensive_research.md")
     return out_path
 
 
@@ -735,72 +721,10 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
     doc.build(story)
 
 
-def build_pdf_xhtml2pdf(md_path: Path, out_pdf: Path, out_html: Path) -> None:
-    css = (PROD_ROOT / "templates" / "print.css").read_text(encoding="utf-8")
-    md_text = md_path.read_text(encoding="utf-8")
-    md_text = re.sub(
-        r"\[\[FRONT_MATTER:(.+?)\]\]",
-        r'<div class="page-break"></div><div class="front-matter-page">\1</div>',
-        md_text,
-    )
-    md_text = re.sub(
-        r"\[\[CHAPTER_TITLE:(.+?)\|\|\|(.+?)\]\]",
-        r'<div class="page-break"></div><div class="chapter-title-page"><div class="chapter-rule">────────────</div><div class="chapter-title">\1</div><div class="chapter-subtitle">\2</div><div class="chapter-rule">────────────</div></div><div class="page-break"></div>',
-        md_text,
-    )
-    html_body = markdown2.markdown(md_text, extras=["tables", "fenced-code-blocks", "cuddled-lists"])
-    html_body = re.sub(
-        r'(<img[^>]+src=")([^":]+?)(")',
-        lambda m: (
-            m.group(1)
-            + str((md_path.parent / unquote(m.group(2))).resolve())
-            + m.group(3)
-        ),
-        html_body,
-    )
-    html = (
-        "<html><head><meta charset='utf-8'><style>"
-        + css
-        + "</style></head><body>"
-        + html_body
-        + "</body></html>"
-    )
-
-    out_html.write_text(html, encoding="utf-8")
-    with out_pdf.open("wb") as f:
-        pisa.CreatePDF(src=html, dest=f, path=str(md_path.parent))
-
-
-def build_with_pandoc(md_path: Path, out_tex: Path) -> None:
-    md_text = md_path.read_text(encoding="utf-8")
-    md_text = re.sub(r"\[\[FRONT_MATTER:(.+?)\]\]", r"\n\n# \1\n\n<div class=\"page-break\"></div>\n\n", md_text)
-    md_text = re.sub(
-        r"\[\[CHAPTER_TITLE:(.+?)\|\|\|(.+?)\]\]",
-        r"\n\n# \1\n\n## \2\n\n<div class=\"page-break\"></div>\n\n",
-        md_text,
-    )
-    tmp_md = METHOD_B_DIR / "_pandoc_input.md"
-    tmp_md.write_text(md_text, encoding="utf-8")
-    pypandoc.convert_file(
-        str(tmp_md),
-        to="latex",
-        format="md",
-        outputfile=str(out_tex),
-        extra_args=["--resource-path", str(md_path.parent), "--toc", "--list-of-figures", "--list-of-tables"],
-    )
-    tmp_md.unlink(missing_ok=True)
-
-
 def run_method_a(md_path: Path) -> None:
     build_docx(md_path, METHOD_A_DIR / "research_method_a.docx")
     build_tex(md_path, METHOD_A_DIR / "research_method_a.tex")
     build_pdf_reportlab(md_path, METHOD_A_DIR / "research_method_a.pdf")
-
-
-def run_method_b(md_path: Path) -> None:
-    build_docx(md_path, METHOD_B_DIR / "research_method_b.docx")
-    build_with_pandoc(md_path, METHOD_B_DIR / "research_method_b.tex")
-    build_pdf_xhtml2pdf(md_path, METHOD_B_DIR / "research_method_b.pdf", METHOD_B_DIR / "research_method_b.html")
 
 
 def main() -> None:
@@ -808,11 +732,9 @@ def main() -> None:
     copy_figure_assets()
     md_path = assemble_markdown()
     run_method_a(md_path)
-    run_method_b(md_path)
     print("Production pipeline completed.")
     print(f"Comprehensive markdown: {md_path}")
     print(f"Method A outputs: {METHOD_A_DIR}")
-    print(f"Method B outputs: {METHOD_B_DIR}")
 
 
 if __name__ == "__main__":
