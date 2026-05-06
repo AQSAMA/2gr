@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import math
 import shutil
@@ -235,7 +233,6 @@ def main() -> None:
     safety_no_share_decisive = (100.0 * safety_no / safety_decisive_total) if safety_decisive_total else 0.0
 
     gender_groups = [group for group in ["Female", "Male"] if group in set(gender_labels)]
-    gender_recommend_categories = ["Yes", "Not sure", "No"]
     gender_recommend_pct: dict[str, list[float]] = {}
     for row in descriptive.get("gender_crosstabs", []):
         gender = str(row.get("gender_label", "")).strip()
