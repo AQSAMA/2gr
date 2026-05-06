@@ -145,9 +145,17 @@ def main() -> None:
     profile_q12 = [safe_float(row.get("Q12_mean")) for row in profile_rows]
     profile_q13 = [safe_float(row.get("Q13_mean")) for row in profile_rows]
 
+    # Pre-group demographics by variable to avoid repeated iteration
+    demo_by_var: dict[str, dict[str, dict[str, Any]]] = {}
+    for row in descriptive.get("demographics", []):
+        var_key = str(row.get("variable", "")).strip().lower()
+        if var_key not in demo_by_var:
+            demo_by_var[var_key] = {}
+        cat_key = str(row.get("category_label", "")).strip().lower()
+        demo_by_var[var_key][cat_key] = row
+
     def pick_demo(variable: str, ordered_categories: list[tuple[str, list[str]]]) -> tuple[list[str], list[int], list[float]]:
-        rows = [row for row in descriptive["demographics"] if str(row["variable"]).strip().lower() == variable.strip().lower()]
-        by_category = {str(row["category_label"]).strip().lower(): row for row in rows}
+        by_category = demo_by_var.get(variable.strip().lower(), {})
         labels: list[str] = []
         counts: list[int] = []
         pct: list[float] = []
@@ -234,22 +242,22 @@ def main() -> None:
     safety_yes_share_decisive = (100.0 * safety_yes / safety_decisive_total) if safety_decisive_total else 0.0
     safety_no_share_decisive = (100.0 * safety_no / safety_decisive_total) if safety_decisive_total else 0.0
 
-    gender_groups = [group for group in ["Female", "Male"] if group in set(gender_labels)]
+    gender_labels_set = set(gender_labels)
+    gender_groups = [group for group in ["Female", "Male"] if group in gender_labels_set]
     gender_recommend_categories = ["Yes", "Not sure", "No"]
-    gender_recommend_pct: dict[str, list[float]] = {}
+    # Initialize with default value from general recommendation percentage
+    gender_recommend_pct: dict[str, list[float]] = {gender: list(recommend_pct) for gender in gender_groups}
+
     for row in descriptive.get("gender_crosstabs", []):
         gender = str(row.get("gender_label", "")).strip()
-        if gender not in gender_groups:
+        if gender not in gender_recommend_pct:
             continue
-        if all(key in row for key in ("yes_pct", "not_sure_pct", "no_pct")):
+        if "yes_pct" in row and "not_sure_pct" in row and "no_pct" in row:
             gender_recommend_pct[gender] = [safe_float(row.get("yes_pct")), safe_float(row.get("not_sure_pct")), safe_float(row.get("no_pct"))]
-        elif all(key in row for key in ("yes_n", "not_sure_n", "no_n")):
+        elif "yes_n" in row and "not_sure_n" in row and "no_n" in row:
             counts = [safe_int(row.get("yes_n")), safe_int(row.get("not_sure_n")), safe_int(row.get("no_n"))]
             total = sum(counts)
             gender_recommend_pct[gender] = [(100.0 * count / total) if total else 0.0 for count in counts]
-    for gender in gender_groups:
-        if gender not in gender_recommend_pct:
-            gender_recommend_pct[gender] = [recommend_pct[0], recommend_pct[1], recommend_pct[2]]
 
     # 01
     filename = "01_hierarchical_pseudo_r2.png"
