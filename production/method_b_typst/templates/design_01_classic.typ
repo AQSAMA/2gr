@@ -8,7 +8,7 @@
   frontmatter-frame: false,
 )
 
-#let document(body) = {
+#let project(body) = {
   set document(title: manuscript_title)
   set page(paper: "a4", margin: 1.5cm, numbering: "1", number-align: center)
   set text(font: ("Times New Roman", "Times"), size: 14pt, fill: rgb("#111827"))
