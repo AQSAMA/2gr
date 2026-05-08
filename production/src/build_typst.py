@@ -47,6 +47,12 @@ def generate_body(md_path: Path) -> Path:
     manually editing manuscript content.
     """
     blocks: list[str] = []
+    def typst_relpath(path: Path) -> str:
+        try:
+            return Path(os.path.relpath(path, TEMPLATES_DIR)).as_posix()
+        except ValueError:
+            return path.as_posix()
+
     for kind, data in iter_markdown_blocks(md_path.read_text(encoding="utf-8")):
         if kind == "chaptertitle":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
@@ -69,9 +75,9 @@ def generate_body(md_path: Path) -> Path:
             if image_path.exists():
                 asset_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(image_path, asset_path)
-                typst_path = Path(os.path.relpath(asset_path, TEMPLATES_DIR)).as_posix()
+                typst_path = typst_relpath(asset_path)
             else:
-                typst_path = Path(os.path.relpath(image_path, TEMPLATES_DIR)).as_posix()
+                typst_path = typst_relpath(image_path)
             blocks.append(
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
