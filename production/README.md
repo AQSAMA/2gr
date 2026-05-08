@@ -1,51 +1,88 @@
 # Production Pipeline
 
-This folder contains a self-contained production pipeline that keeps source research text unchanged and generates publication-ready outputs using one unified Python production path.
+## English
 
-## Input sources used
-- `/home/runner/work/2gr/2gr/content/*.md`
-- `/home/runner/work/2gr/2gr/references.md`
-- `/home/runner/work/2gr/2gr/figures/*.png`
+The `production/` directory is the output factory for the research project. The scientific manuscript text stays in `content/*.md`, with references in `references.md` and figures in `figures/`. Production scripts assemble those sources into final deliverables without changing the scientific content files.
 
-## Outputs
-- `assembled/comprehensive_research.md`
-- `method_a_python/research_method_a.pdf`
-- `method_a_python/research_method_a.docx`
-- `method_a_python/research_method_a.tex`
+The main entry point is:
 
-## Run
 ```bash
-cd /home/runner/work/2gr/2gr
-python -m pip install -r production/requirements.txt
-python production/src/build_production.py
+python production/src/build_all.py
 ```
 
-## Cover and front-matter behavior
-- Front-matter pages are authored in `content/00_cover.md` as the single source for cover-related material.
-- DOCX outputs still allow field refresh for navigation lists when needed in final formatting.
+Before running locally, install the Python dependencies:
 
-## Refresh instructions after each content update
-1. Re-run the build command:
-   ```bash
-   python production/src/build_production.py
-   ```
-2. Open the generated DOCX file in Word (`production/method_a_python/research_method_a.docx`).
-3. Select all (`Ctrl+A`) and update fields (`F9`) to refresh:
-   - Table of Contents
-   - List of Figures
-   - List of Tables
-4. Save the document after field refresh if you need a final submission copy.
+```bash
+python -m pip install -r production/requirements.txt
+```
 
-## Caption normalization
-- Figure captions are normalized and ordered automatically during assembly.
-- Captions are exported in consistent `Figure N. ...` format so ToC/LoF generation remains stable across runs.
+`build_all.py` runs two production paths in order. Method A (`production/method_a_python/`) is the existing Python path and produces DOCX, PDF, TEX, and a copy of the assembled Markdown. Method B (`production/method_b_typst/`) generates Typst files from the same assembled Markdown and, when Typst is installed, produces five PDF designs.
+
+If optional tools such as Typst or Pandoc are missing, the build prints a warning and continues with the available outputs. Pandoc is not required for the current Python Method A path, but the warning makes the environment status clear for future conversion steps.
+
+## Inputs
+
+```text
+content/*.md          Scientific manuscript source text
+references.md         Master bibliography
+figures/*.png         Figure assets used by the manuscript
+outline.md            Structural blueprint that governs manuscript order
+survey_data_results.md Source of primary survey result values
+```
+
+## Outputs
+
+```text
+production/assembled/comprehensive_research.md
+production/method_a_python/research_method_a.docx
+production/method_a_python/research_method_a.pdf
+production/method_a_python/research_method_a.tex
+production/method_b_typst/output/design_01_classic.pdf
+production/method_b_typst/output/design_02_modern_navy.pdf
+production/method_b_typst/output/design_03_minimal_journal.pdf
+production/method_b_typst/output/design_04_elegant_frontmatter.pdf
+production/method_b_typst/output/design_05_defense_copy.pdf
+```
+
+## Method A: Python
+
+Method A remains the stable production path. It assembles `content/*.md`, appends `references.md`, copies figure assets, normalizes figure captions, and produces DOCX/PDF/TEX outputs in `production/method_a_python/`. Open the DOCX in Word and refresh fields if you need Word-generated navigation lists.
+
+## Method B: Typst
+
+Method B is located in `production/method_b_typst/`. Its directory roles are:
+
+```text
+templates/  Editable design files
+generated/  Auto-generated Typst body and entry files; generally do not edit manually
+output/     Final Typst PDF outputs
+main.typ    Default classic-design Typst entry point
+```
+
+To adjust a Typst design, edit the matching template file, such as `production/method_b_typst/templates/design_03_minimal_journal.typ`, then rerun `python production/src/build_all.py`. The generated body stays synchronized with `production/assembled/comprehensive_research.md`, which is assembled from `content/*.md`.
+
+## العربية
+
+مجلد `production/` هو مصنع الإخراج النهائي للمشروع. يبقى النص العلمي الأصلي داخل `content/*.md`، وتبقى المراجع في `references.md`، والأشكال في `figures/`. تقوم سكربتات الإنتاج بتجميع هذه الملفات لإنتاج النسخ النهائية من دون تعديل ملفات المحتوى العلمي.
+
+نقطة التشغيل الرئيسية هي:
+
+```bash
+python production/src/build_all.py
+```
+
+قبل التشغيل المحلي، ثبّت متطلبات بايثون:
+
+```bash
+python -m pip install -r production/requirements.txt
+```
+
+يشغّل `build_all.py` مسارين. Method A هو المسار الحالي باستخدام Python ويُنتج DOCX وPDF وTEX. Method B يستخدم Typst لإنشاء خمسة تصاميم PDF من نفس النص المجمّع. إذا لم تكن أدوات Typst أو Pandoc مثبتة، تظهر رسالة تحذير ويستمر البناء بالمسارات المتاحة.
+
+لا تعدّل ملفات `production/method_b_typst/generated/` يدوياً لأنها تُنشأ تلقائياً. عدّل ملفات التصميم داخل `production/method_b_typst/templates/` فقط، ثم أعد تشغيل البناء. أما النتائج النهائية فتوجد في مجلد `output/`.
+
 ## Operations (CI/CD)
-The workflow in `.github/workflows/production.yml` runs on every `push` and `pull_request`, executes `python production/src/build_production.py`, and uploads the generated outputs as run artifacts in the Actions **Artifacts** panel.
 
-When a tag push (for example `v1.0.0`) or a published GitHub Release event occurs, the same build runs again and DOCX/PDF/TEX/MD outputs are uploaded as Release assets on the matching tag/release page.
+The workflow in `.github/workflows/production.yml` installs Python dependencies, Pandoc, and Typst, then runs `python production/src/build_all.py`. It uploads the assembled Markdown, Method A outputs, and Method B Typst PDF outputs as workflow artifacts. For tag builds or published releases, the same outputs are uploaded as release assets.
 
 CI only builds and publishes artifacts/assets; it does not commit generated binary files back to the repository.
-
-## Notes
-- The pipeline does not modify any file in `content/`, `sources/`, `figures/`, or other repository paths.
-- Page size/margins, Times New Roman style target, and line spacing are applied in generated outputs.
