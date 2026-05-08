@@ -125,7 +125,7 @@ def compile_design(entry: Path, out_pdf: Path) -> bool:
 
     try:
         result = subprocess.run(
-            [typst, "compile", str(entry), str(out_pdf)],
+            [typst, "compile", "--root", str(PROD_ROOT.parent), str(entry), str(out_pdf)],
             cwd=METHOD_B_DIR,
             text=True,
             capture_output=True,
