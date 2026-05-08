@@ -27,6 +27,9 @@ jobs:
           cache: "pip"
           cache-dependency-path: production/requirements.txt
 
+      - name: Install Pandoc and TeX Live
+        run: sudo apt-get update && sudo apt-get install -y pandoc texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-xetex
+
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
 
@@ -47,6 +50,8 @@ jobs:
             production/method_b_hybrid/*.docx
             production/method_b_hybrid/*.pdf
             production/method_b_hybrid/*.tex
+            production/designs/*.docx
+            production/designs/*.pdf
 
   publish-release-assets:
     name: Publish release assets
@@ -67,6 +72,9 @@ jobs:
           cache: "pip"
           cache-dependency-path: production/requirements.txt
 
+      - name: Install Pandoc and TeX Live
+        run: sudo apt-get update && sudo apt-get install -y pandoc texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended texlive-xetex
+
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
 
@@ -85,3 +93,5 @@ jobs:
             production/method_b_hybrid/*.docx
             production/method_b_hybrid/*.pdf
             production/method_b_hybrid/*.tex
+            production/designs/*.docx
+            production/designs/*.pdf

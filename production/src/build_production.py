@@ -729,6 +729,13 @@ def run_method_a(md_path: Path) -> None:
     build_pdf_reportlab(md_path, METHOD_A_DIR / "research_method_a.pdf")
 
 def build_pandoc_designs(md_path: Path) -> None:
+    # Check if pandoc is installed
+    try:
+        subprocess.run(["pandoc", "--version"], check=True, capture_output=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("Warning: Pandoc is not installed or not in PATH. Skipping advanced design generation.")
+        return
+
     designs_dir = PROD_ROOT / "designs"
     templates_dir = PROD_ROOT / "templates" / "latex"
     designs_dir.mkdir(parents=True, exist_ok=True)
@@ -742,16 +749,13 @@ def build_pandoc_designs(md_path: Path) -> None:
         pdf_out = designs_dir / f"{design}.pdf"
         template = templates_dir / f"{design}.tex"
         if template.exists():
-            try:
-                subprocess.run([
-                    "pandoc",
-                    str(md_path),
-                    "-o", str(pdf_out),
-                    "--template", str(template),
-                    "--pdf-engine=pdflatex"
-                ], check=True, capture_output=True)
-            except subprocess.CalledProcessError as e:
-                print(f"  Warning: PDF generation failed for {design}: {e.stderr.decode('utf-8')}")
+            subprocess.run([
+                "pandoc",
+                str(md_path),
+                "-o", str(pdf_out),
+                "--template", str(template),
+                "--pdf-engine=pdflatex"
+            ], check=True, capture_output=True)
         else:
             print(f"  Warning: Template {template} not found.")
 
@@ -762,10 +766,7 @@ def build_pandoc_designs(md_path: Path) -> None:
         if reference_doc.exists():
             cmd.append(f"--reference-doc={reference_doc}")
 
-        try:
-            subprocess.run(cmd, check=True, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            print(f"  Warning: DOCX generation failed for {design}: {e.stderr.decode('utf-8')}")
+        subprocess.run(cmd, check=True, capture_output=True)
 
 
 def main() -> None:
