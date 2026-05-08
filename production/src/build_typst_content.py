@@ -57,6 +57,15 @@ def ensure_dirs() -> None:
 
 
 
+def _split_references(md_text: str) -> tuple[str, list[str]]:
+    marker = "\n# VIII. REFERENCES\n"
+    if marker not in md_text:
+        return md_text, []
+    before, after = md_text.split(marker, 1)
+    references = [clean_text(line) for line in after.splitlines() if clean_text(line)]
+    return before + marker, references
+
+
 def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
     """Return Typst calls for roman-numbered front matter and arabic main matter."""
     front_calls: list[str] = []
@@ -64,8 +73,9 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
     target = front_calls
     skip_cover = True
     in_references = False
+    md_text, references = _split_references(md_path.read_text(encoding="utf-8"))
 
-    for kind, data in iter_markdown_blocks(md_path.read_text(encoding="utf-8")):
+    for kind, data in iter_markdown_blocks(md_text):
         if skip_cover:
             if kind == "h1" and data.strip().upper() == "ABSTRACT":
                 skip_cover = False
@@ -84,7 +94,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             text = clean_text(data)
             if text.upper() == "VIII. REFERENCES":
                 in_references = True
-            target.append(f"#h1({typst_string(text)})")
+            target.append(f"#section-title({typst_string(text)})")
             continue
 
         if kind == "h2":
@@ -109,8 +119,13 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             target.append("#pagebreak()")
             continue
 
-    return front_calls, main_calls
+    if references:
+        if not in_references:
+            target.append(f"#section-title({typst_string('VIII. REFERENCES')})")
+        for reference in references:
+            target.append(f"#refp({typst_string(reference)})")
 
+    return front_calls, main_calls
 
 def render_typst_source(md_path: Path) -> str:
     front_calls, main_calls = collect_manuscript_calls(md_path)
@@ -146,8 +161,15 @@ def render_typst_source(md_path: Path) -> str:
 
 #let center-line(s, size: 14pt, weight: "regular", fill: ink) = align(center)[#text(size: size, weight: weight, fill: fill)[#s]]
 #let p(s) = par(first-line-indent: 1.27cm, justify: true)[#s]
-#let refp(s) = par(first-line-indent: 0pt, hanging-indent: 0.5in, justify: true)[#s]
+#let refp(s) = block(above: 3pt, below: 5pt)[
+  #set text(size: 12pt)
+  #par(first-line-indent: 0pt, hanging-indent: 0.5in, justify: true)[#s]
+]
 #let h1(s) = heading(level: 1, outlined: true)[#s]
+#let section-title(s) = [
+  #pagebreak(weak: true)
+  #h1(s)
+]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
 #let fig(path, caption-text) = figure(image(path, width: 90%), caption: [#caption-text])
 
@@ -181,7 +203,7 @@ def render_typst_source(md_path: Path) -> str:
   #counter(page).update(1)
 ]
 
-// Cover page: unnumbered, with supervisor certification on the same page.
+// Cover page: unnumbered. Certification begins on the second page.
 #set page(numbering: none)
 #align(center)[
   #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
@@ -204,13 +226,6 @@ def render_typst_source(md_path: Path) -> str:
   #text(size: 16pt)[Supervisor's Degree]
   #v(0.25cm)
   #text(size: 14pt)[{MONTH_YEAR}]
-]
-#v(0.35cm)
-#box(width: 100%, inset: 8pt, stroke: 0.55pt + navy)[
-  #align(center)[#text(size: 14pt, weight: "bold", fill: navy)[Certification of the Supervisor]]
-  #text(size: 11pt)[I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.]
-  #v(0.18cm)
-  #text(size: 11pt)[Supervisor's name: {SUPERVISOR} #h(2cm) Date:]
 ]
 
 // Roman-numbered preliminary pages.
@@ -292,15 +307,42 @@ def compile_typst_pdf() -> bool:
     return True
 
 
+def convert_typst_docx_with_pandoc() -> bool:
+    pandoc = shutil.which("pandoc")
+    if pandoc is None:
+        print("WARNING: pandoc is not installed; Typst-to-DOCX conversion was skipped.")
+        return False
+    try:
+        result = subprocess.run(
+            [pandoc, str(TYPST_SOURCE), "-f", "typst", "-t", "docx", "-o", str(TYPST_DOCX)],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired as exc:
+        print("WARNING: Pandoc Typst-to-DOCX conversion timed out; falling back if possible.")
+        _print_process_output(exc.stdout)
+        _print_process_output(exc.stderr)
+        return False
+    if result.returncode != 0:
+        print("WARNING: Pandoc could not convert typst_content/research.typ to DOCX; falling back if possible.")
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
+        return False
+    print(f"Typst content DOCX: {TYPST_DOCX}")
+    return True
+
+
 def copy_docx_output() -> bool:
     source_docx = METHOD_A_DIR / "research_method_a.docx"
     if not source_docx.exists():
-        print("WARNING: Method A DOCX was not found; typst_content DOCX copy was skipped.")
+        print("WARNING: Method A DOCX was not found; typst_content DOCX fallback was skipped.")
         return False
     shutil.copy2(source_docx, TYPST_DOCX)
-    print(f"Typst content DOCX companion: {TYPST_DOCX}")
+    print(f"Typst content DOCX fallback copied from Method A: {TYPST_DOCX}")
     return True
-
 
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()
@@ -313,7 +355,8 @@ def run_typst_content(md_path: Path | None = None) -> None:
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
-    copy_docx_output()
+    if not convert_typst_docx_with_pandoc():
+        copy_docx_output()
 
 
 def main() -> None:

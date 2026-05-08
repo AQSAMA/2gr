@@ -66,7 +66,7 @@ To adjust a Typst design, edit the matching template file, such as `production/m
 
 ## Editable Typst Source
 
-The `typst_content/` directory contains a single editable Typst file, `research.typ`, generated from the current manuscript content. It includes a formal cover page, supervisor certification, dedication, acknowledgment, automatic table of contents, lists of figures/tables/abbreviations, page borders, Roman-numbered preliminary pages, and Arabic-numbered manuscript chapters. The source links to the existing `figures/` assets and, when Typst is available, compiles `typst_content/output/research.pdf`. The companion DOCX in `typst_content/output/research.docx` is copied from the stable Method A DOCX because Typst does not provide a native DOCX export path in this repository.
+The `typst_content/` directory contains a single editable Typst file, `research.typ`, generated from the current manuscript content. It includes a formal cover page, supervisor certification, dedication, acknowledgment, automatic table of contents, lists of figures/tables/abbreviations, page borders, Roman-numbered preliminary pages, and Arabic-numbered manuscript chapters. The source links to the existing `figures/` assets and, when Typst is available, compiles `typst_content/output/research.pdf`. The build now first tries to create `typst_content/output/research.docx` from `typst_content/research.typ` with Pandoc. If that converter is unavailable or cannot read the Typst source, it falls back to the stable Method A DOCX so the GitHub Action still publishes a DOCX artifact.
 
 ## Operations (CI/CD)
 
