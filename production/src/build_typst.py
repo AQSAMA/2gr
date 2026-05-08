@@ -47,7 +47,9 @@ def generate_body(md_path: Path) -> Path:
     manually editing manuscript content.
     """
     blocks: list[str] = []
+
     def typst_relpath(path: Path) -> str:
+        """Return a templates-relative path for Typst, falling back on absolute paths."""
         try:
             return Path(os.path.relpath(path, TEMPLATES_DIR)).as_posix()
         except ValueError:

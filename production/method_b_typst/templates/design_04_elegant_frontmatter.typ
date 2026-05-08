@@ -9,8 +9,9 @@
   frontmatter-frame: true,
 )
 
+#let document_element = document
 #let document(body) = {
-  set document(title: manuscript_title)
+  set document_element(title: manuscript_title)
   set page(paper: "a4", margin: 1.5cm, numbering: "1", number-align: center)
   set text(font: ("Times New Roman", "Times"), size: 14pt, fill: rgb("#201517"))
   set par(leading: 0.55em, spacing: 0.35em, justify: true)

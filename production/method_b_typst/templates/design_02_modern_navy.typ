@@ -9,8 +9,9 @@
   frontmatter-frame: true,
 )
 
+#let document_element = document
 #let document(body) = {
-  set document(title: manuscript_title)
+  set document_element(title: manuscript_title)
   set page(
     paper: "a4",
     margin: 1.5cm,
