@@ -1,0 +1,45 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[left=4cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry} % Wide left margin for binding
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
+
+% Formal Thesis Style
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.5pt}
+\fancyhead[R]{\thepage}
+\fancyhead[L]{\leftmark}
+
+\titleformat{\chapter}[display]{\vspace{2in}\Huge\bfseries\centering}{Chapter \thechapter}{20pt}{\Huge}
+\titleformat{\section}[hang]{\Large\bfseries}{\thesection}{1em}{}
+
+\setstretch{1.5} % Strict 1.5 spacing
+\setlength{\parindent}{0.5in}
+
+$if(title)$
+\title{\vspace{1.5in}\Huge\textbf{\uppercase{$title$}} $if(subtitle)$ \\[1.5em] \Large $subtitle$ $endif$}
+\author{}
+\date{}
+$endif$
+
+\begin{document}
+$if(title)$
+\maketitle
+\thispagestyle{empty}
+\newpage
+$endif$
+
+$if(toc)$
+\tableofcontents
+\newpage
+$endif$
+
+$body$
+
+\end{document}
