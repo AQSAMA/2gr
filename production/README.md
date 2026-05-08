@@ -16,7 +16,7 @@ Before running locally, install the Python dependencies:
 python -m pip install -r production/requirements.txt
 ```
 
-`build_all.py` runs two production paths in order. Method A (`production/method_a_python/`) is the existing Python path and produces DOCX, PDF, TEX, and a copy of the assembled Markdown. Method B (`production/method_b_typst/`) generates Typst files from the same assembled Markdown and, when Typst is installed, produces five PDF designs.
+`build_all.py` runs two production paths in order. Method A (`production/method_a_python/`) is the existing Python path and produces DOCX, PDF, TEX, and a copy of the assembled Markdown. Method B (`production/method_b_typst/`) generates Typst files from the same assembled Markdown and, when Typst is installed, produces five PDF designs. The new `typst_content/` path also writes one editable Typst thesis source with a formal bordered front matter design plus PDF/DOCX companion outputs for artifacts.
 
 If optional tools such as Typst or Pandoc are missing, the build prints a warning and continues with the available outputs. Pandoc is not required for the current Python Method A path, but the warning makes the environment status clear for future conversion steps.
 
@@ -42,6 +42,9 @@ production/method_b_typst/output/design_02_modern_navy.pdf
 production/method_b_typst/output/design_03_minimal_journal.pdf
 production/method_b_typst/output/design_04_elegant_frontmatter.pdf
 production/method_b_typst/output/design_05_defense_copy.pdf
+typst_content/research.typ
+typst_content/output/research.pdf
+typst_content/output/research.docx
 ```
 
 ## Method A: Python
@@ -61,28 +64,12 @@ main.typ    Default classic-design Typst entry point
 
 To adjust a Typst design, edit the matching template file, such as `production/method_b_typst/templates/design_03_minimal_journal.typ`, then rerun `python production/src/build_all.py`. The generated body stays synchronized with `production/assembled/comprehensive_research.md`, which is assembled from `content/*.md`.
 
-## العربية
+## Editable Typst Source
 
-مجلد `production/` هو مصنع الإخراج النهائي للمشروع. يبقى النص العلمي الأصلي داخل `content/*.md`، وتبقى المراجع في `references.md`، والأشكال في `figures/`. تقوم سكربتات الإنتاج بتجميع هذه الملفات لإنتاج النسخ النهائية من دون تعديل ملفات المحتوى العلمي.
-
-نقطة التشغيل الرئيسية هي:
-
-```bash
-python production/src/build_all.py
-```
-
-قبل التشغيل المحلي، ثبّت متطلبات بايثون:
-
-```bash
-python -m pip install -r production/requirements.txt
-```
-
-يشغّل `build_all.py` مسارين. Method A هو المسار الحالي باستخدام Python ويُنتج DOCX وPDF وTEX. Method B يستخدم Typst لإنشاء خمسة تصاميم PDF من نفس النص المجمّع. إذا لم تكن أدوات Typst أو Pandoc مثبتة، تظهر رسالة تحذير ويستمر البناء بالمسارات المتاحة.
-
-لا تعدّل ملفات `production/method_b_typst/generated/` يدوياً لأنها تُنشأ تلقائياً. عدّل ملفات التصميم داخل `production/method_b_typst/templates/` فقط، ثم أعد تشغيل البناء. أما النتائج النهائية فتوجد في مجلد `output/`.
+The `typst_content/` directory contains a single editable Typst file, `research.typ`, generated from the current manuscript content. It includes a formal cover page, supervisor certification, dedication, acknowledgment, automatic table of contents, lists of figures/tables/abbreviations, page borders, Roman-numbered preliminary pages, and Arabic-numbered manuscript chapters. The source links to the existing `figures/` assets and, when Typst is available, compiles `typst_content/output/research.pdf`. The companion DOCX in `typst_content/output/research.docx` is copied from the stable Method A DOCX because Typst does not provide a native DOCX export path in this repository.
 
 ## Operations (CI/CD)
 
-The workflow in `.github/workflows/production.yml` installs Python dependencies, Pandoc, and Typst, then runs `python production/src/build_all.py`. It uploads the assembled Markdown, Method A outputs, and Method B Typst PDF outputs as workflow artifacts. For tag builds or published releases, the same outputs are uploaded as release assets.
+The workflow in `.github/workflows/production.yml` installs Python dependencies, Pandoc, and Typst, then runs `python production/src/build_all.py`. It uploads the assembled Markdown, Method A outputs, Method B Typst PDF outputs, and `typst_content/` source/output artifacts. For tag builds or published releases, the same outputs are uploaded as release assets.
 
 CI only builds and publishes artifacts/assets; it does not commit generated binary files back to the repository.

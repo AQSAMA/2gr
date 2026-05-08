@@ -49,6 +49,8 @@ jobs:
             production/assembled/comprehensive_research.md
             production/method_a_python/*
             production/method_b_typst/output/*
+            typst_content/research.typ
+            typst_content/output/*
 
   publish-release-assets:
     name: Publish release assets
@@ -89,3 +91,5 @@ jobs:
             production/assembled/comprehensive_research.md
             production/method_a_python/*
             production/method_b_typst/output/*
+            typst_content/research.typ
+            typst_content/output/*
