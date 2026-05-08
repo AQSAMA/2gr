@@ -5,7 +5,7 @@
 #let running_header = "Psychiatric Medication Use and Public Acceptance in Iraq"
 
 // Convert basic Markdown inline markers to Typst content.
-// Handles **bold**, *italic*, and ***bold-italic*** sequences.
+// Processes ***bold-italic*** first, then **bold**, then *italic*.
 #let md-inline(s) = {
   let apply-italic(text) = {
     let parts = text.split("*")
@@ -18,13 +18,24 @@
     result.join()
   }
 
-  let parts = s.split("**")
+  let apply-bold(text) = {
+    let parts = text.split("**")
+    let result = ()
+    let is-bold = false
+    for part in parts {
+      result += (if is-bold { strong(apply-italic(part)) } else { apply-italic(part) },)
+      is-bold = not is-bold
+    }
+    result.join()
+  }
+
+  // Handle ***text*** (bold-italic) before ** and * to avoid ambiguous splits.
+  let parts = s.split("***")
   let result = ()
-  let is-bold = false
+  let is-bold-italic = false
   for part in parts {
-    let inner = apply-italic(part)
-    result += (if is-bold { strong(inner) } else { inner },)
-    is-bold = not is-bold
+    result += (if is-bold-italic { strong(emph(part)) } else { apply-bold(part) },)
+    is-bold-italic = not is-bold-italic
   }
   result.join()
 }
