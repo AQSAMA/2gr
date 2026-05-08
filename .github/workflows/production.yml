@@ -27,11 +27,17 @@ jobs:
           cache: "pip"
           cache-dependency-path: production/requirements.txt
 
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
 
       - name: Run production build
-        run: python production/src/build_production.py
+        run: python production/src/build_all.py
 
       - name: Upload production artifacts
         if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -41,12 +47,8 @@ jobs:
           if-no-files-found: error
           path: |
             production/assembled/comprehensive_research.md
-            production/method_a_python/*.docx
-            production/method_a_python/*.pdf
-            production/method_a_python/*.tex
-            production/method_b_hybrid/*.docx
-            production/method_b_hybrid/*.pdf
-            production/method_b_hybrid/*.tex
+            production/method_a_python/*
+            production/method_b_typst/output/*
 
   publish-release-assets:
     name: Publish release assets
@@ -67,11 +69,17 @@ jobs:
           cache: "pip"
           cache-dependency-path: production/requirements.txt
 
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
 
       - name: Run production build
-        run: python production/src/build_production.py
+        run: python production/src/build_all.py
 
       - name: Upload assets to release
         uses: softprops/action-gh-release@v2
@@ -79,9 +87,5 @@ jobs:
           tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
           files: |
             production/assembled/comprehensive_research.md
-            production/method_a_python/*.docx
-            production/method_a_python/*.pdf
-            production/method_a_python/*.tex
-            production/method_b_hybrid/*.docx
-            production/method_b_hybrid/*.pdf
-            production/method_b_hybrid/*.tex
+            production/method_a_python/*
+            production/method_b_typst/output/*

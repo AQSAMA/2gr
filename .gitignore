@@ -5,3 +5,7 @@ production/method_b_hybrid/*.pdf
 production/method_b_hybrid/*.docx
 production/assembled/*.html
 production/assembled/*.tex
+
+# Python cache files
+__pycache__/
+*.py[cod]
