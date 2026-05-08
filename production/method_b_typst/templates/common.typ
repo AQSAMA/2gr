@@ -4,6 +4,31 @@
 #let manuscript_title = "Psychiatric Medication Use and Public Acceptance in Iraq"
 #let running_header = "Psychiatric Medication Use and Public Acceptance in Iraq"
 
+// Convert basic Markdown inline markers to Typst content.
+// Handles **bold**, *italic*, and ***bold-italic*** sequences.
+#let md-inline(s) = {
+  let apply-italic(text) = {
+    let parts = text.split("*")
+    let result = ()
+    let is-italic = false
+    for part in parts {
+      result += (if is-italic { emph(part) } else { part },)
+      is-italic = not is-italic
+    }
+    result.join()
+  }
+
+  let parts = s.split("**")
+  let result = ()
+  let is-bold = false
+  for part in parts {
+    let inner = apply-italic(part)
+    result += (if is-bold { strong(inner) } else { inner },)
+    is-bold = not is-bold
+  }
+  result.join()
+}
+
 #let navigation-frontmatter(accent: rgb("#1f2937")) = {
   align(center)[#text(size: 28pt, weight: "bold", fill: accent)[Table of Contents]]
   outline(title: none, depth: 2)
@@ -67,14 +92,14 @@
     } else if block.kind == "references_start" {
       in-references = true
     } else if block.kind == "h1" {
-      heading(level: 1, outlined: true)[#block.text]
+      heading(level: 1, outlined: true)[#md-inline(block.text)]
     } else if block.kind == "h2" {
-      heading(level: 2, outlined: true)[#block.text]
+      heading(level: 2, outlined: true)[#md-inline(block.text)]
     } else if block.kind == "paragraph" {
       if in-references {
-        par(first-line-indent: 0pt, justify: true)[#block.text]
+        par(first-line-indent: 0pt, justify: true)[#md-inline(block.text)]
       } else {
-        par(first-line-indent: 1.27cm, justify: true)[#block.text]
+        par(first-line-indent: 1.27cm, justify: true)[#md-inline(block.text)]
       }
     } else if block.kind == "image" {
       figure(

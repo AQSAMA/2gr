@@ -41,6 +41,14 @@ jobs:
       - name: Run production build
         run: python production/src/build_all.py
 
+      - name: Verify Method B PDF outputs
+        run: |
+          pdf_list=$(find production/method_b_typst/output -name "*.pdf" | sort)
+          pdf_count=$(echo "$pdf_list" | grep -c '\.pdf' || true)
+          echo "Method B PDFs produced: $pdf_count"
+          echo "$pdf_list"
+          test "$pdf_count" -eq 5
+
       - name: Upload production artifacts
         if: github.event_name == 'push' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
