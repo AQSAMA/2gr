@@ -40,20 +40,56 @@ def generate_body(md_path: Path) -> Path:
     manually editing manuscript content.
     """
     blocks: list[str] = []
+
+    in_cover = False
+    skip_until_h1 = False
     for kind, data in iter_markdown_blocks(md_path.read_text(encoding="utf-8")):
+        if skip_until_h1:
+            if kind in {"h1", "chaptertitle"}:
+                skip_until_h1 = False
+            else:
+                continue
+
         if kind == "chaptertitle":
+            in_cover = False
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
             blocks.append(
                 f"  (kind: \"chaptertitle\", chapter: {typst_string(chapter_number)}, "
                 f"title: {typst_string(chapter_name)}),"
             )
         elif kind == "frontmatter":
+            in_cover = False
             blocks.append(f"  (kind: \"frontmatter\", title: {typst_string(data)}),")
         elif kind in {"h1", "h2", "paragraph"}:
-            if kind == "h1" and data.strip().upper() == "VIII. REFERENCES":
+            data_upper = data.strip().upper()
+            if kind == "h1":
+                if data_upper == "COVER":
+                    in_cover = True
+                    continue
+                else:
+                    in_cover = False
+
+            if in_cover:
+                if kind == "h2":
+                    if data_upper == "COVER PAGE":
+                        continue
+                    blocks.append(f"  (kind: \"cover_h2\", text: {typst_string(data)}),")
+                elif kind == "paragraph":
+                    blocks.append(f"  (kind: \"cover_paragraph\", text: {typst_string(data)}),")
+                continue
+
+            if data_upper == "TABLE OF CONTENTS" or data_upper == "LIST OF FIGURES" or data_upper == "LIST OF TABLES":
+                if data_upper == "TABLE OF CONTENTS":
+                    blocks.append('  (kind: "toc"),')
+                skip_until_h1 = True
+                continue
+
+            if kind == "h1" and data_upper == "VIII. REFERENCES":
                 blocks.append('  (kind: "references_start"),')
+
             blocks.append(f"  (kind: \"{kind}\", text: {typst_string(data)}),")
         elif kind == "image":
+            in_cover = False
             caption, rel_path = data.split("|||", 1)
             image_path = (md_path.parent / rel_path).resolve()
             try:
