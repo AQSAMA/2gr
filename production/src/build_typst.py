@@ -83,9 +83,9 @@ def write_design_entry(design: str) -> Path:
     entry = GENERATED_DIR / f"{design}.typ"
     entry.write_text(
         f"// AUTO-GENERATED entry point for {design}.\n"
-        f"#import \"../templates/{design}.typ\": document, render-manuscript\n"
+        f"#import \"../templates/{design}.typ\": project, render-manuscript\n"
         "#import \"body.typ\": manuscript_blocks\n\n"
-        "#show: document\n"
+        "#show: project\n"
         "#render-manuscript(manuscript_blocks)\n",
         encoding="utf-8",
     )
@@ -100,9 +100,9 @@ def write_default_main() -> None:
         "// Default Method B Typst entry point.\n"
         "// The production build uses generated/design_*.typ to compile all designs.\n"
         "// Compile this file after running build_all.py if you only need the classic design.\n"
-        "#import \"templates/design_01_classic.typ\": document, render-manuscript\n"
+        "#import \"templates/design_01_classic.typ\": project, render-manuscript\n"
         "#import \"generated/body.typ\": manuscript_blocks\n\n"
-        "#show: document\n"
+        "#show: project\n"
         "#render-manuscript(manuscript_blocks)\n",
         encoding="utf-8",
     )
@@ -125,7 +125,7 @@ def compile_design(entry: Path, out_pdf: Path) -> bool:
 
     try:
         result = subprocess.run(
-            [typst, "compile", str(entry), str(out_pdf)],
+            [typst, "compile", "--root", str(METHOD_B_DIR.parent.parent), str(entry), str(out_pdf)],
             cwd=METHOD_B_DIR,
             text=True,
             capture_output=True,

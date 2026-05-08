@@ -9,9 +9,9 @@
   frontmatter-frame: false,
 )
 
-#let document(body) = {
+#let project(body) = {
   set document(title: manuscript_title)
-  set page(paper: "a4", margin: 1.5cm, numbering: "1", number-align: center, footer: align(center)[#text(size: 9pt, fill: green)[Defense copy — #counter(page).display()]])
+  set page(paper: "a4", margin: 1.5cm, numbering: "1", number-align: center, footer: align(center)[#text(size: 9pt, fill: green)[Defense copy — context counter(page).display()]])
   set text(font: ("Times New Roman", "Times"), size: 14pt, fill: rgb("#102017"))
   set par(leading: 0.55em, spacing: 0.35em, justify: true)
   show heading.where(level: 1): it => block(above: 12pt, below: 8pt, fill: rgb("#edf7f2"), inset: 6pt)[#text(size: 18pt, weight: "bold", fill: green)[#it.body]]

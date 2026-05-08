@@ -9,8 +9,8 @@ CURRENT_DIR = Path(__file__).resolve().parent
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
-import build_production
-import build_typst
+import build_production  # noqa: E402
+import build_typst  # noqa: E402
 
 
 def warn_missing_tool(name: str, purpose: str) -> None:

@@ -9,7 +9,7 @@
   frontmatter-frame: true,
 )
 
-#let document(body) = {
+#let project(body) = {
   set document(title: manuscript_title)
   set page(
     paper: "a4",
