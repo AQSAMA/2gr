@@ -69,12 +69,9 @@ def generate_body(md_path: Path) -> Path:
             if image_path.exists():
                 asset_path.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(image_path, asset_path)
-                typst_path = asset_rel.as_posix()
+                typst_path = Path(os.path.relpath(asset_path, TEMPLATES_DIR)).as_posix()
             else:
-                try:
-                    typst_path = image_path.relative_to(GENERATED_DIR).as_posix()
-                except ValueError:
-                    typst_path = Path(os.path.relpath(image_path, GENERATED_DIR)).as_posix()
+                typst_path = Path(os.path.relpath(image_path, TEMPLATES_DIR)).as_posix()
             blocks.append(
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
