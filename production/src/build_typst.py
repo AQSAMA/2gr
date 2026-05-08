@@ -12,6 +12,7 @@ METHOD_B_DIR = PROD_ROOT / "method_b_typst"
 TEMPLATES_DIR = METHOD_B_DIR / "templates"
 GENERATED_DIR = METHOD_B_DIR / "generated"
 OUTPUT_DIR = METHOD_B_DIR / "output"
+GENERATED_ASSETS_DIR = GENERATED_DIR / "assets"
 BODY_TYP = GENERATED_DIR / "body.typ"
 
 DESIGNS = [
@@ -24,7 +25,13 @@ DESIGNS = [
 
 
 def ensure_dirs() -> None:
-    for directory in [METHOD_B_DIR, TEMPLATES_DIR, GENERATED_DIR, OUTPUT_DIR]:
+    for directory in [
+        METHOD_B_DIR,
+        TEMPLATES_DIR,
+        GENERATED_DIR,
+        GENERATED_ASSETS_DIR,
+        OUTPUT_DIR,
+    ]:
         directory.mkdir(parents=True, exist_ok=True)
 
 
@@ -56,10 +63,18 @@ def generate_body(md_path: Path) -> Path:
         elif kind == "image":
             caption, rel_path = data.split("|||", 1)
             image_path = (md_path.parent / rel_path).resolve()
-            try:
-                typst_path = image_path.relative_to(GENERATED_DIR).as_posix()
-            except ValueError:
-                typst_path = Path(os.path.relpath(image_path, GENERATED_DIR)).as_posix()
+            clean_parts = [part for part in Path(rel_path).parts if part not in {".", ".."}]
+            asset_rel = Path("assets", *clean_parts) if clean_parts else Path("assets", image_path.name)
+            asset_path = GENERATED_DIR / asset_rel
+            if image_path.exists():
+                asset_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(image_path, asset_path)
+                typst_path = asset_rel.as_posix()
+            else:
+                try:
+                    typst_path = image_path.relative_to(GENERATED_DIR).as_posix()
+                except ValueError:
+                    typst_path = Path(os.path.relpath(image_path, GENERATED_DIR)).as_posix()
             blocks.append(
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
@@ -125,7 +140,7 @@ def compile_design(entry: Path, out_pdf: Path) -> bool:
 
     try:
         result = subprocess.run(
-            [typst, "compile", "--root", str(PROD_ROOT), str(entry), str(out_pdf)],
+            [typst, "compile", str(entry), str(out_pdf)],
             cwd=METHOD_B_DIR,
             text=True,
             capture_output=True,
@@ -147,6 +162,15 @@ def compile_design(entry: Path, out_pdf: Path) -> bool:
     return True
 
 
+def enforce_required_outputs(compiled: int) -> None:
+    required_outputs = int(os.environ.get("REQUIRE_TYPST_OUTPUTS", "0") or "0")
+    if required_outputs and compiled < required_outputs:
+        raise RuntimeError(
+            f"Method B produced {compiled}/{len(DESIGNS)} PDFs, but CI requires at least "
+            f"{required_outputs}. Check Typst warnings above."
+        )
+
+
 def run_method_b(md_path: Path | None = None) -> None:
     ensure_dirs()
     write_default_main()
@@ -166,19 +190,12 @@ def run_method_b(md_path: Path | None = None) -> None:
             compiled += 1
             print(f"Method B PDF: {out_pdf}")
 
-    required_outputs = int(os.environ.get("REQUIRE_TYPST_OUTPUTS", "0") or "0")
     if compiled == 0:
-        message = "No Method B PDFs were produced. Install typst to enable Typst PDF output."
-        if required_outputs:
-            raise RuntimeError(message)
-        print(f"WARNING: {message}")
-    elif required_outputs and compiled < required_outputs:
-        raise RuntimeError(
-            f"Method B produced {compiled}/{len(DESIGNS)} PDFs, but CI requires at least "
-            f"{required_outputs}. Check Typst warnings above."
-        )
+        print("WARNING: No Method B PDFs were produced. Install typst to enable Typst PDF output.")
     else:
         print(f"Method B completed: {compiled}/{len(DESIGNS)} PDFs produced.")
+
+    enforce_required_outputs(compiled)
 
 
 def main() -> None:
