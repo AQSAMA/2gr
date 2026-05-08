@@ -1,6 +1,9 @@
 // Shared rendering helpers for Method B Typst designs.
 // Design files import this helper and pass their own colors and frontmatter style.
 
+#let manuscript_title = "Psychiatric Medication Use and Public Acceptance in Iraq"
+#let running_header = "Psychiatric Medication Use and Public Acceptance in Iraq"
+
 #let navigation-frontmatter(accent: rgb("#1f2937")) = {
   align(center)[#text(size: 28pt, weight: "bold", fill: accent)[Table of Contents]]
   outline(title: none, depth: 2)
@@ -61,10 +64,9 @@
         }
       ]
       pagebreak()
+    } else if block.kind == "references_start" {
+      in-references = true
     } else if block.kind == "h1" {
-      if block.text == "VIII. REFERENCES" {
-        in-references = true
-      }
       heading(level: 1, outlined: true)[#block.text]
     } else if block.kind == "h2" {
       heading(level: 2, outlined: true)[#block.text]
@@ -72,7 +74,7 @@
       if in-references {
         par(first-line-indent: 0pt, justify: true)[#block.text]
       } else {
-        par(first-line-indent: 0.5in, justify: true)[#block.text]
+        par(first-line-indent: 1.27cm, justify: true)[#block.text]
       }
     } else if block.kind == "image" {
       figure(

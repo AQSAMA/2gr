@@ -1,4 +1,4 @@
-#import "common.typ": render-blocks, navigation-frontmatter
+#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title, running_header
 
 #let green = rgb("#1f5f4b")
 #let render-manuscript(blocks) = render-blocks(
@@ -10,7 +10,7 @@
 )
 
 #let document(body) = {
-  set document(title: "Psychiatric Medication Use and Public Acceptance in Iraq")
+  set document(title: manuscript_title)
   set page(paper: "a4", margin: 1.5cm, numbering: "1", number-align: center, footer: align(center)[#text(size: 9pt, fill: green)[Defense copy — #counter(page).display()]])
   set text(font: ("Times New Roman", "Times"), size: 14pt, fill: rgb("#102017"))
   set par(leading: 0.55em, spacing: 0.35em, justify: true)

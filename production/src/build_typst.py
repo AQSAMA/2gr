@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -49,6 +50,8 @@ def generate_body(md_path: Path) -> Path:
         elif kind == "frontmatter":
             blocks.append(f"  (kind: \"frontmatter\", title: {typst_string(data)}),")
         elif kind in {"h1", "h2", "paragraph"}:
+            if kind == "h1" and data.strip().upper() == "VIII. REFERENCES":
+                blocks.append('  (kind: "references_start"),')
             blocks.append(f"  (kind: \"{kind}\", text: {typst_string(data)}),")
         elif kind == "image":
             caption, rel_path = data.split("|||", 1)
@@ -56,8 +59,7 @@ def generate_body(md_path: Path) -> Path:
             try:
                 typst_path = image_path.relative_to(GENERATED_DIR).as_posix()
             except ValueError:
-                typst_path = Path("../../assembled") / image_path.name
-                typst_path = typst_path.as_posix()
+                typst_path = Path(os.path.relpath(image_path, GENERATED_DIR)).as_posix()
             blocks.append(
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
@@ -106,25 +108,41 @@ def write_default_main() -> None:
     )
 
 
+def _print_process_output(output: str | bytes | None) -> None:
+    if output is None:
+        return
+    if isinstance(output, bytes):
+        output = output.decode(errors="replace")
+    if output.strip():
+        print(output.strip())
+
+
 def compile_design(entry: Path, out_pdf: Path) -> bool:
     typst = shutil.which("typst")
     if typst is None:
         print("WARNING: typst is not installed; Method B PDF compilation was skipped.")
         return False
 
-    result = subprocess.run(
-        [typst, "compile", str(entry), str(out_pdf)],
-        cwd=METHOD_B_DIR,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            [typst, "compile", str(entry), str(out_pdf)],
+            cwd=METHOD_B_DIR,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired as exc:
+        print(f"WARNING: Typst failed for {entry.name}; continuing with remaining outputs.")
+        print("Typst compilation timed out after 300 seconds.")
+        _print_process_output(exc.stdout)
+        _print_process_output(exc.stderr)
+        return False
+
     if result.returncode != 0:
         print(f"WARNING: Typst failed for {entry.name}; continuing with remaining outputs.")
-        if result.stdout.strip():
-            print(result.stdout.strip())
-        if result.stderr.strip():
-            print(result.stderr.strip())
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
         return False
     return True
 

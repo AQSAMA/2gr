@@ -31,7 +31,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Install Typst
-        uses: typst-community/setup-typst@v4
+        uses: typst-community/setup-typst@48aeee7543d37f01afd1ffb27307dc277387ba13
 
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
@@ -73,7 +73,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Install Typst
-        uses: typst-community/setup-typst@v4
+        uses: typst-community/setup-typst@48aeee7543d37f01afd1ffb27307dc277387ba13
 
       - name: Install dependencies
         run: python -m pip install -r production/requirements.txt
