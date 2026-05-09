@@ -24,6 +24,7 @@ from build_production import (
     copy_figure_assets,
     ensure_dirs as ensure_production_dirs,
     iter_markdown_blocks,
+    run_method_a,
 )
 
 TYPST_CONTENT_DIR = REPO_ROOT / "typst_content"
@@ -845,6 +846,23 @@ def copy_docx_output() -> bool:
     print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
 
+
+def copy_pdf_output(md_path: Path | None = None) -> bool:
+    source_pdf = METHOD_A_DIR / "research_method_a.pdf"
+    if not source_pdf.exists() and md_path is not None:
+        print("WARNING: Method A PDF was not found; generating Method A outputs for typst_content PDF fallback.")
+        try:
+            run_method_a(md_path)
+        except Exception as exc:
+            print(f"WARNING: Method A PDF fallback generation failed ({exc}).")
+    if not source_pdf.exists():
+        print("WARNING: Method A PDF was not found; typst_content PDF fallback was skipped.")
+        return False
+    shutil.copy2(source_pdf, TYPST_PDF)
+    print(f"Typst content PDF fallback copied from Method A: {TYPST_PDF}")
+    return True
+
+
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()
     if md_path is None:
@@ -857,7 +875,8 @@ def run_typst_content(md_path: Path | None = None) -> None:
         print("WARNING: university logo PNG was not found at repository root or in figures/; cover logo placement was skipped.")
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
-    compile_typst_pdf()
+    if not compile_typst_pdf():
+        copy_pdf_output(md_path)
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
