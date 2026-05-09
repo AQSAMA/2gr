@@ -254,17 +254,16 @@ def render_typst_source(md_path: Path) -> str:
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
 
-// The running head sits at the top RIGHT and is suppressed on the first
-// page of every chapter. Chapter-title pages already disable the header
-// via `set page(header: none)`; content pages mark the opening page with a
-// `<section-start>` label so this context block knows to hide the head on
-// that page only.
+// The running head sits at the top RIGHT and appears ONLY on the first
+// page of every chapter/section (the page carrying the <section-start>
+// label). On all subsequent pages the header is empty. Chapter-title
+// interstitial pages disable the header entirely via `set page(header: none)`.
 #let regular-page-header = context {{
   let head = running-head.get()
   if head != "" {{
     let page-num = here().page()
     let markers = query(<section-start>).filter(m => m.location().page() == page-num)
-    if markers.len() == 0 {{
+    if markers.len() > 0 {{
       align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
     }}
   }}
@@ -333,12 +332,14 @@ def render_typst_source(md_path: Path) -> str:
 
 #let start-main-numbering() = [
   #pagebreak(weak: true)
-  #set page(numbering: "1", number-align: top + center)
+  #set page(numbering: "1", number-align: bottom + center)
   #counter(page).update(1)
 ]
 
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// Cover page: Roman-numbered from page 1. The entire front matter uses
+// Roman numerals; Arabic numbering begins at the abstract.
+#set page(numbering: "i", number-align: bottom + center)
+#counter(page).update(1)
 #align(center)[
 {logo_block}  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \\
@@ -362,11 +363,8 @@ def render_typst_source(md_path: Path) -> str:
   #text(size: 14pt)[{MONTH_YEAR}]
 ]
 
-// Roman-numbered preliminary pages. Numbering stays Roman through every
-// front-matter spread and switches to Arabic the moment the abstract opens.
+// Roman-numbered preliminary pages continue from the cover.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
 #front-title[Certification of the Supervisor]
 #p("I certify that this project entitled \u201c{TITLE}\u201d was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
 #align(right)[#text(weight: "bold")[Supervisor's name: {SUPERVISOR}]]
@@ -379,11 +377,11 @@ def render_typst_source(md_path: Path) -> str:
 
 #pagebreak()
 #front-title[Table of Contents]
-// The table of contents is tightened to fit a single page. We keep depth 2
-// so readers still see chapter + section structure, but compact the entry
-// size and spacing so the full outline renders inside one A4 page.
+// The table of contents is sized to fill exactly one page without overflow.
+// Depth 2 shows chapters + sections; entry size and spacing are tuned to
+// use the available vertical space comfortably.
 #{{
-  show outline.entry: it => block(above: 0.15em, below: 0.15em, text(size: 10pt, it))
+  show outline.entry: it => block(above: 0.45em, below: 0.45em, text(size: 12pt, it))
   outline(title: none, depth: 2, indent: auto)
 }}
 
