@@ -38,6 +38,7 @@ STUDENTS = [
     "Shifa Safi Aboud",
     "Zainab Mashal Nayef",
 ]
+STUDENTS.sort()
 SUPERVISOR = "Hameed Adnan"
 UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
@@ -93,8 +94,25 @@ def _split_references(md_text: str) -> tuple[str, list[str]]:
     if marker not in md_text:
         return md_text, []
     before, after = md_text.split(marker, 1)
-    references = [clean_text(line) for line in after.splitlines() if clean_text(line)]
-    return before + marker, references
+    all_references = [clean_text(line) for line in after.splitlines() if clean_text(line)]
+
+    citations = re.findall(r"\(([A-Z][A-Za-z\- \.,&;\d]*\d{4}[a-z]?)\)", before)
+    cited_authors = set()
+    for match in citations:
+        for citation in match.split(";"):
+            citation = citation.strip()
+            author = re.split(r" et al\.|,|&", citation)[0].strip()
+            if author:
+                cited_authors.add(author)
+
+    filtered_references = []
+    for ref in all_references:
+        for author in cited_authors:
+            if ref.startswith(author):
+                filtered_references.append(ref)
+                break
+
+    return before + marker, filtered_references
 
 
 def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
@@ -168,7 +186,7 @@ def render_typst_source(md_path: Path) -> str:
     logo_block = ""
     if logo_path is not None:
         logo_rel = Path("..") / logo_path.relative_to(REPO_ROOT)
-        logo_block = f"  #image({typst_string(logo_rel.as_posix())}, width: 2.25cm)\n  #v(0.16cm)\n"
+        logo_block = f"  #image({typst_string(logo_rel.as_posix())}, width: 2.25cm)\n  #v(0.1cm)\n"
 
     preamble = f'''// Editable Typst source for the graduation project.
 // Generated from content/*.md by production/src/build_typst_content.py.
@@ -187,13 +205,15 @@ def render_typst_source(md_path: Path) -> str:
 #let regular-page-header = context {{
   let head = running-head.get()
   if head != "" {{
-    align(left)[#text(size: 9pt, fill: navy)[#head]]
+    align(right)[#text(size: 9pt, fill: navy)[#head]]
   }}
 }}
 
 #set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
+#show outline.entry: set block(spacing: 0.65em)
+#show regex("\\([^()]*\\d{{4}}[a-z]?\\)"): set text(fill: rgb("#475569"))
 
 #show heading.where(level: 1): it => block(above: 10pt, below: 8pt)[
   #text(size: 18pt, weight: "bold", fill: navy)[#it.body]
@@ -278,7 +298,7 @@ def render_typst_source(md_path: Path) -> str:
 
 // Roman-numbered preliminary pages.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
+#set page(numbering: "I", number-align: top + center)
 #counter(page).update(1)
 #front-title[Certification of the Supervisor]
 #p("I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
@@ -511,7 +531,7 @@ def _configure_section(
             first_header.alignment = WD_ALIGN_PARAGRAPH.CENTER
             _add_field_run(first_header, "PAGE")
         header = section.header.paragraphs[0]
-        header.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         if running_head:
             run = header.add_run(running_head)
             _set_run_font(run, size=9, color="102A43")
