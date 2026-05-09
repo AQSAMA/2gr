@@ -27,19 +27,6 @@ design_05_defense_copy.pdf
 
 To modify a design, edit the matching file in `templates/`, then rerun `python production/src/build_all.py`. For example, edit `templates/design_02_modern_navy.typ` to change the navy design only. Do not manually edit `generated/body.typ`, because the next build will overwrite it.
 
-## العربية
+## Related Editable Typst Source
 
-المسار Method B هو مسار إنتاج باستخدام Typst لإخراج نسخة PDF من البحث. يعتمد على نفس ملف Markdown المجمّع المستخدم في Method A، لذلك تبقى كل التصاميم متزامنة مع النص العلمي نفسه.
-
-مصدر النص العلمي هو `content/*.md`. لا تعدّل ملف `generated/body.typ` لتغيير النص العلمي أو النتائج أو الأشكال أو الاستشهادات أو ترتيب الفصول، لأن هذا الملف يُنشأ تلقائياً من `production/assembled/comprehensive_research.md` بواسطة `production/src/build_typst.py`.
-
-وظيفة المجلدات واضحة. يحتوي `templates/` على ملفات التصميم القابلة للتعديل. يحتوي `generated/` على ملفات Typst التي تُنشأ تلقائياً. يحتوي `output/` على ملفات PDF النهائية. أما `main.typ` فهو نقطة تشغيل افتراضية للتصميم الكلاسيكي بعد إنشاء ملف الجسم.
-
-لتشغيل الإنتاج محلياً من جذر المشروع:
-
-```bash
-python -m pip install -r production/requirements.txt
-python production/src/build_all.py
-```
-
-لتعديل التصميم، عدّل ملف التصميم المناسب داخل `templates/` ثم شغّل البناء من جديد. لا تعدّل ملفات `generated/` يدوياً لأنها ستُستبدل في كل بناء جديد.
+The separate `typst_content/research.typ` file is the preferred single-file Typst source for manual editing. This Method B directory remains the multi-design production path, while `typst_content/` provides one clean thesis-style version with front matter, borders, Roman preliminary numbering, Arabic main numbering, and companion PDF/DOCX outputs in CI.

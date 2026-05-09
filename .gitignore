@@ -9,3 +9,7 @@ production/assembled/*.tex
 # Python cache files
 __pycache__/
 *.py[cod]
+
+# Editable Typst generated outputs
+typst_content/output/*
+!typst_content/output/.gitkeep
