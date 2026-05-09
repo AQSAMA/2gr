@@ -187,7 +187,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text == "8. REFERENCES":
+            if text.upper() == "8. REFERENCES":
                 in_references = True
                 # References live outside any numbered chapter, so switch the
                 # running head to "References" before emitting the heading.
@@ -463,7 +463,7 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text == "8. REFERENCES":
+            if text.upper() == "8. REFERENCES":
                 in_references = True
                 blocks.append(("references_section", text))
                 continue

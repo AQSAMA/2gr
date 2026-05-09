@@ -119,7 +119,7 @@ Section 4 defines the required **target** typography/layout specs for the final 
 * **Paragraphs:** Indent the first line of every paragraph (No empty lines between paragraphs).
 
 ## B. Document Structure & Page Breaks
-1. **Major Section Breaks:** To ensure professional formatting when exported to PDF/Word, insert the exact HTML tag `<div style="page-break-after: always;"></div>` at the very end of major sections (e.g., before starting a new major internal section like "III. METHODOLOGY" or "IV. RESULTS"). Internal Sections I/II map to College Chapter One at final output.
+1. **Major Section Breaks:** To ensure professional formatting when exported to PDF/Word, insert the exact HTML tag `<div style="page-break-after: always;"></div>` at the very end of major sections (e.g., before starting a new major internal section like "3. METHODOLOGY" or "4. RESULTS"). Internal Sections 1/2 map to College Chapter One at final output.
 2. **Logical Flow (No Orphans/Widows):** NEVER insert a page break in the middle of a paragraph, in the middle of a bulleted list, or inside a table. 
 3. **Spacing:** Ensure there is a blank line before and after the page break tag so it renders correctly without breaking the markdown syntax.
 

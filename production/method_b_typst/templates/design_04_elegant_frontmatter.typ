@@ -1,4 +1,4 @@
-#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title, running_header
+#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title
 
 #let burgundy = rgb("#6b1f2a")
 #let render-manuscript(blocks) = render-blocks(

@@ -2,8 +2,6 @@
 // Design files import this helper and pass their own colors and frontmatter style.
 
 #let manuscript_title = "Psychiatric Medication Use and Public Acceptance in Iraq"
-// Kept as a fallback for any legacy design that still imports it by this name.
-#let running_header = "Psychiatric Medication Use and Public Acceptance in Iraq"
 
 // Shared running-head state. Designs that set a page header should read this
 // state via a context block so continuation pages within a chapter carry the
