@@ -13,3 +13,7 @@ __pycache__/
 # Editable Typst generated outputs
 typst_content/output/*
 !typst_content/output/.gitkeep
+
+# Generated copied logo assets
+production/assembled/University_logo.png
+production/figures/University_logo.png
