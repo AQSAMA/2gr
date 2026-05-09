@@ -104,9 +104,7 @@ Zainab Mashal Nayef]
 #front-title[Certification of the Supervisor]
 #p("I certify that this project entitled “Psychiatric Medication Use and Public Acceptance in Iraq” was prepared by the fifth-year students Abdul Rahman Wakaa Ali, Ali Basem Hammoud, Shifa Safi Aboud, Zainab Mashal Nayef under my supervision at the College of Pharmacy/University of Al-Maarif in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
 #align(right)[#text(weight: "bold")[Supervisor's name: Hameed Adnan]]
-#v(0.2cm)
-#align(right)[Date:]
-#v(0.35cm)
+#v(0.55cm)
 #front-title[Dedication]
 #p("We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.")
 #v(0.35cm)

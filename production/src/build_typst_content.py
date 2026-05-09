@@ -7,6 +7,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from docx import Document
+from docx.enum.section import WD_SECTION
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Cm, Inches, Pt, RGBColor
+
 from build_production import (
     ASSEMBLED_DIR,
     FIGURES_DIR,
@@ -235,9 +242,7 @@ def render_typst_source(md_path: Path) -> str:
 #front-title[Certification of the Supervisor]
 #p("I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
 #align(right)[#text(weight: "bold")[Supervisor's name: {SUPERVISOR}]]
-#v(0.2cm)
-#align(right)[Date:]
-#v(0.35cm)
+#v(0.55cm)
 #front-title[Dedication]
 #p("We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.")
 #v(0.35cm)
@@ -307,32 +312,366 @@ def compile_typst_pdf() -> bool:
     return True
 
 
-def convert_typst_docx_with_pandoc() -> bool:
-    pandoc = shutil.which("pandoc")
-    if pandoc is None:
-        print("WARNING: pandoc is not installed; Typst-to-DOCX conversion was skipped.")
-        return False
-    try:
-        result = subprocess.run(
-            [pandoc, str(TYPST_SOURCE), "-f", "typst", "-t", "docx", "-o", str(TYPST_DOCX)],
-            cwd=REPO_ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=300,
-        )
-    except subprocess.TimeoutExpired as exc:
-        print("WARNING: Pandoc Typst-to-DOCX conversion timed out; falling back if possible.")
-        _print_process_output(exc.stdout)
-        _print_process_output(exc.stderr)
-        return False
-    if result.returncode != 0:
-        print("WARNING: Pandoc could not convert typst_content/research.typ to DOCX; falling back if possible.")
-        _print_process_output(result.stdout)
-        _print_process_output(result.stderr)
-        return False
-    print(f"Typst content DOCX: {TYPST_DOCX}")
-    return True
+def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
+    """Collect the same manuscript structure used by the editable Typst source."""
+    blocks: list[tuple[str, str]] = []
+    skip_cover = True
+    in_references = False
+    md_text, references = _split_references(md_path.read_text(encoding="utf-8"))
+
+    for kind, data in iter_markdown_blocks(md_text):
+        if skip_cover:
+            if kind == "h1" and data.strip().upper() == "ABSTRACT":
+                skip_cover = False
+            else:
+                continue
+
+        if kind == "chaptertitle":
+            chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
+            if chapter_number == "Chapter One":
+                blocks.append(("start_main", ""))
+            blocks.append(("chapter", f"{chapter_number}|||{chapter_name}"))
+            continue
+
+        if kind == "h1":
+            text = clean_text(data)
+            if text.upper() == "VIII. REFERENCES":
+                in_references = True
+            blocks.append(("section", text))
+            continue
+
+        if kind == "h2":
+            blocks.append(("h2", clean_text(data)))
+            continue
+
+        if kind == "paragraph":
+            text = clean_text(data)
+            if text:
+                blocks.append(("reference" if in_references else "paragraph", text))
+            continue
+
+        if kind == "image":
+            caption, rel_path = data.split("|||", 1)
+            blocks.append(("image", f"{clean_text(caption)}|||{Path(rel_path).name}"))
+            continue
+
+        if kind == "pagebreak":
+            blocks.append(("pagebreak", ""))
+            continue
+
+    if references:
+        if not in_references:
+            blocks.append(("section", "VIII. REFERENCES"))
+        for reference in references:
+            blocks.append(("reference", reference))
+
+    return blocks
+
+
+def _set_run_font(run, size: int | float | None = None, bold: bool | None = None, color: str | None = None) -> None:
+    run.font.name = "Times New Roman"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    if size is not None:
+        run.font.size = Pt(size)
+    if bold is not None:
+        run.bold = bold
+    if color is not None:
+        run.font.color.rgb = RGBColor.from_string(color)
+
+
+def _set_paragraph_border(paragraph, color: str = "B58B2A", size: str = "8") -> None:
+    p_pr = paragraph._p.get_or_add_pPr()
+    borders = p_pr.find(qn("w:pBdr"))
+    if borders is None:
+        borders = OxmlElement("w:pBdr")
+        p_pr.append(borders)
+    for edge in ["top", "left", "bottom", "right"]:
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), size)
+        element.set(qn("w:space"), "4")
+        element.set(qn("w:color"), color)
+        borders.append(element)
+
+
+def _set_page_border(section) -> None:
+    sect_pr = section._sectPr
+    borders = sect_pr.find(qn("w:pgBorders"))
+    if borders is None:
+        borders = OxmlElement("w:pgBorders")
+        borders.set(qn("w:offsetFrom"), "page")
+        sect_pr.append(borders)
+    for edge in ["top", "left", "bottom", "right"]:
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), "8")
+        element.set(qn("w:space"), "18")
+        element.set(qn("w:color"), "102A43")
+        borders.append(element)
+
+
+def _set_page_numbering(section, fmt: str, start: int = 1) -> None:
+    sect_pr = section._sectPr
+    pg_num = sect_pr.find(qn("w:pgNumType"))
+    if pg_num is None:
+        pg_num = OxmlElement("w:pgNumType")
+        sect_pr.append(pg_num)
+    pg_num.set(qn("w:fmt"), fmt)
+    pg_num.set(qn("w:start"), str(start))
+
+
+def _add_field_run(paragraph, instruction: str) -> None:
+    run = paragraph.add_run()
+    fld_begin = OxmlElement("w:fldChar")
+    fld_begin.set(qn("w:fldCharType"), "begin")
+    run._r.append(fld_begin)
+    instr = OxmlElement("w:instrText")
+    instr.set(qn("xml:space"), "preserve")
+    instr.text = instruction
+    run._r.append(instr)
+    fld_sep = OxmlElement("w:fldChar")
+    fld_sep.set(qn("w:fldCharType"), "separate")
+    run._r.append(fld_sep)
+    result = OxmlElement("w:t")
+    result.text = " "
+    run._r.append(result)
+    fld_end = OxmlElement("w:fldChar")
+    fld_end.set(qn("w:fldCharType"), "end")
+    run._r.append(fld_end)
+
+
+def _configure_section(section, *, numbered: bool, number_format: str = "decimal", start: int = 1) -> None:
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    _set_page_border(section)
+    section.header.is_linked_to_previous = False
+    section.footer.is_linked_to_previous = False
+    for paragraph in section.header.paragraphs:
+        paragraph.clear()
+    if numbered:
+        _set_page_numbering(section, number_format, start)
+        header = section.header.paragraphs[0]
+        header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_field_run(header, "PAGE")
+
+
+def _setup_docx_styles(doc: Document) -> None:
+    normal = doc.styles["Normal"]
+    normal.font.name = "Times New Roman"
+    normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    normal.font.size = Pt(14)
+    normal.paragraph_format.line_spacing = 1.5
+    normal.paragraph_format.first_line_indent = Inches(0.5)
+
+    for style_name, size in [("Heading 1", 18), ("Heading 2", 16)]:
+        style = doc.styles[style_name]
+        style.font.name = "Times New Roman"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        style.font.size = Pt(size)
+        style.font.bold = True
+        style.font.color.rgb = RGBColor.from_string("102A43")
+
+
+def _center_paragraph(doc: Document, text: str = "", size: int | float = 14, bold: bool = False, color: str | None = None):
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    if text:
+        run = paragraph.add_run(text)
+        _set_run_font(run, size=size, bold=bold, color=color)
+    return paragraph
+
+
+def _front_title(doc: Document, title: str) -> None:
+    paragraph = _center_paragraph(doc, title, size=22, bold=True, color="102A43")
+    _set_paragraph_border(paragraph)
+    paragraph.paragraph_format.space_before = Pt(8)
+    paragraph.paragraph_format.space_after = Pt(8)
+
+
+def _add_body_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.line_spacing = 1.5
+    paragraph.paragraph_format.first_line_indent = Inches(0.5)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+
+def _add_reference_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.first_line_indent = Inches(-0.5)
+    paragraph.paragraph_format.left_indent = Inches(0.5)
+    paragraph.paragraph_format.space_before = Pt(3)
+    paragraph.paragraph_format.space_after = Pt(5)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for run in paragraph.runs:
+        _set_run_font(run, size=12)
+
+
+def _add_cover_page(doc: Document) -> None:
+    for line in ["Republic of Iraq", "Ministry of Higher Education and Scientific Research", UNIVERSITY, COLLEGE]:
+        _center_paragraph(doc, line, size=15, bold=True, color="102A43")
+    doc.add_paragraph()
+    title = _center_paragraph(doc, TITLE, size=24, bold=True, color="102A43")
+    _set_paragraph_border(title)
+    title.paragraph_format.space_before = Pt(8)
+    title.paragraph_format.space_after = Pt(14)
+    _center_paragraph(doc, "A Project Submitted to", size=14)
+    _center_paragraph(
+        doc,
+        f"The {COLLEGE}, {UNIVERSITY}, Department of Clinical Pharmacy, in Partial Fulfillment for the Bachelor of Pharmacy",
+        size=13,
+    )
+    doc.add_paragraph()
+    _center_paragraph(doc, "By", size=14, bold=True)
+    for student in STUDENTS:
+        _center_paragraph(doc, student, size=20, bold=True, color="102A43")
+    doc.add_paragraph()
+    _center_paragraph(doc, "Supervised by:", size=14, bold=True)
+    _center_paragraph(doc, SUPERVISOR, size=20, bold=True, color="102A43")
+    _center_paragraph(doc, "Supervisor's Degree", size=16)
+    doc.add_paragraph()
+    _center_paragraph(doc, MONTH_YEAR, size=14)
+
+
+def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
+    _front_title(doc, "Certification of the Supervisor")
+    _add_body_paragraph(
+        doc,
+        f"I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {', '.join(STUDENTS)} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
+    )
+    paragraph = doc.add_paragraph(f"Supervisor's name: {SUPERVISOR}")
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.runs[0].bold = True
+    _set_run_font(paragraph.runs[0], size=14, bold=True)
+
+    _front_title(doc, "Dedication")
+    _add_body_paragraph(
+        doc,
+        "We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.",
+    )
+    _front_title(doc, "Acknowledgment")
+    _add_body_paragraph(
+        doc,
+        f"We thank Dr. {SUPERVISOR} for his supervision, guidance, and careful advice throughout this project. We are also grateful to the {COLLEGE} at {UNIVERSITY}, to the participants who gave their time to answer the survey, and to our colleagues who supported the data collection and revision process.",
+    )
+
+    doc.add_page_break()
+    _front_title(doc, "Table of Contents")
+    paragraph = doc.add_paragraph()
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    _add_field_run(paragraph, r'TOC \o "1-2" \h \z \u')
+
+    doc.add_page_break()
+    _front_title(doc, "List of Figures")
+    for caption in figure_captions:
+        paragraph = doc.add_paragraph(caption)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+    _front_title(doc, "List of Tables")
+    _add_body_paragraph(doc, "No manuscript tables are currently embedded as formal tables in this editable source. Statistical results are reported in the text and figures.")
+    _front_title(doc, "List of Abbreviations")
+    abbreviations = [
+        "AOR: Adjusted Odds Ratio",
+        "CI: Confidence Interval",
+        "LLR: Likelihood Ratio Test",
+        "MLE: Maximum Likelihood Estimation",
+        "OR: Odds Ratio",
+        "PTSD: Post-Traumatic Stress Disorder",
+        "RRR: Relative Risk Ratio",
+        "Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting",
+        "R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries",
+    ]
+    for item in abbreviations:
+        paragraph = doc.add_paragraph(item)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+
+
+def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
+    blocks = collect_docx_blocks(md_path)
+    figure_captions = [data.split("|||", 1)[0] for kind, data in blocks if kind == "image"]
+
+    doc = Document()
+    _setup_docx_styles(doc)
+    _configure_section(doc.sections[0], numbered=False)
+    _add_cover_page(doc)
+
+    front_section = doc.add_section(WD_SECTION.NEW_PAGE)
+    _configure_section(front_section, numbered=True, number_format="lowerRoman", start=1)
+    _add_preliminary_pages(doc, figure_captions)
+
+    main_started = False
+    in_references = False
+    chapter_just_added = False
+
+    for kind, data in blocks:
+        if kind == "start_main" and not main_started:
+            section = doc.add_section(WD_SECTION.NEW_PAGE)
+            _configure_section(section, numbered=True, number_format="decimal", start=1)
+            main_started = True
+            chapter_just_added = False
+            continue
+
+        if kind == "chapter":
+            if not main_started:
+                doc.add_page_break()
+            chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
+            paragraph = _center_paragraph(doc, chapter_number, size=32, bold=True, color="102A43")
+            paragraph.paragraph_format.space_before = Inches(3)
+            _center_paragraph(doc, chapter_name, size=20, bold=True, color="102A43")
+            doc.add_page_break()
+            chapter_just_added = True
+            continue
+
+        if kind == "section":
+            if chapter_just_added:
+                chapter_just_added = False
+            else:
+                doc.add_page_break()
+            paragraph = doc.add_paragraph(data)
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_after = Pt(8)
+            in_references = data.upper() == "VIII. REFERENCES"
+            continue
+
+        if kind == "h2":
+            paragraph = doc.add_paragraph(data)
+            paragraph.style = doc.styles["Heading 2"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            continue
+
+        if kind == "paragraph":
+            _add_body_paragraph(doc, data)
+            continue
+
+        if kind == "reference":
+            _add_reference_paragraph(doc, data)
+            continue
+
+        if kind == "image":
+            caption, filename = data.split("|||", 1)
+            image_path = FIGURES_DIR / filename
+            if image_path.exists():
+                paragraph = doc.add_paragraph()
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                paragraph.paragraph_format.first_line_indent = Inches(0)
+                run = paragraph.add_run()
+                run.add_picture(str(image_path), width=Inches(5.9))
+            cap = doc.add_paragraph(caption)
+            cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            cap.paragraph_format.first_line_indent = Inches(0)
+            for run in cap.runs:
+                _set_run_font(run, size=12, bold=True)
+            continue
+
+        if kind == "pagebreak":
+            doc.add_page_break()
+            chapter_just_added = False
+
+    doc.save(out_path)
+    print(f"Typst content DOCX: {out_path}")
 
 
 def copy_docx_output() -> bool:
@@ -341,7 +680,7 @@ def copy_docx_output() -> bool:
         print("WARNING: Method A DOCX was not found; typst_content DOCX fallback was skipped.")
         return False
     shutil.copy2(source_docx, TYPST_DOCX)
-    print(f"Typst content DOCX fallback copied from Method A: {TYPST_DOCX}")
+    print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
 
 def run_typst_content(md_path: Path | None = None) -> None:
@@ -355,7 +694,10 @@ def run_typst_content(md_path: Path | None = None) -> None:
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
-    if not convert_typst_docx_with_pandoc():
+    try:
+        build_typst_content_docx(md_path, TYPST_DOCX)
+    except Exception as exc:
+        print(f"WARNING: Typst content DOCX generation failed ({exc}); falling back if possible.")
         copy_docx_output()
 
 
