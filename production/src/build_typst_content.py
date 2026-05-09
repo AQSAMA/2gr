@@ -152,7 +152,7 @@ def filter_cited_references(references: list[str]) -> list[str]:
 
 
 def _split_references(md_text: str) -> tuple[str, list[str]]:
-    marker = "\n# VIII. REFERENCES\n"
+    marker = "\n# 8. REFERENCES\n"
     if marker not in md_text:
         return md_text, []
     before, after = md_text.split(marker, 1)
@@ -175,7 +175,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
                 skip_cover = False
                 target = main_calls
                 target.append("#start-main-numbering()")
-                target.append('#set-running-head("")')
+                target.append('#set-running-head("Abstract")')
             else:
                 continue
 
@@ -187,7 +187,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text.upper() == "VIII. REFERENCES":
+            if text == "8. REFERENCES":
                 in_references = True
                 # References live outside any numbered chapter, so switch the
                 # running head to "References" before emitting the heading.
@@ -220,7 +220,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
     if references:
         if not in_references:
             target.append('#set-running-head("References")')
-            target.append(f"#section-title({typst_string('VIII. REFERENCES')})")
+            target.append(f"#section-title({typst_string('8. REFERENCES')})")
         for reference in references:
             target.append(f"#refp({typst_string(reference)})")
 
@@ -254,18 +254,15 @@ def render_typst_source(md_path: Path) -> str:
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
 
-// The running head sits at the top RIGHT and appears ONLY on the first
-// page of every chapter/section (the page carrying the <section-start>
-// label). On all subsequent pages the header is empty. Chapter-title
-// interstitial pages disable the header entirely via `set page(header: none)`.
+// The running head sits at the top RIGHT and appears on every page whose
+// section has set a non-empty running head via `#set-running-head(...)`.
+// Chapter interstitial pages disable the header entirely via
+// `set page(header: none)`, and the cover/preliminary pages keep the
+// default empty state so their header is blank.
 #let regular-page-header = context {{
   let head = running-head.get()
   if head != "" {{
-    let page-num = here().page()
-    let markers = query(<section-start>).filter(m => m.location().page() == page-num)
-    if markers.len() > 0 {{
-      align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
-    }}
+    align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
   }}
 }}
 
@@ -466,7 +463,7 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text.upper() == "VIII. REFERENCES":
+            if text == "8. REFERENCES":
                 in_references = True
                 blocks.append(("references_section", text))
                 continue
@@ -494,7 +491,7 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
 
     if references:
         if not in_references:
-            blocks.append(("references_section", "VIII. REFERENCES"))
+            blocks.append(("references_section", "8. REFERENCES"))
         for reference in references:
             blocks.append(("reference", reference))
 
@@ -896,7 +893,7 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
             paragraph.style = doc.styles["Heading 1"]
             paragraph.paragraph_format.first_line_indent = Inches(0)
             paragraph.paragraph_format.space_after = Pt(8)
-            in_references = data.upper() == "VIII. REFERENCES"
+            in_references = data.upper() == "8. REFERENCES"
             continue
 
         if kind == "h2":

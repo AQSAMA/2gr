@@ -1,4 +1,4 @@
-#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title, running_header
+#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title, running-head, set-running-head
 
 #let navy = rgb("#0f2a44")
 #let render-manuscript(blocks) = render-blocks(
@@ -16,7 +16,12 @@
     margin: 1.5cm,
     numbering: "I",
     number-align: center,
-    header: align(right)[#text(size: 9pt, fill: navy)[#running_header]],
+    header: context {
+      let h = running-head.get()
+      if h != "" {
+        align(right)[#text(size: 9pt, fill: navy, style: "italic")[#h]]
+      }
+    },
   )
   set text(font: ("Times New Roman", "Times"), size: 14pt, fill: rgb("#111827"))
   set par(leading: 0.55em, justify: true)
@@ -25,3 +30,4 @@
   show figure: it => block(above: 10pt, below: 12pt, inset: 6pt, stroke: 0.4pt + rgb("#cbd5e1"))[#align(center)[#it]]
   body
 }
+

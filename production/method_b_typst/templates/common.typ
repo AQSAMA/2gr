@@ -2,7 +2,14 @@
 // Design files import this helper and pass their own colors and frontmatter style.
 
 #let manuscript_title = "Psychiatric Medication Use and Public Acceptance in Iraq"
+// Kept as a fallback for any legacy design that still imports it by this name.
 #let running_header = "Psychiatric Medication Use and Public Acceptance in Iraq"
+
+// Shared running-head state. Designs that set a page header should read this
+// state via a context block so continuation pages within a chapter carry the
+// current chapter (or section) title rather than a static manuscript title.
+#let running-head = state("running-head", "")
+#let set-running-head(s) = running-head.update(s)
 
 #let navigation-frontmatter(accent: rgb("#1f2937")) = {
   align(center)[#text(size: 28pt, weight: "bold", fill: accent)[Table of Contents]]
@@ -34,29 +41,46 @@
     ]
     pagebreak()
   } else if block.kind == "chaptertitle" {
-    pagebreak(weak: true)
-    align(center + horizon)[
-      #if chapter-frame {
-        box(width: 84%, inset: 28pt, stroke: 1.2pt + accent, radius: 6pt, fill: light-accent)[
-          #align(center)[
-            #text(size: 32pt, weight: "bold", fill: accent)[#block.chapter]
-            #v(8pt)
-            #text(size: 19pt, weight: "bold", fill: accent)[#block.title]
+    // Set the running head for all continuation pages of this chapter
+    // BEFORE emitting the interstitial so that the first page after the
+    // interstitial already sees the correct state. Page headers evaluate
+    // the state at the top of the page, so the update must land on the
+    // previous page (or earlier) to be visible on the next one.
+    set-running-head(block.title)
+    // Chapter interstitial page: rendered inside a content block so the
+    // `set page(header: none)` rule only applies to this interstitial
+    // page. The surrounding page header resumes automatically on the
+    // next page. This mirrors typst_content/research.typ's chapter-page.
+    [
+      #pagebreak(weak: true)
+      #set page(header: none)
+      #align(center + horizon)[
+        #if chapter-frame {
+          box(width: 84%, inset: 28pt, stroke: 1.2pt + accent, radius: 6pt, fill: light-accent)[
+            #align(center)[
+              #text(size: 32pt, weight: "bold", fill: accent)[#block.chapter]
+              #v(8pt)
+              #text(size: 19pt, weight: "bold", fill: accent)[#block.title]
+            ]
           ]
-        ]
-      } else {
-        align(center)[
-          #line(length: 4.5cm, stroke: 0.8pt + accent)
-          #v(10pt)
-          #text(size: 32pt, weight: "bold", fill: accent)[#block.chapter]
-          #v(6pt)
-          #text(size: 19pt, weight: "bold", fill: accent)[#block.title]
-          #v(10pt)
-          #line(length: 4.5cm, stroke: 0.8pt + accent)
-        ]
-      }
+        } else {
+          align(center)[
+            #line(length: 4.5cm, stroke: 0.8pt + accent)
+            #v(10pt)
+            #text(size: 32pt, weight: "bold", fill: accent)[#block.chapter]
+            #v(6pt)
+            #text(size: 19pt, weight: "bold", fill: accent)[#block.title]
+            #v(10pt)
+            #line(length: 4.5cm, stroke: 0.8pt + accent)
+          ]
+        }
+      ]
+      #pagebreak()
     ]
-    pagebreak()
+  } else if block.kind == "references_start" {
+    // References start on a new page too; update before any content lands
+    // on that page so the header picks up "References" immediately.
+    set-running-head("References")
   } else if block.kind == "cover_h2" {
     v(1.5em, weak: true)
     align(center)[#heading(level: 2, outlined: false)[#block.text]]
@@ -70,6 +94,9 @@
       v(8em)
     }
   } else if block.kind == "h1" {
+    if upper(block.text) == "ABSTRACT" {
+      set-running-head("Abstract")
+    }
     v(1.5em, weak: true)
     heading(level: 1, outlined: true)[#block.text]
   } else if block.kind == "h2" {
@@ -129,3 +156,4 @@
     render-block(block, accent, light-accent, chapter-frame, frontmatter-frame, in-references)
   }
 }
+

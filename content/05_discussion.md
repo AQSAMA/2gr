@@ -1,4 +1,4 @@
-# V. DISCUSSION
+# 5. DISCUSSION
 
 ## A. Interpretation of Primary Findings
 

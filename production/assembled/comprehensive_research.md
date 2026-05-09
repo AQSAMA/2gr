@@ -68,7 +68,7 @@ These findings indicate ambivalent public attitudes rather than uniform rejectio
 
 [[CHAPTER_TITLE:Chapter One|||Introduction]]
 
-# I. INTRODUCTION
+# 1. INTRODUCTION
 
 ## A. Background and Context
 
@@ -98,7 +98,7 @@ This study has direct value for pharmacy practice in Iraq. Pharmacists are often
 
 The study also supports clinicians, educators, and health planners. For clinical teams, it clarifies where social perceptions may interfere with evidence-based treatment. For pharmacy and medical education, it provides Iraq-specific data that can strengthen teaching on stigma-sensitive counseling and psychopharmacology communication. For policy and service planning, it offers current local evidence that can support anti-stigma messaging, community engagement, and integration of mental health support in primary-care and public-health programs.
 
-# II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
+# 2. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
 
 ## A. Stigma and Public Attitudes
 
@@ -136,7 +136,7 @@ Regional systems research supports service integration as a practical direction.
 
 [[CHAPTER_TITLE:Chapter Two|||Materials and Methods]]
 
-# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
+# 3. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
 
 ## A. Study Design and Setting
 
@@ -198,9 +198,9 @@ Because the design is cross-sectional, associations should not be interpreted as
 
 [[CHAPTER_TITLE:Chapter Three|||Results]]
 
-# IV. RESULTS
+# 4. RESULTS
 
-## IV.A Sample Profile and Descriptive Statistics
+## 4.A Sample Profile and Descriptive Statistics
 
 The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.
 
@@ -213,13 +213,13 @@ Across core belief items, agreement levels were high for two statements and mode
 ![Figure 3. 19 likert diverging q11 q13](../figures/19_likert_diverging_q11_q13.png)
 
 
-## IV.B Main Outcome Distributions
+## 4.B Main Outcome Distributions
 
 The primary attitude outcomes showed mixed acceptance patterns. For Q6 (safety perception), 23.65% answered yes, 31.23% answered not sure, and 45.12% answered no. For Q7 (acceptability), 30.80% answered yes, 17.70% answered not sure, and 51.49% answered no. For Q8 (recommendation willingness), 57.65% answered yes, 11.62% answered not sure, and 30.72% answered no. For Q9 (social concern), 37.77% answered yes, 13.09% answered not sure, and 49.14% answered no.
 
 Bivariate correlations among core variables were as follows: Q11 (belief that doctors prescribe psychiatric medications more than necessary) with Q12 (belief that most psychiatric medications cause psychological or physical dependence), r=0.269; Q13 (belief that modern psychiatric medications are safer than older ones) with Q11, r=-0.066; Q13 with Q12, r=-0.038; recommendation willingness (Q8) with Q11, r=-0.086; recommendation willingness (Q8) with Q12, r=-0.087; recommendation willingness (Q8) with Q13, r=0.077; acceptability (Q7) with recommendation willingness (Q8), r=0.232; and social concern (Q9) with recommendation willingness (Q8), r=-0.042.
 
-## IV.C Hierarchical Logistic Regression (Primary Model)
+## 4.C Hierarchical Logistic Regression (Primary Model)
 
 The primary hierarchical logistic regression used a binary recommendation outcome (Q8, willingness to recommend psychiatric medication, yes vs no) with complete-case n=647. Model fit improved across blocks, with McFadden pseudo R² increasing from 0.0040 in Block 1 to 0.0116 in Block 2 and 0.0686 in Block 3. The Block 1 likelihood ratio p-value was 0.5037, Block 2 p-value was 0.0847, and Block 3 p-value was <0.0001.
 
@@ -230,7 +230,7 @@ In the final primary block, the largest directional effect was fear, which was a
 
 A separate sensitivity model that added Q6 (safety perception) and Q7 (acceptability) used complete-case n=406 and produced McFadden pseudo R² of 0.2440 (fit type: mle). This model was reported as a sensitivity analysis because Q6 and Q7 are proximal to the recommendation outcome.
 
-## IV.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)
+## 4.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)
 
 Multinomial logistic regression preserved the three-category recommendation structure with complete-case n=837 and model log-likelihood -748.910 (fit type: mle). The outcome categories were coded as No (reference), Yes, and Not sure, corresponding to Q8=0, Q8=1, and Q8=2.
 
@@ -241,13 +241,13 @@ For the second non-reference equation (Q8=2 Not sure vs reference No, where Q8 i
 ![Figure 5. 08 multinomial key predictor comparison](../figures/08_multinomial_key_predictor_comparison.png)
 
 
-## IV.E The Contact Hypothesis (Users vs Non-Users)
+## 4.E The Contact Hypothesis (Users vs Non-Users)
 
 The contact analysis compared Users vs Non-Users using prior use status from Q31 (prior psychiatric medication use; Users n=127, Non-Users n=716). Mann-Whitney U tests were statistically significant for Q11 (belief that doctors prescribe psychiatric medications more than necessary), Q12 (belief that most psychiatric medications cause psychological or physical dependence), and Q13 (belief that modern psychiatric medications are safer than older ones), while chi-square tests were statistically significant for Q12 and Q13 but not for Q11.
 
 For Q11 (belief that doctors prescribe psychiatric medications more than necessary), the Users median was 3.00 and the Non-Users median was 4.00, with small inverse practical differences (Cliff’s delta -0.108; Cramer’s V=0.094), Mann-Whitney U p=0.0428, chi-square p=0.1170, and N=843. For Q12 (belief that most psychiatric medications cause psychological or physical dependence), both medians were 4.00, with small inverse practical differences (Cliff’s delta -0.112; Cramer’s V=0.108), Mann-Whitney U p=0.0317, chi-square p=0.0428, and N=840. For Q13 (belief that modern psychiatric medications are safer than older ones), the Users median was 4.00 and the Non-Users median was 3.00, with the largest contact effect in this section, approaching moderate by rank effect size (Cliff’s delta 0.198) and remaining small-to-moderate by nominal association (Cramer’s V=0.139), Mann-Whitney U p=0.0002, chi-square p=0.0027, and N=842.
 
-## IV.F Exploratory Stigma Phenotypes (Clearly Labeled)
+## 4.F Exploratory Stigma Phenotypes (Clearly Labeled)
 
 Exploratory k-means clustering on standardized Q11–Q13 (Q11: belief that doctors prescribe psychiatric medications more than necessary; Q12: belief that most psychiatric medications cause psychological or physical dependence; Q13: belief that modern psychiatric medications are safer than older ones) evaluated k=2, k=3, and k=4. Silhouette scores were 0.274 for k=2, 0.272 for k=3, and 0.303 for k=4, so k=4 was selected by maximum silhouette criterion. These k-means profiles are data-driven exploratory groupings, not confirmed latent classes. The silhouette values indicate relative fit among the tested k values in this dataset, and they do not establish a definitive underlying class structure.
 
@@ -256,7 +256,7 @@ The four profiles had the following mean structures. Profile 0 (n=183) showed Q1
 ![Figure 6. 14 profile means heatmap](../figures/14_profile_means_heatmap.png)
 
 
-## IV.G Results Summary
+## 4.G Results Summary
 
 The survey included 877 participants and showed a sample pattern with higher female representation and concentration in younger, university-educated, and single respondents based on variable-specific valid denominators. In descriptive outcomes, recommendation willingness had the highest yes proportion (57.65%), while safety and acceptability showed higher no proportions than yes proportions. In the primary hierarchical logistic model (n=647), the strongest statistically supported predictors in the final block were gender, Q11, Q13, and fear. In the multinomial model (n=837), gender remained significant in both non-reference equations, while Q13 and Q12 were significant in one non-reference equation only. In Users vs Non-Users analyses, Mann-Whitney tests were significant for Q11, Q12, and Q13, and chi-square tests were significant for Q12 and Q13 only. Exploratory phenotype analysis identified a four-profile solution with the highest silhouette score among tested cluster counts.
 
@@ -264,7 +264,7 @@ The survey included 877 participants and showed a sample pattern with higher fem
 
 [[CHAPTER_TITLE:Chapter Four|||Discussion]]
 
-# V. DISCUSSION
+# 5. DISCUSSION
 
 ## A. Interpretation of Primary Findings
 
@@ -312,7 +312,7 @@ The exploratory stigma phenotypes identified in this study also need confirmator
 
 [[CHAPTER_TITLE:Chapter Five|||Conclusions and Suggestions]]
 
-# VI. RECOMMENDATIONS
+# 6. RECOMMENDATIONS
 
 ## A. Policy-Level Recommendations
 
@@ -342,7 +342,7 @@ Future Iraqi studies should evaluate intervention effectiveness rather than only
 
 Researchers should also conduct repeated cross-sectional surveys with harmonized measures to monitor trend changes in acceptance, safety perception, and recommendation willingness over time. This will allow policymakers to track whether reforms produce measurable public attitude improvement.
 
-# VII. CONCLUSION
+# 7. CONCLUSION
 
 ## A. What the Cross-Sectional Study Adds
 
@@ -360,7 +360,7 @@ The evidence from this study supports a clear national direction for Iraq: impro
 
 <div class="page-break"></div>
 
-# VIII. REFERENCES
+# 8. REFERENCES
 
 Abdisa, Eba, Ginenus Fekadu, Shimelis Girma, et al. “Self-Stigma and Medication Adherence among Patients with Mental Illness Treated at Jimma University Medical Center, Southwest Ethiopia.” International Journal of Mental Health Systems 14, no. 1 (2020): 56. https://doi.org/10.1186/s13033-020-00391-6.
 Abdul Kareem, Makwan, and Hezha Mahmood. “Adherence to Pharmacological Treatment Among Patients with Schizophrenia: Adherence to Pharmacological Treatment Among Patients with Schizophrenia.” Iraqi National Journal of Medicine 4, no. 1 (2022): 31–42. https://doi.org/10.37319/IQNJM.4.1.4.
