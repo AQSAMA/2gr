@@ -10,8 +10,16 @@
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
+#let running-head = state("running-head", "")
+#let set-running-head(s) = running-head.update(s)
+#let regular-page-header = context {
+  let head = running-head.get()
+  if head != "" {
+    align(left)[#text(size: 9pt, fill: navy)[#head]]
+  }
+}
 
-#set page(paper: "a4", margin: 1.5cm, background: page-border)
+#set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
 
@@ -49,6 +57,7 @@
 
 #let chapter-page(chapter, title) = [
   #pagebreak(weak: true)
+  #set page(header: none)
   #align(center + horizon)[
     #box(width: 84%, inset: 28pt, stroke: 1pt + navy, fill: pale)[
       #align(center)[
@@ -61,6 +70,7 @@
     ]
   ]
   #pagebreak()
+  #set page(header: regular-page-header)
 ]
 
 #let start-main-numbering() = [
@@ -76,24 +86,24 @@
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \
   #text(size: 15pt, weight: "bold", fill: navy)[University of Al-Maarif] \
   #text(size: 15pt, weight: "bold", fill: navy)[College of Pharmacy]
-  #v(0.55cm)
+  #v(0.35cm)
   #box(width: 88%, inset: 12pt, stroke: 1pt + gold, fill: pale)[
     #text(size: 24pt, weight: "bold", fill: navy)[Psychiatric Medication Use and Public Acceptance in Iraq]
   ]
-  #v(0.45cm)
+  #v(0.32cm)
   #text(size: 14pt)[A Project Submitted to] \
   #text(size: 13pt)[The College of Pharmacy, University of Al-Maarif, Department of Clinical Pharmacy, in Partial Fulfillment for the Bachelor of Pharmacy]
-  #v(0.45cm)
+  #v(0.28cm)
   #text(size: 14pt, weight: "bold")[By] \
   #text(size: 20pt, weight: "bold", fill: navy)[Abdul Rahman Wakaa Ali\
 Ali Basem Hammoud\
 Shifa Safi Aboud\
 Zainab Mashal Nayef]
-  #v(0.35cm)
+  #v(0.25cm)
   #text(size: 14pt, weight: "bold")[Supervised by:] \
   #text(size: 20pt, weight: "bold", fill: navy)[Hameed Adnan] \
   #text(size: 16pt)[Supervisor's Degree]
-  #v(0.25cm)
+  #v(0.18cm)
   #text(size: 14pt)[May, 2026]
 ]
 
@@ -133,13 +143,16 @@ RRR: Relative Risk Ratio \
 Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting \
 R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries]
 
+
+
+#start-main-numbering()
+#set-running-head("")
 #section-title("ABSTRACT")
 #p("Psychiatric medication acceptance in Iraq remains a public health challenge because mental health needs are high while treatment hesitation persists. This study examined psychiatric medication use and public acceptance in Iraq using an original cross-sectional survey with supportive literature context. We analyzed responses from 877 participants using descriptive statistics, hierarchical logistic regression, multinomial logistic regression, Users vs Non-Users comparisons, and exploratory stigma-phenotype analysis.")
 #p("The sample was mostly female, young, and university educated. Public attitudes were mixed: recommendation willingness was higher than perceived safety and acceptability, showing that many respondents were open to treatment in principle but still worried about medication risks. In adjusted models, recommendation was more likely among women and among respondents who trusted newer psychiatric medications, and less likely among those with stronger fear and overprescribing concerns. In the multinomial model, dependence concern reduced the likelihood of clear recommendation. Users also reported more favorable beliefs than non-users, especially for confidence in modern medications.")
 #p("These findings indicate ambivalent public attitudes rather than uniform rejection. The strongest barriers were fear, mistrust, and dependence concerns, more than most demographic factors. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.")
-
-#start-main-numbering()
 #chapter-page("Chapter One", "Introduction")
+#set-running-head("Introduction")
 #section-title("I. INTRODUCTION")
 #h2("A. Background and Context")
 #p("Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability. This history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).")
@@ -174,6 +187,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("Community and student-level Iraqi evidence reflects parallel concerns. Research in Basra medical-group students reports measurable psychotropic drug use patterns alongside anxiety and depression burden, suggesting that even health-educated populations may face unresolved medication and mental health challenges (Kadhim et al., 2024). At the care-seeking level, Iraqi psychiatric-clinic evidence indicates frequent prior or concurrent use of faith-healing pathways, often before psychiatric consultation, which can delay formal treatment and fragment continuity of care (Younis et al., 2020).")
 #p("Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.")
 #chapter-page("Chapter Two", "Materials and Methods")
+#set-running-head("Materials and Methods")
 #section-title("III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)")
 #h2("A. Study Design and Setting")
 #p("This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.")
@@ -205,6 +219,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #h2("G. Methodological Limitations")
 #p("Because the design is cross-sectional, associations should not be interpreted as causal effects. Complete-case modeling produced model-specific analytic samples (n=647 in the primary hierarchical model, n=406 in the sensitivity model, and n=837 in the multinomial model) and may introduce selection effects if missingness is not random. The achieved sample was dominated by younger and university-educated respondents, which may limit generalizability to older or less-educated Iraqi populations. Some instrument blocks had substantial missingness, so primary inference relied on the most complete and policy-relevant core variables.")
 #chapter-page("Chapter Three", "Results")
+#set-running-head("Results")
 #section-title("IV. RESULTS")
 #h2("IV.A Sample Profile and Descriptive Statistics")
 #p("The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.")
@@ -237,6 +252,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("The survey included 877 participants and showed a sample pattern with higher female representation and concentration in younger, university-educated, and single respondents based on variable-specific valid denominators. In descriptive outcomes, recommendation willingness had the highest yes proportion (57.65%), while safety and acceptability showed higher no proportions than yes proportions. In the primary hierarchical logistic model (n=647), the strongest statistically supported predictors in the final block were gender, Q11, Q13, and fear. In the multinomial model (n=837), gender remained significant in both non-reference equations, while Q13 and Q12 were significant in one non-reference equation only. In Users vs Non-Users analyses, Mann-Whitney tests were significant for Q11, Q12, and Q13, and chi-square tests were significant for Q12 and Q13 only. Exploratory phenotype analysis identified a four-profile solution with the highest silhouette score among tested cluster counts.")
 #pagebreak()
 #chapter-page("Chapter Four", "Discussion")
+#set-running-head("Discussion")
 #section-title("V. DISCUSSION")
 #h2("A. Interpretation of Primary Findings")
 #p("This cross-sectional survey shows a mixed public position toward psychiatric medication in Iraq rather than uniform rejection or uniform support. Recommendation willingness was 57.65%, while 11.62% were not sure and 30.72% were against recommendation. Acceptability was lower: 30.80% considered psychiatric medication acceptable, 17.70% were not sure, and 51.49% considered it unacceptable. Safety perception was similarly low: 23.65% considered medication safe, 31.23% were not sure, and 45.12% considered it unsafe. This pattern suggests that many respondents accept medication in selected situations but still carry safety concerns and social hesitation.")
@@ -261,6 +277,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("The exploratory stigma phenotypes identified in this study also need confirmatory work. These k-means profiles are data-driven exploratory groupings, and the silhouette values from k=2 to k=4 indicate relative fit only among the tested options rather than confirmed latent classes. Subsequent studies should validate these profiles with larger and more demographically balanced samples and apply confirmatory approaches before using profile labels as stable population categories, then evaluate whether each profile responds differently to educational messages, clinician communication style, and family involvement. This would allow Iraq to move from general anti-stigma messaging toward stratified interventions that match the dominant belief pattern in each subgroup.")
 #pagebreak()
 #chapter-page("Chapter Five", "Conclusions and Suggestions")
+#set-running-head("Conclusions and Suggestions")
 #section-title("VI. RECOMMENDATIONS")
 #h2("A. Policy-Level Recommendations")
 #p("The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and Primary Care Directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.")

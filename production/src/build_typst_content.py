@@ -42,6 +42,26 @@ SUPERVISOR = "Hameed Adnan"
 UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
 MONTH_YEAR = "May, 2026"
+LOGO_CANDIDATES = (
+    "university logo.png",
+    "university_logo.png",
+    "University logo.png",
+    "University Logo.png",
+    "almaarif logo.png",
+    "al-maarif logo.png",
+)
+
+
+def find_university_logo() -> Path | None:
+    for filename in LOGO_CANDIDATES:
+        candidate = FIGURES_DIR / filename
+        if candidate.exists():
+            return candidate
+    for candidate in sorted(FIGURES_DIR.glob("*.png")):
+        lowered = candidate.name.lower()
+        if "logo" in lowered or "university" in lowered or "maarif" in lowered:
+            return candidate
+    return None
 
 
 def typst_string(value: str) -> str:
@@ -86,15 +106,16 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
         if skip_cover:
             if kind == "h1" and data.strip().upper() == "ABSTRACT":
                 skip_cover = False
+                target = main_calls
+                target.append("#start-main-numbering()")
+                target.append('#set-running-head("")')
             else:
                 continue
 
         if kind == "chaptertitle":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
-            if chapter_number == "Chapter One":
-                target = main_calls
-                target.append("#start-main-numbering()")
             target.append(f"#chapter-page({typst_string(chapter_number)}, {typst_string(chapter_name)})")
+            target.append(f"#set-running-head({typst_string(chapter_name)})")
             continue
 
         if kind == "h1":
@@ -139,6 +160,12 @@ def render_typst_source(md_path: Path) -> str:
     students = ", ".join(STUDENTS)
     student_lines = "\\\n".join(STUDENTS)
 
+    logo_path = find_university_logo()
+    logo_block = ""
+    if logo_path is not None:
+        logo_rel = Path("../figures") / logo_path.name
+        logo_block = f"  #image({typst_string(logo_rel.as_posix())}, width: 2.25cm)\n  #v(0.16cm)\n"
+
     preamble = f'''// Editable Typst source for the graduation project.
 // Generated from content/*.md by production/src/build_typst_content.py.
 // The design follows common university thesis conventions: bordered A4 pages,
@@ -151,8 +178,16 @@ def render_typst_source(md_path: Path) -> str:
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
+#let running-head = state("running-head", "")
+#let set-running-head(s) = running-head.update(s)
+#let regular-page-header = context {{
+  let head = running-head.get()
+  if head != "" {{
+    align(left)[#text(size: 9pt, fill: navy)[#head]]
+  }}
+}}
 
-#set page(paper: "a4", margin: 1.5cm, background: page-border)
+#set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
 
@@ -190,6 +225,7 @@ def render_typst_source(md_path: Path) -> str:
 
 #let chapter-page(chapter, title) = [
   #pagebreak(weak: true)
+  #set page(header: none)
   #align(center + horizon)[
     #box(width: 84%, inset: 28pt, stroke: 1pt + navy, fill: pale)[
       #align(center)[
@@ -202,6 +238,7 @@ def render_typst_source(md_path: Path) -> str:
     ]
   ]
   #pagebreak()
+  #set page(header: regular-page-header)
 ]
 
 #let start-main-numbering() = [
@@ -213,25 +250,25 @@ def render_typst_source(md_path: Path) -> str:
 // Cover page: unnumbered. Certification begins on the second page.
 #set page(numbering: none)
 #align(center)[
-  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
+{logo_block}  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \\
   #text(size: 15pt, weight: "bold", fill: navy)[{UNIVERSITY}] \\
   #text(size: 15pt, weight: "bold", fill: navy)[{COLLEGE}]
-  #v(0.55cm)
+  #v(0.35cm)
   #box(width: 88%, inset: 12pt, stroke: 1pt + gold, fill: pale)[
     #text(size: 24pt, weight: "bold", fill: navy)[{TITLE}]
   ]
-  #v(0.45cm)
+  #v(0.32cm)
   #text(size: 14pt)[A Project Submitted to] \\
   #text(size: 13pt)[The {COLLEGE}, {UNIVERSITY}, Department of Clinical Pharmacy, in Partial Fulfillment for the Bachelor of Pharmacy]
-  #v(0.45cm)
+  #v(0.28cm)
   #text(size: 14pt, weight: "bold")[By] \\
   #text(size: 20pt, weight: "bold", fill: navy)[{student_lines}]
-  #v(0.35cm)
+  #v(0.25cm)
   #text(size: 14pt, weight: "bold")[Supervised by:] \\
   #text(size: 20pt, weight: "bold", fill: navy)[{SUPERVISOR}] \\
   #text(size: 16pt)[Supervisor's Degree]
-  #v(0.25cm)
+  #v(0.18cm)
   #text(size: 14pt)[{MONTH_YEAR}]
 ]
 
@@ -323,13 +360,12 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
         if skip_cover:
             if kind == "h1" and data.strip().upper() == "ABSTRACT":
                 skip_cover = False
+                blocks.append(("start_main", ""))
             else:
                 continue
 
         if kind == "chaptertitle":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
-            if chapter_number == "Chapter One":
-                blocks.append(("start_main", ""))
             blocks.append(("chapter", f"{chapter_number}|||{chapter_name}"))
             continue
 
@@ -440,7 +476,15 @@ def _add_field_run(paragraph, instruction: str) -> None:
     run._r.append(fld_end)
 
 
-def _configure_section(section, *, numbered: bool, number_format: str = "decimal", start: int = 1) -> None:
+def _configure_section(
+    section,
+    *,
+    numbered: bool,
+    number_format: str = "decimal",
+    start: int | None = 1,
+    running_head: str = "",
+    empty_first_running_head: bool = False,
+) -> None:
     section.left_margin = Cm(1.5)
     section.right_margin = Cm(1.5)
     section.top_margin = Cm(1.5)
@@ -448,13 +492,28 @@ def _configure_section(section, *, numbered: bool, number_format: str = "decimal
     _set_page_border(section)
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
+    section.different_first_page_header_footer = empty_first_running_head
+
     for paragraph in section.header.paragraphs:
         paragraph.clear()
+    for paragraph in section.first_page_header.paragraphs:
+        paragraph.clear()
+
     if numbered:
-        _set_page_numbering(section, number_format, start)
+        if start is not None:
+            _set_page_numbering(section, number_format, start)
+        if empty_first_running_head:
+            first_header = section.first_page_header.paragraphs[0]
+            first_header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _add_field_run(first_header, "PAGE")
         header = section.header.paragraphs[0]
-        header.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _add_field_run(header, "PAGE")
+        header.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        if running_head:
+            run = header.add_run(running_head)
+            _set_run_font(run, size=9, color="102A43")
+        page_paragraph = section.header.add_paragraph()
+        page_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_field_run(page_paragraph, "PAGE")
 
 
 def _setup_docx_styles(doc: Document) -> None:
@@ -510,9 +569,15 @@ def _add_reference_paragraph(doc: Document, text: str) -> None:
 
 
 def _add_cover_page(doc: Document) -> None:
+    logo_path = find_university_logo()
+    if logo_path is not None:
+        paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+        run = paragraph.add_run()
+        run.add_picture(str(logo_path), width=Inches(0.9))
     for line in ["Republic of Iraq", "Ministry of Higher Education and Scientific Research", UNIVERSITY, COLLEGE]:
         _center_paragraph(doc, line, size=15, bold=True, color="102A43")
-    doc.add_paragraph()
     title = _center_paragraph(doc, TITLE, size=24, bold=True, color="102A43")
     _set_paragraph_border(title)
     title.paragraph_format.space_before = Pt(8)
@@ -614,9 +679,16 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
             continue
 
         if kind == "chapter":
-            if not main_started:
-                doc.add_page_break()
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
+            section = doc.add_section(WD_SECTION.NEW_PAGE)
+            _configure_section(
+                section,
+                numbered=True,
+                number_format="decimal",
+                start=None,
+                running_head=chapter_name,
+                empty_first_running_head=True,
+            )
             paragraph = _center_paragraph(doc, chapter_number, size=32, bold=True, color="102A43")
             paragraph.paragraph_format.space_before = Inches(3)
             _center_paragraph(doc, chapter_name, size=20, bold=True, color="102A43")
@@ -691,6 +763,8 @@ def run_typst_content(md_path: Path | None = None) -> None:
         md_path = ASSEMBLED_DIR / "comprehensive_research.md"
         if not md_path.exists():
             md_path = assemble_markdown()
+    if find_university_logo() is None:
+        print("WARNING: university logo PNG was not found in figures/; cover logo placement was skipped.")
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
