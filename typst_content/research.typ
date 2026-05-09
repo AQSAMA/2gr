@@ -9,19 +9,36 @@
 #let gold = rgb("#b58b2a")
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
+#let citation-color = rgb("#2c5282")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
+
+// The running head sits at the top RIGHT and is suppressed on the first
+// page of every chapter. Chapter-title pages already disable the header
+// via `set page(header: none)`; content pages mark the opening page with a
+// `<section-start>` label so this context block knows to hide the head on
+// that page only.
 #let regular-page-header = context {
   let head = running-head.get()
   if head != "" {
-    align(left)[#text(size: 9pt, fill: navy)[#head]]
+    let page-num = here().page()
+    let markers = query(<section-start>).filter(m => m.location().page() == page-num)
+    if markers.len() == 0 {
+      align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
+    }
   }
 }
 
 #set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
+
+// Muted academic navy for parenthetical in-text citations such as
+// "(Author, 2020)" or "(Author et al., 2020; Other, 2019)". The leading
+// capital letter in the required lookbehind avoids matching numeric
+// parentheses like "(p=0.0001)" or "(adjusted OR 0.504, ...)".
+#show regex("\([A-Z][^()]*?\d{4}[a-z]?\)"): it => text(fill: citation-color, it)
 
 #show heading.where(level: 1): it => block(above: 10pt, below: 8pt)[
   #text(size: 18pt, weight: "bold", fill: navy)[#it.body]
@@ -42,6 +59,7 @@
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
   #pagebreak(weak: true)
+  #[#metadata(none) <section-start>]
   #h1(s)
 ]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
@@ -82,6 +100,8 @@
 // Cover page: unnumbered. Certification begins on the second page.
 #set page(numbering: none)
 #align(center)[
+  #image("../figures/University_logo.png", width: 2.25cm)
+  #v(0.16cm)
   #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \
   #text(size: 15pt, weight: "bold", fill: navy)[University of Al-Maarif] \
@@ -107,7 +127,8 @@ Zainab Mashal Nayef]
   #text(size: 14pt)[May, 2026]
 ]
 
-// Roman-numbered preliminary pages.
+// Roman-numbered preliminary pages. Numbering stays Roman through every
+// front-matter spread and switches to Arabic the moment the abstract opens.
 #pagebreak()
 #set page(numbering: "i", number-align: top + center)
 #counter(page).update(1)
@@ -123,7 +144,13 @@ Zainab Mashal Nayef]
 
 #pagebreak()
 #front-title[Table of Contents]
-#outline(title: none, depth: 2)
+// The table of contents is tightened to fit a single page. We keep depth 2
+// so readers still see chapter + section structure, but compact the entry
+// size and spacing so the full outline renders inside one A4 page.
+#{
+  show outline.entry: it => block(above: 0.15em, below: 0.15em, text(size: 10pt, it))
+  outline(title: none, depth: 2, indent: auto)
+}
 
 #pagebreak()
 #front-title[List of Figures]
@@ -183,7 +210,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("Psychiatric-specific evidence highlights a strong relationship between stigma processes and medication behavior. In mental health settings, internalized stigma is associated with poorer adherence, higher relapse pressure, and reduced social functioning (Abdisa et al., 2020). Intervention reviews in schizophrenia show that information-only psychoeducation often has limited effect, whereas approaches that include motivational, behavioral, and community-support components show better adherence outcomes (Zygmunt et al., 2002).")
 #p("Family and caregiver context adds another layer that is highly relevant to Iraqi social structure. Systematic review evidence in child and adolescent psychiatry shows that parental beliefs, family functioning, and caregiver mental health influence adherence trajectories (Kalaman et al., 2023). In Iraq, where family decision-making remains central in treatment choices, this supports a practice model in which counseling targets both patient and family belief systems.")
 #h2("D. Iraqi and Regional Service Realities")
-#p("Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Raghad F., 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.")
+#p("Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Wadeea, 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.")
 #p("Community and student-level Iraqi evidence reflects parallel concerns. Research in Basra medical-group students reports measurable psychotropic drug use patterns alongside anxiety and depression burden, suggesting that even health-educated populations may face unresolved medication and mental health challenges (Kadhim et al., 2024). At the care-seeking level, Iraqi psychiatric-clinic evidence indicates frequent prior or concurrent use of faith-healing pathways, often before psychiatric consultation, which can delay formal treatment and fragment continuity of care (Younis et al., 2020).")
 #p("Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.")
 #chapter-page("Chapter Two", "Materials and Methods")
@@ -302,56 +329,27 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #h2("C. Closing Evidence-Based Statement")
 #p("The evidence from this study supports a clear national direction for Iraq: improve psychiatric medication acceptance by reducing fear, correcting dependence myths, and strengthening trust in modern treatment through integrated, pharmacist-inclusive care. If policy and practice align around these targets, Iraq can reduce treatment delay, improve adherence pathways, and narrow the mental health treatment gap.")
 #pagebreak()
+#set-running-head("References")
 #section-title("VIII. REFERENCES")
 #refp("Abdisa, Eba, Ginenus Fekadu, Shimelis Girma, et al. “Self-Stigma and Medication Adherence among Patients with Mental Illness Treated at Jimma University Medical Center, Southwest Ethiopia.” International Journal of Mental Health Systems 14, no. 1 (2020): 56. https://doi.org/10.1186/s13033-020-00391-6.")
-#refp("Abdul Kareem, Makwan, and Hezha Mahmood. “Adherence to Pharmacological Treatment Among Patients with Schizophrenia: Adherence to Pharmacological Treatment Among Patients with Schizophrenia.” Iraqi National Journal of Medicine 4, no. 1 (2022): 31–42. https://doi.org/10.37319/IQNJM.4.1.4.")
-#refp("Abi Hana, Racha, Maguy Arnous, Eva Heim, et al. “Mental Health Stigma at Primary Health Care Centres in Lebanon: Qualitative Study.” International Journal of Mental Health Systems 16, no. 1 (2022): 23. https://doi.org/10.1186/s13033-022-00533-y.")
-#refp("Adewuya, Abiodun O., and Roger O. A. Makanjuola. “Lay Beliefs Regarding Causes of Mental Illness in Nigeria: Pattern and Correlates.” Social Psychiatry and Psychiatric Epidemiology 43, no. 4 (2008): 336–41. https://doi.org/10.1007/s00127-007-0305-x.")
-#refp("Al-Asadi, Jasim Naeem, and Zainab B. Hussein. “Depression among Infertile Women in Basrah, Iraq: Prevalence and Risk Factors.” Journal of the Chinese Medical Association: JCMA 78, no. 11 (2015): 673–77. https://doi.org/10.1016/j.jcma.2015.07.009.")
-#refp("Al-Awadhi, Anwar, Farid Atawneh, M. ZiadY Alalyan, AltafAhmad Shahid, Sulaiman Al-Alkhadhari, and MuhammadAjmal Zahid. “Nurses’ Attitude towards Patients with Mental Illness in a General Hospital in Kuwait.” Saudi Journal of Medicine and Medical Sciences 5, no. 1 (2017): 31. https://doi.org/10.4103/1658-631X.194249.")
-#refp("Albaroodi, Khansaa A. Ibrahim. “Pharmacists’ Knowledge Regarding Drug Disposal in Karbala.” Pharmacy 7, no. 2 (2019): 57. https://doi.org/10.3390/pharmacy7020057.")
-#refp("Al-Hemiary, Nesif J., Jawad K. Al-Diwan, Albert L. Hasson, and Richard A. Rawson. “Drug and Alcohol Use in Iraq: Findings of the Inaugural Iraqi Community Epidemiological Workgroup.” Substance Use & Misuse 49, no. 13 (2014): 1759–63. https://doi.org/10.3109/10826084.2014.913633.")
-#refp("Al-Jawadi, Asma A., and Shatha Abdul-Rhman. “Prevalence of Childhood and Early Adolescence Mental Disorders among Children Attending Primary Health Care Centers in Mosul, Iraq: A Cross-Sectional Study.” BMC Public Health 7, no. 1 (2007): 274. https://doi.org/10.1186/1471-2458-7-274.")
-#refp("Almazeedi, Hind, and Mohammad T. Alsuwaidan. “‘Integrating Kuwait’s Mental Health System to End Stigma: A Call to Action.’” Journal of Mental Health 23, no. 1 (2014): 1–3. https://doi.org/10.3109/09638237.2013.775407.")
-#refp("Al Omari, Omar, Blessy Prabha Valsaraj, Moawiah Khatatbeh, et al. “Self and Public Stigma towards Mental Illnesses and Its Predictors among University Students in 11 Arabic‐speaking Countries: A Multi‐site Study.” International Journal of Mental Health Nursing 32, no. 6 (2023): 1745–55. https://doi.org/10.1111/inm.13206.")
 #refp("Angermeyer, Matthias C., Sandra Van Der Auwera, Mauro G. Carta, and Georg Schomerus. “Public Attitudes towards Psychiatry and Psychiatric Treatment at the Beginning of the 21st Century: A Systematic Review and Meta‐analysis of Population Surveys.” World Psychiatry 16, no. 1 (2017): 50–61. https://doi.org/10.1002/wps.20383.")
-#refp("Berge, Erik Eng, Roger Hagen, and Joar Øveraas Halvorsen. “PTSD Relapse in Veterans of Iraq and Afghanistan: A Systematic Review.” Military Psychology 32, no. 4 (2020): 300–312. https://doi.org/10.1080/08995605.2020.1754123.")
 #refp("Booth, Wendy A., Mabrouka Abuhmida, and Felix Anyanwu. “Mental Health Stigma: A Conundrum for Healthcare Practitioners in Conservative Communities.” Frontiers in Public Health 12 (May 2024): 1384521. https://doi.org/10.3389/fpubh.2024.1384521.")
 #refp("Burnam, M. Audrey, Lisa S. Meredith, Terri Tanielian, and Lisa H. Jaycox. “Mental Health Care For Iraq And Afghanistan War Veterans.” Health Affairs 28, no. 3 (2009): 771–82. https://doi.org/10.1377/hlthaff.28.3.771.")
 #refp("Cubillos, Leonardo, Sophia M. Bartels, William C. Torrey, et al. “The Effectiveness and Cost-Effectiveness of Integrating Mental Health Services in Primary Care in Low- and Middle-Income Countries: Systematic Review.” BJPsych Bulletin 45, no. 1 (2021): 40–52. https://doi.org/10.1192/bjb.2020.35.")
-#refp("Dikeç, Gül, and Kübra Timarcıoğlu. “Medication Adherence to Psychotropic Medication and Relationship with Psychiatric Symptoms among Syrian Refugees in Turkey: A Pilot Study.” Trauma Care 3, no. 1 (2023): 37–45. https://doi.org/10.3390/traumacare3010005.")
 #refp("Elyamani, Rowaida, Sarah Naja, Ayman Al-Dahshan, Hamed Hamoud, Mohammed Iheb Bougmiza, and Noora Alkubaisi. “Mental Health Literacy in Arab States of the Gulf Cooperation Council: A Systematic Review.” PLOS ONE 16, no. 1 (2021): e0245156. https://doi.org/10.1371/journal.pone.0245156.")
 #refp("Gast, Alina, and Tim Mathes. “Medication Adherence Influencing Factors—an (Updated) Overview of Systematic Reviews.” Systematic Reviews 8, no. 1 (2019): 112. https://doi.org/10.1186/s13643-019-1014-8.")
-#refp("Häge, Alexander, Lisa Weymann, Lucia Bliznak, Viktoria Märker, Konstantin Mechler, and Ralf W. Dittmann. “Non-adherence to Psychotropic Medication Among Adolescents – A Systematic Review of the Literature.” Zeitschrift für Kinder- und Jugendpsychiatrie und Psychotherapie 46, no. 1 (2018): 69–78. https://doi.org/10.1024/1422-4917/a000505.")
-#refp("Hamrin, Vanya, Erin M. McCarthy, and Veda Tyson. “Pediatric Psychotropic Medication Initiation and Adherence: A Literature Review Based on Social Exchange Theory.” Journal of Child and Adolescent Psychiatric Nursing 23, no. 3 (2010): 151–72. https://doi.org/10.1111/j.1744-6171.2010.00237.x.")
-#refp("Herbert, Sophia M. C., Joni C. Carroll, Kim C. Coley, Stephanie Harriman McGrath, and Melissa Somma McGivney. “A Student Pharmacist Quality Engagement Team to Support Initial Implementation of Comprehensive Medication Management within Independent Community Pharmacies.” Pharmacy 8, no. 3 (2020): 141. https://doi.org/10.3390/pharmacy8030141.")
-#refp("Hisle-Gorman, Elizabeth, Apryl Susi, and Gregory H. Gorman. “Mental Health Trends in Military Pediatrics.” Psychiatric Services 70, no. 8 (2019): 657–64. https://doi.org/10.1176/appi.ps.201800101.")
-#refp("Hoge, Charles W., Carl A. Castro, Stephen C. Messer, Dennis McGurk, Dave I. Cotting, and Robert L. Koffman. “Combat Duty in Iraq and Afghanistan, Mental Health Problems, and Barriers to Care.” New England Journal of Medicine 351, no. 1 (2004): 13–22. https://doi.org/10.1056/NEJMoa040603.")
-#refp("Hoge, Charles W., Christopher G. Ivany, Edward A. Brusher, et al. “Transformation of Mental Health Care for U.S. Soldiers and Families During the Iraq and Afghanistan Wars: Where Science and Politics Intersect.” American Journal of Psychiatry 173, no. 4 (2016): 334–43. https://doi.org/10.1176/appi.ajp.2015.15040553.")
 #refp("Horne, Robert, John Weinman, and Maittew Hankins. “The Beliefs about Medicines Questionnaire: The Development and Evaluation of a New Method for Assessing the Cognitive Representation of Medication.” Psychology & Health 14, no. 1 (1999): 1–24. https://doi.org/10.1080/08870449908407311.")
 #refp("Hussein Alwan, Iman, Mohammed Fadhil Ali, and Zeyad Tariq Madalla. “Factors Influencing Stigma Toward Mental Illness Among Students at the University of Baghdad.” International Journal of Body, Mind and Culture 12, no. 6 (2025): 161–70. https://doi.org/10.61838/ijbmc.v12i5.945.")
-#refp("Ibrahim, Hawkar, Verena Ertl, Claudia Catani, Azad Ali Ismail, and Frank Neuner. “Trauma and Perceived Social Rejection among Yazidi Women and Girls Who Survived Enslavement and Genocide.” BMC Medicine 16, no. 1 (2018): 154. https://doi.org/10.1186/s12916-018-1140-5.")
 #refp("Kadhim, Sheima Nadim, Zainab Haroon Ahmed, and Muntadher Luay Abdulsahib. “ANXIETY, DEPRESSION, AND PSYCHOTROPIC DRUGS USAGE BY UNIVERSITY STUDENTS OF MEDICAL GROUP IN BASRA, IRAQ.” Universal Journal of Pharmaceutical Research, ahead of print, May 15, 2024. https://doi.org/10.22270/ujpr.v9i2.1081.")
 #refp("Kalaman, Clarisse Roswini, Norhayati Ibrahim, Vinorra Shaker, et al. “Parental Factors Associated with Child or Adolescent Medication Adherence: A Systematic Review.” Healthcare 11, no. 4 (2023): 501. https://doi.org/10.3390/healthcare11040501.")
-#refp("Kwan, Yu Heng, Si Dun Weng, Dionne Hui Fang Loh, et al. “Measurement Properties of Existing Patient-Reported Outcome Measures on Medication Adherence: Systematic Review.” Journal of Medical Internet Research 22, no. 10 (2020): e19179. https://doi.org/10.2196/19179.")
-#refp("Leucht, S., T. Burkard, J. Henderson, M. Maj, and N. Sartorius. “Physical Illness and Schizophrenia: A Review of the Literature.” Acta Psychiatrica Scandinavica 116, no. 5 (2007): 317–33. https://doi.org/10.1111/j.1600-0447.2007.01095.x.")
-#refp("Leucht, Stefan, Andrea Cipriani, Loukia Spineli, et al. “Comparative Efficacy and Tolerability of 15 Antipsychotic Drugs in Schizophrenia: A Multiple-Treatments Meta-Analysis.” The Lancet 382, no. 9896 (2013): 951–62. https://doi.org/10.1016/S0140-6736(13)60733-3.")
-#refp("Mohammed, Mrywan Abdulmajeed, and Konul Memmedova. “Prevalence of Mental Health Problems among Iraqi University Students during the COVID-19 Pandemic.” Sustainability 15, no. 3 (2023): 1746. https://doi.org/10.3390/su15031746.")
 #refp("Mojtabai, Ramin. “Americans’ Attitudes Toward Psychiatric Medications: 1998–2006.” Psychiatric Services 60, no. 8 (2009): 1015–23. https://doi.org/10.1176/ps.2009.60.8.1015.")
-#refp("Nassr, Ola A., and Raghad F. “Prevalence and Predictors of High-Dose Antipsychotic Therapy among Adult Psychiatric Inpatients in Baghdad, Iraq.” South African Journal of Psychiatry 32, no. 0 (2026): a2606. https://doi.org/10.4102/SAJPSYCHIATRY.v32i0.2606.")
+#refp("Nassr, Ola A., and Raghad F. Wadeea. “Prevalence and Predictors of High-Dose Antipsychotic Therapy among Adult Psychiatric Inpatients in Baghdad, Iraq.” South African Journal of Psychiatry 32, no. 0 (2026): a2606. https://doi.org/10.4102/SAJPSYCHIATRY.v32i0.2606.")
 #refp("Okasha, Tarek, Nermin M. Shaker, and Dina Aly El-Gabry. “Mental Health Services in Egypt, the Middle East, and North Africa.” International Review of Psychiatry 37, nos. 3–4 (2025): 306–14. https://doi.org/10.1080/09540261.2024.2400143.")
-#refp("Ouanes, Sami, Imen Becetti, Suhaila Ghuloum, et al. “Patterns of Prescription of Antipsychotics in Qatar.” PLOS ONE 15, no. 11 (2020): e0241986. https://doi.org/10.1371/journal.pone.0241986.")
 #refp("Rasheed, Sana, Eisha Kashif, Rida Arif, et al. “The Impact of Stigma on Health Care-Seeking Behavior in Military Personnel with Mental Health Challenges.” Annals of Medicine and Surgery (2012) 88, no. 1 (2026): 630–36. https://doi.org/10.1097/MS9.0000000000004569.")
-#refp("Roder, V. “Integrated Psychological Therapy (IPT) for Schizophrenia: Is It Effective?” Schizophrenia Bulletin 32, no. Supplement 1 (2006): S81–93. https://doi.org/10.1093/schbul/sbl021.")
 #refp("Sadik, Sabah, Marie Bradley, Saad Al-Hasoon, and Rachel Jenkins. “Public Perception of Mental Health in Iraq.” International Journal of Mental Health Systems 4, no. 1 (2010): 26. https://doi.org/10.1186/1752-4458-4-26.")
 #refp("Saied, AbdulRahman A., Sirwan Khalid Ahmed, Asmaa A. Metwally, and Hani Aiash. “Iraq’s Mental Health Crisis: A Way Forward?” The Lancet 402, no. 10409 (2023): 1235–36. https://doi.org/10.1016/S0140-6736(23)01283-7.")
-#refp("Saied, AbdulRahman A., Asmaa A. Metwally, Sirwan Khalid Ahmed, Rukhsar Muhmmad Omar, and Salar Omar Abdulqadir. “National Suicide Prevention Strategy in Iraq.” Asian Journal of Psychiatry 82 (April 2023): 103486. https://doi.org/10.1016/j.ajp.2023.103486.")
 #refp("Slewa-Younan, Shameran, Jonathan Mond, Elise Bussion, et al. “Mental Health Literacy of Resettled Iraqi Refugees in Australia: Knowledge about Posttraumatic Stress Disorder and Beliefs about Helpfulness of Interventions.” BMC Psychiatry 14, no. 1 (2014): 320. https://doi.org/10.1186/s12888-014-0320-x.")
-#refp("Uribe Guajardo, Maria Gabriela, Shameran Slewa-Younan, Betty Ann Kitchener, Haider Mannan, Yaser Mohammad, and Anthony Francis Jorm. “Improving the Capacity of Community-Based Workers in Australia to Provide Initial Assistance to Iraqi Refugees with Mental Health Problems: An Uncontrolled Evaluation of a Mental Health Literacy Course.” International Journal of Mental Health Systems 12, no. 1 (2018): 2. https://doi.org/10.1186/s13033-018-0180-8.")
-#refp("Van, Connie, Daniel Costa, Penny Abbott, Bernadette Mitchell, and Ines Krass. “Community Pharmacist Attitudes towards Collaboration with General Practitioners: Development and Validation of a Measure and a Model.” BMC Health Services Research 12, no. 1 (2012): 320. https://doi.org/10.1186/1472-6963-12-320.")
-#refp("Younis, Maha S. “Tears of Ishtar: Women’s Mental Health in Iraq.” The Lancet. Psychiatry 2, no. 2 (2015): 119–21. https://doi.org/10.1016/S2215-0366(14)00061-3.")
 #refp("Younis, Maha S., and Deema Khunda. “Maha Sulaiman Younis: A Personal History of Psychiatry in Iraq through War and Conflict.” GLOBAL PSYCHIATRY ARCHIVES 3, no. 2 (2020): 113–18. https://doi.org/10.52095/gpa.2020.1355.")
 #refp("Younis, Maha S., Riyadh K. Lafta, and Saba Dhiaa. “Faith Healers Are Taking over the Role of Psychiatrists in Iraq.” Qatar Medical Journal 2019, no. 3 (2020). https://doi.org/10.5339/qmj.2019.13.")
-#refp("Younis, Maha Sulaiman, and Riyadh Khudhiar Lafta. “The Plight of Women in Iraq: Gender Disparity, Violence, and Mental Health.” International Journal of Social Psychiatry 67, no. 8 (2021): 977–83. https://doi.org/10.1177/00207640211003602.")
 #refp("Zolezzi, Monica, Maha Alamri, Shahd Shaar, and Daniel Rainkie. “Stigma Associated with Mental Illness and Its Treatment in the Arab Culture: A Systematic Review.” International Journal of Social Psychiatry 64, no. 6 (2018): 597–609. https://doi.org/10.1177/0020764018789200.")
 #refp("Zygmunt, Annette, Mark Olfson, Carol A. Boyer, and David Mechanic. “Interventions to Improve Medication Adherence in Schizophrenia.” American Journal of Psychiatry 159, no. 10 (2002): 1653–64. https://doi.org/10.1176/appi.ajp.159.10.1653.")
