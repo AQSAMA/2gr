@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import subprocess
+import unicodedata
 from pathlib import Path
 
 from docx import Document
@@ -23,6 +24,7 @@ from build_production import (
     copy_figure_assets,
     ensure_dirs as ensure_production_dirs,
     iter_markdown_blocks,
+    run_method_a,
 )
 
 TYPST_CONTENT_DIR = REPO_ROOT / "typst_content"
@@ -31,13 +33,20 @@ TYPST_SOURCE = TYPST_CONTENT_DIR / "research.typ"
 TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 
+CITATION_COLOR = "1F5F6B"
+CITATION_PATTERN = re.compile(
+    r"\((?=[^()]{0,280}(?:19|20)\d{2}[a-z]?)(?=[^()]{0,280}[A-Za-z])[^()]{1,280}\)"
+)
+
 TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
-STUDENTS = [
-    "Abdul Rahman Wakaa Ali",
-    "Ali Basem Hammoud",
-    "Shifa Safi Aboud",
-    "Zainab Mashal Nayef",
-]
+STUDENTS = sorted(
+    [
+        "Abdul Rahman Wakaa Ali",
+        "Ali Basem Hammoud",
+        "Shifa Safi Aboud",
+        "Zainab Mashal Nayef",
+    ]
+)
 SUPERVISOR = "Hameed Adnan"
 UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
@@ -87,6 +96,45 @@ def ensure_dirs() -> None:
     TYPST_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _normalize_key(value: str) -> str:
+    value = unicodedata.normalize("NFKC", value).replace("\u00a0", " ")
+    value = re.sub(r"\s+", " ", value).strip().lower()
+    return value
+
+
+def _reference_keys(reference: str) -> set[tuple[str, str]]:
+    if "," not in reference:
+        return set()
+    first_author = _normalize_key(reference.split(",", 1)[0])
+    years = re.findall(r"(?:19|20)\d{2}", reference)
+    return {(first_author, year) for year in years}
+
+
+def _citation_keys(text: str) -> set[tuple[str, str]]:
+    keys: set[tuple[str, str]] = set()
+    for citation in CITATION_PATTERN.findall(text):
+        for part in citation.strip("()").split(";"):
+            year_match = re.search(r"(?:19|20)\d{2}", part)
+            if year_match is None:
+                continue
+            author_part = part[: year_match.start()].rstrip(" ,")
+            author_part = re.sub(r"\bet\s+al\.?", "", author_part, flags=re.IGNORECASE).strip()
+            first_author = re.split(
+                r"\s*&\s*|\s+and\s+", author_part, maxsplit=1, flags=re.IGNORECASE
+            )[0]
+            first_author = first_author.rstrip(" ,")
+            if first_author:
+                keys.add((_normalize_key(first_author), year_match.group(0)))
+    return keys
+
+
+def _filter_references_to_cited(manuscript_text: str, references: list[str]) -> list[str]:
+    cited_keys = _citation_keys(manuscript_text)
+    if not cited_keys:
+        return references
+    filtered = [reference for reference in references if _reference_keys(reference) & cited_keys]
+    return filtered or references
+
 
 def _split_references(md_text: str) -> tuple[str, list[str]]:
     marker = "\n# VIII. REFERENCES\n"
@@ -94,7 +142,22 @@ def _split_references(md_text: str) -> tuple[str, list[str]]:
         return md_text, []
     before, after = md_text.split(marker, 1)
     references = [clean_text(line) for line in after.splitlines() if clean_text(line)]
+    references = _filter_references_to_cited(before, references)
     return before + marker, references
+
+
+def typst_inline_content(text: str) -> str:
+    parts: list[str] = ["["]
+    last = 0
+    for match in CITATION_PATTERN.finditer(text):
+        if match.start() > last:
+            parts.append(typst_string(text[last : match.start()]))
+        parts.append(f"#text(fill: citation-color)[{typst_string(match.group(0))}]")
+        last = match.end()
+    if last < len(text):
+        parts.append(typst_string(text[last:]))
+    parts.append("]")
+    return "".join(parts)
 
 
 def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
@@ -138,7 +201,8 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             if not text:
                 continue
             fn = "refp" if in_references else "p"
-            target.append(f"#{fn}({typst_string(text)})")
+            content = typst_inline_content(text) if fn == "p" else typst_string(text)
+            target.append(f"#{fn}({content})")
             continue
 
         if kind == "image":
@@ -181,13 +245,14 @@ def render_typst_source(md_path: Path) -> str:
 #let gold = rgb("#b58b2a")
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
+#let citation-color = rgb("#1F5F6B")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
 #let regular-page-header = context {{
   let head = running-head.get()
   if head != "" {{
-    align(left)[#text(size: 9pt, fill: navy)[#head]]
+    align(right)[#text(size: 9pt, fill: navy)[#head]]
   }}
 }}
 
@@ -292,7 +357,11 @@ def render_typst_source(md_path: Path) -> str:
 
 #pagebreak()
 #front-title[Table of Contents]
-#outline(title: none, depth: 2)
+#block(width: 100%)[
+  #set text(size: 10.5pt)
+  #set par(leading: 0.42em)
+  #outline(title: none, depth: 1)
+]
 
 #pagebreak()
 #front-title[List of Figures]
@@ -511,13 +580,13 @@ def _configure_section(
             first_header.alignment = WD_ALIGN_PARAGRAPH.CENTER
             _add_field_run(first_header, "PAGE")
         header = section.header.paragraphs[0]
-        header.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        header.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        _add_field_run(header, "PAGE")
         if running_head:
-            run = header.add_run(running_head)
+            head_paragraph = section.header.add_paragraph()
+            head_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            run = head_paragraph.add_run(running_head)
             _set_run_font(run, size=9, color="102A43")
-        page_paragraph = section.header.add_paragraph()
-        page_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _add_field_run(page_paragraph, "PAGE")
 
 
 def _setup_docx_styles(doc: Document) -> None:
@@ -554,8 +623,23 @@ def _front_title(doc: Document, title: str) -> None:
     paragraph.paragraph_format.space_after = Pt(8)
 
 
+def _add_citation_colored_runs(paragraph, text: str) -> None:
+    last = 0
+    for match in CITATION_PATTERN.finditer(text):
+        if match.start() > last:
+            run = paragraph.add_run(text[last : match.start()])
+            _set_run_font(run, size=14)
+        run = paragraph.add_run(match.group(0))
+        _set_run_font(run, size=14, color=CITATION_COLOR)
+        last = match.end()
+    if last < len(text):
+        run = paragraph.add_run(text[last:])
+        _set_run_font(run, size=14)
+
+
 def _add_body_paragraph(doc: Document, text: str) -> None:
-    paragraph = doc.add_paragraph(text)
+    paragraph = doc.add_paragraph()
+    _add_citation_colored_runs(paragraph, text)
     paragraph.paragraph_format.line_spacing = 1.5
     paragraph.paragraph_format.first_line_indent = Inches(0.5)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -631,7 +715,7 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     _front_title(doc, "Table of Contents")
     paragraph = doc.add_paragraph()
     paragraph.paragraph_format.first_line_indent = Inches(0)
-    _add_field_run(paragraph, r'TOC \o "1-2" \h \z \u')
+    _add_field_run(paragraph, r'TOC \o "1-1" \h \z \u')
 
     doc.add_page_break()
     _front_title(doc, "List of Figures")
@@ -662,6 +746,9 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     figure_captions = [data.split("|||", 1)[0] for kind, data in blocks if kind == "image"]
 
     doc = Document()
+    doc.core_properties.title = TITLE
+    doc.core_properties.author = ", ".join(STUDENTS)
+    doc.core_properties.subject = "Original cross-sectional research study"
     _setup_docx_styles(doc)
     _configure_section(doc.sections[0], numbered=False)
     _add_cover_page(doc)
@@ -759,6 +846,23 @@ def copy_docx_output() -> bool:
     print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
 
+
+def copy_pdf_output(md_path: Path | None = None) -> bool:
+    source_pdf = METHOD_A_DIR / "research_method_a.pdf"
+    if not source_pdf.exists() and md_path is not None:
+        print("WARNING: Method A PDF was not found; generating Method A outputs for typst_content PDF fallback.")
+        try:
+            run_method_a(md_path)
+        except Exception as exc:
+            print(f"WARNING: Method A PDF fallback generation failed ({exc}).")
+    if not source_pdf.exists():
+        print("WARNING: Method A PDF was not found; typst_content PDF fallback was skipped.")
+        return False
+    shutil.copy2(source_pdf, TYPST_PDF)
+    print(f"Typst content PDF fallback copied from Method A: {TYPST_PDF}")
+    return True
+
+
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()
     if md_path is None:
@@ -771,7 +875,8 @@ def run_typst_content(md_path: Path | None = None) -> None:
         print("WARNING: university logo PNG was not found at repository root or in figures/; cover logo placement was skipped.")
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
-    compile_typst_pdf()
+    if not compile_typst_pdf():
+        copy_pdf_output(md_path)
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:

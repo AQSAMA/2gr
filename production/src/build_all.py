@@ -21,7 +21,7 @@ def warn_missing_tool(name: str, purpose: str) -> None:
 
 def main() -> None:
     warn_missing_tool("pandoc", "Pandoc-dependent conversions are unavailable, but the Python Method A path will still run.")
-    warn_missing_tool("typst", "Typst PDFs will be skipped after the Markdown/Method A build completes.")
+    warn_missing_tool("typst", "native Typst PDF compilation will be skipped; typst_content will copy the Method A PDF fallback when available.")
 
     print("Step 1/3: Building assembled Markdown and Method A outputs.")
     build_production.ensure_dirs()
