@@ -43,6 +43,7 @@ UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
 MONTH_YEAR = "May, 2026"
 LOGO_CANDIDATES = (
+    "University_logo.png",
     "university logo.png",
     "university_logo.png",
     "University logo.png",
@@ -53,14 +54,17 @@ LOGO_CANDIDATES = (
 
 
 def find_university_logo() -> Path | None:
-    for filename in LOGO_CANDIDATES:
-        candidate = FIGURES_DIR / filename
-        if candidate.exists():
-            return candidate
-    for candidate in sorted(FIGURES_DIR.glob("*.png")):
-        lowered = candidate.name.lower()
-        if "logo" in lowered or "university" in lowered or "maarif" in lowered:
-            return candidate
+    search_dirs = (REPO_ROOT, FIGURES_DIR)
+    for directory in search_dirs:
+        for filename in LOGO_CANDIDATES:
+            candidate = directory / filename
+            if candidate.exists():
+                return candidate
+    for directory in search_dirs:
+        for candidate in sorted(directory.glob("*.png")):
+            lowered = candidate.name.lower()
+            if "logo" in lowered or "university" in lowered or "maarif" in lowered:
+                return candidate
     return None
 
 
@@ -163,7 +167,7 @@ def render_typst_source(md_path: Path) -> str:
     logo_path = find_university_logo()
     logo_block = ""
     if logo_path is not None:
-        logo_rel = Path("../figures") / logo_path.name
+        logo_rel = Path("..") / logo_path.relative_to(REPO_ROOT)
         logo_block = f"  #image({typst_string(logo_rel.as_posix())}, width: 2.25cm)\n  #v(0.16cm)\n"
 
     preamble = f'''// Editable Typst source for the graduation project.
@@ -764,7 +768,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
         if not md_path.exists():
             md_path = assemble_markdown()
     if find_university_logo() is None:
-        print("WARNING: university logo PNG was not found in figures/; cover logo placement was skipped.")
+        print("WARNING: university logo PNG was not found at repository root or in figures/; cover logo placement was skipped.")
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
