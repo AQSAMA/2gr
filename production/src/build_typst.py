@@ -87,6 +87,9 @@ def generate_body(md_path: Path) -> Path:
             if kind == "h1" and data_upper == "8. REFERENCES":
                 blocks.append('  (kind: "references_start"),')
 
+            if kind == "h1" and data_upper == "ABSTRACT":
+                blocks.append('  (kind: "abstract_start"),')
+
             blocks.append(f"  (kind: \"{kind}\", text: {typst_string(data)}),")
         elif kind == "image":
             in_cover = False

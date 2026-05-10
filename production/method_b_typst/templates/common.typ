@@ -79,6 +79,12 @@
     // References start on a new page too; update before any content lands
     // on that page so the header picks up "References" immediately.
     set-running-head("References")
+  } else if block.kind == "abstract_start" {
+    // Abstract starts on a new page; update the running-head state BEFORE
+    // the pagebreak so the new page's header (evaluated at page top) picks
+    // up "Abstract". Mirrors the chaptertitle ordering.
+    set-running-head("Abstract")
+    pagebreak(weak: true)
   } else if block.kind == "cover_h2" {
     v(1.5em, weak: true)
     align(center)[#heading(level: 2, outlined: false)[#block.text]]
@@ -92,9 +98,6 @@
       v(8em)
     }
   } else if block.kind == "h1" {
-    if upper(block.text) == "ABSTRACT" {
-      set-running-head("Abstract")
-    }
     v(1.5em, weak: true)
     heading(level: 1, outlined: true)[#block.text]
   } else if block.kind == "h2" {
