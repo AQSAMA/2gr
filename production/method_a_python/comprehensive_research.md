@@ -66,11 +66,9 @@ The sample was mostly female, young, and university educated. Public attitudes w
 
 These findings indicate ambivalent public attitudes rather than uniform rejection. The strongest barriers were fear, mistrust, and dependence concerns, more than most demographic factors. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.
 
-[[CHAPTER_TITLE:Chapter One|||Introduction]]
+# Chapter One: Introduction, aims of the study and review of literature
 
-# I. INTRODUCTION
-
-## A. Background and Context
+## Background and Context
 
 Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability. This history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).
 
@@ -80,27 +78,25 @@ Current system-level indicators support this gap. National commentary describes 
 
 These structural and social conditions make psychiatric medication use a public-health issue, not only a clinical issue. When access to specialist follow-up is limited, decisions about whether psychiatric medicines are acceptable, safe, or socially risky often move into family and community spaces. In Iraq, those decisions are influenced by collective memory of conflict, concerns about dependence, and distrust of mental health services, while public education and mental health literacy remain uneven across groups (Saied et al., 2023; Sadik et al., 2010).
 
-## B. Problem Statement
+## Problem Statement
 
 Iraq faces a double challenge. The first challenge is a treatment-capacity gap, with limited workforce and service coverage relative to the burden of mental disorders. The second challenge is a public-acceptance gap, where stigma and negative social beliefs can reduce care-seeking, delay treatment initiation, and weaken long-term medication use. Iraqi evidence indicates that many people recognize biological and psychosocial causes of mental illness, yet still hold restrictive social attitudes about people living with mental disorders (Sadik et al., 2010). This pattern means awareness alone does not automatically produce acceptance.
 
 The available literature gives strong signals on stigma and service barriers, but it does not provide a current, integrated Iraqi cross-sectional picture focused directly on psychiatric medication acceptance in the general public. The present study addresses this local evidence gap by using a dedicated survey framework that links demographic factors, prior medication exposure, core beliefs about psychiatric medicines, and willingness to recommend treatment.
 
-## C. Study Aim and Research Questions
+## Study Aim and Research Questions
 
 This study aims to measure psychiatric medication acceptance in Iraq and identify factors associated with willingness to recommend psychiatric medication when needed.
 
 The study asks four linked questions. First, what is the distribution of public responses on core acceptance outcomes, including perceived safety, acceptability, recommendation willingness, and social concern? Second, after adjustment for demographic characteristics and prior psychiatric medication use, which beliefs independently predict recommendation willingness? Third, when hesitation is preserved as a separate response category, how do predictors differ across no, yes, and not sure recommendation responses? Fourth, do people with personal experience of psychiatric medication differ from non-users in key belief items related to prescribing trust, dependence concerns, and perceptions of medication progress?
 
-## D. Study Significance
+## Study Significance
 
 This study has direct value for pharmacy practice in Iraq. Pharmacists are often the most accessible health professionals in daily care pathways, especially when specialist psychiatric follow-up is delayed. Clear evidence on which beliefs are associated with acceptance can help pharmacists provide targeted counseling, address dependence fears, and improve communication with patients and families.
 
 The study also supports clinicians, educators, and health planners. For clinical teams, it clarifies where social perceptions may interfere with evidence-based treatment. For pharmacy and medical education, it provides Iraq-specific data that can strengthen teaching on stigma-sensitive counseling and psychopharmacology communication. For policy and service planning, it offers current local evidence that can support anti-stigma messaging, community engagement, and integration of mental health support in primary-care and public-health programs.
 
-# II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
-
-## A. Stigma and Public Attitudes
+## Stigma and Public Attitudes
 
 Evidence across Arab and international settings shows that stigma remains a major barrier to mental health care, but its expression varies by culture, service structure, and public literacy. In Arab populations, stigma does not operate only as individual prejudice. It is reinforced by family reputation concerns, social exclusion risks, and public narratives that connect mental illness with danger, moral weakness, or shame (Zolezzi et al., 2018; Booth et al., 2024). This multi-layered pattern helps explain why people may verbally support treatment in principle while still discouraging disclosure or formal care in practice.
 
@@ -110,7 +106,7 @@ Iraqi university evidence adds local detail to this pattern. Among Baghdad stude
 
 Regional and international trends indicate gradual improvement in acceptance of psychiatric professionals and treatment in some settings, yet medication-specific hesitation often remains higher than psychotherapy acceptance (Angermeyer et al., 2017). For Iraq, this contrast matters because medication is frequently the first scalable intervention in a constrained service system. If medication acceptance lags behind service expansion, the practical benefit of system investment will remain limited.
 
-## B. Medication Beliefs and Acceptance
+## Medication Beliefs and Acceptance
 
 Medication acceptance is strongly linked to how people cognitively represent necessity, harm, dependence risk, and long-term control. The Beliefs about Medicines framework shows that adherence behavior is shaped by a balance between perceived need and perceived harm, not by knowledge level alone (Horne et al., 1999). This model remains useful for psychiatric medications because concern-driven non-use can occur even when people acknowledge treatment effectiveness.
 
@@ -118,7 +114,7 @@ Population data outside Iraq show that favorable attitudes toward psychiatric me
 
 Gulf-region literacy evidence shows that low or uneven mental health literacy coexists with persistent negative attitudes and stigma, including among some health-related groups (Elyamani et al., 2021). Iraqi refugee evidence supports this point by showing that even in highly trauma-exposed populations, recognition of formal psychiatric labels can remain low while selective trust in specific forms of help remains high (Slewa-Younan et al., 2014). Taken together, these findings suggest that communication approaches framed around understandable explanations of benefit, safety monitoring, and expected treatment course may be more acceptable than label-centered messaging alone.
 
-## C. Adherence and Determinants
+## Adherence and Determinants
 
 Adherence evidence consistently shows that non-adherence is multi-determined and cannot be explained by one variable. Systematic synthesis identifies social support, socioeconomic position, depression burden, treatment costs, and health-system barriers as recurrent determinants, while some demographic effects vary by context and measurement method (Gast & Mathes, 2019). This indicates that adherence strategies in Iraq should combine clinical counseling with structural supports rather than relying on patient motivation alone.
 
@@ -126,7 +122,7 @@ Psychiatric-specific evidence highlights a strong relationship between stigma pr
 
 Family and caregiver context adds another layer that is highly relevant to Iraqi social structure. Systematic review evidence in child and adolescent psychiatry shows that parental beliefs, family functioning, and caregiver mental health influence adherence trajectories (Kalaman et al., 2023). In Iraq, where family decision-making remains central in treatment choices, this supports a practice model in which counseling targets both patient and family belief systems.
 
-## D. Iraqi and Regional Service Realities
+## Iraqi and Regional Service Realities
 
 Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Raghad F., 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.
 
@@ -134,11 +130,11 @@ Community and student-level Iraqi evidence reflects parallel concerns. Research 
 
 Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.
 
-[[CHAPTER_TITLE:Chapter Two|||Materials and Methods]]
+<div class="page-break"></div>
 
-# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
+# Chapter Two: Materials and Methods
 
-## A. Study Design and Setting
+## Study Design and Setting
 
 This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.
 
@@ -146,13 +142,13 @@ The available materials indicate an Iraq-focused online questionnaire dataset wi
 
 **Reporting constraints:** The available project files did not provide a verifiable calendar field or protocol record for the exact data-collection month/year range, did not document the original dissemination channels in a reproducible log, and did not include a formal eligibility sheet beyond what can be inferred from the final dataset structure.
 
-## B. Participants and Sampling
+## Participants and Sampling
 
 The study analyzed all available respondent records retained after preprocessing of the source questionnaire file. Preprocessing removed the questionnaire label row, normalized text encoding and spacing, mapped Arabic response options to numeric categories, and checked unmapped values before analysis. The cleaned dataset contained 877 participants and represented the achieved analytic sample for descriptive analyses. For inferential models, we applied complete-case handling within each model-specific variable set, so analytic sample size differed by model according to missingness in required fields.
 
 Based on the observed dataset structure and cleaning workflow, inclusion for the analytic dataset required a valid respondent row under the 29-variable questionnaire schema after removal of the non-respondent label row. Exclusion at preprocessing level applied to the label row and any non-mappable residual text entries; no unmapped text values remained after cleaning. For model estimation, additional model-specific exclusion was applied through complete-case handling when required covariates or outcomes were missing. Recruitment is therefore reported as an achieved online non-probability sample captured in the dataset, with no recoverable record of platform-specific invitation channels.
 
-## C. Survey Instrument
+## Survey Instrument
 
 The survey instrument included 29 variables covering demographics, public attitudes toward psychiatric medication, medication beliefs, social concern, and prior personal use. Demographic fields captured age group, gender, educational level, and marital status. Core public-acceptance items measured perceived safety, acceptability of psychiatric medication in comparison with treatment for chronic medical conditions, willingness to recommend psychiatric medication, and concern about interacting with a person using psychiatric medication. Belief items included perceptions of overprescribing, dependence risk, and whether modern psychiatric medicines are safer than older options.
 
@@ -160,7 +156,7 @@ The instrument also included an extended block of personal medication-belief ite
 
 To make code references explicit for readers, the study used a fixed question-code map in all chapters. Q6 referred to perceived safety of psychiatric medication, Q7 referred to acceptability of psychiatric medication relative to treatment for chronic medical illness, Q8 referred to willingness to recommend psychiatric medication, and Q9 referred to social concern about interacting with a person using psychiatric medication. Q11 referred to the statement that doctors prescribe psychiatric medications more than necessary, Q12 referred to the statement that most psychiatric medications cause psychological or physical dependence, Q13 referred to the statement that modern psychiatric medications are safer than older ones, and Q31 identified prior psychiatric medication use status.
 
-## D. Variables and Operational Definitions
+## Variables and Operational Definitions
 
 The primary outcome for the main binary logistic models was recommendation willingness, coded from the recommendation item as yes versus no. In the multinomial model, the same outcome preserved three response categories: no, yes, and not sure.
 
@@ -168,7 +164,7 @@ The main predictor set included binary demographic indicators and key belief var
 
 To avoid conceptual overlap with the recommendation outcome, two proximal items, perceived safety and disease-model acceptability, were excluded from the primary hierarchical model and tested separately in a sensitivity model.
 
-## E. Data Management and Statistical Analysis
+## Data Management and Statistical Analysis
 
 Data management followed a predefined cleaning pipeline. First, the source spreadsheet label row was removed, and all text fields were normalized to handle spacing and encoding inconsistencies. Second, Arabic response categories were mapped to numeric codes using fixed dictionaries for demographics, Likert responses, yes or no items, and yes or no or not sure items. Third, all mapped fields were converted to numeric types where possible, and unmapped residual text values were checked.
 
@@ -188,17 +184,17 @@ Fourth, we tested the contact hypothesis as Users vs Non-Users by comparing core
 
 Fifth, we conducted exploratory stigma-phenotype profiling using k-means clustering on standardized core belief items, selected cluster number by silhouette score, and reported cluster means and sizes as exploratory findings.
 
-## F. Ethical Considerations
+## Ethical Considerations
 
 The analysis used de-identified survey data and reported aggregate findings only. No personal identifiers were used in the analytic outputs. The available dataset was handled as anonymized observational data for academic research use, and reporting was limited to group-level summaries.
 
-## G. Methodological Limitations
+## Methodological Limitations
 
 Because the design is cross-sectional, associations should not be interpreted as causal effects. Complete-case modeling produced model-specific analytic samples (n=647 in the primary hierarchical model, n=406 in the sensitivity model, and n=837 in the multinomial model) and may introduce selection effects if missingness is not random. The achieved sample was dominated by younger and university-educated respondents, which may limit generalizability to older or less-educated Iraqi populations. Some instrument blocks had substantial missingness, so primary inference relied on the most complete and policy-relevant core variables.
 
-[[CHAPTER_TITLE:Chapter Three|||Results]]
+<div class="page-break"></div>
 
-# IV. RESULTS
+# Chapter Three: Results
 
 ## IV.A Sample Profile and Descriptive Statistics
 
@@ -262,11 +258,9 @@ The survey included 877 participants and showed a sample pattern with higher fem
 
 <div class="page-break"></div>
 
-[[CHAPTER_TITLE:Chapter Four|||Discussion]]
+# Chapter Four: Discussion
 
-# V. DISCUSSION
-
-## A. Interpretation of Primary Findings
+## Interpretation of Primary Findings
 
 This cross-sectional survey shows a mixed public position toward psychiatric medication in Iraq rather than uniform rejection or uniform support. Recommendation willingness was 57.65%, while 11.62% were not sure and 30.72% were against recommendation. Acceptability was lower: 30.80% considered psychiatric medication acceptable, 17.70% were not sure, and 51.49% considered it unacceptable. Safety perception was similarly low: 23.65% considered medication safe, 31.23% were not sure, and 45.12% considered it unsafe. This pattern suggests that many respondents accept medication in selected situations but still carry safety concerns and social hesitation.
 
@@ -276,7 +270,7 @@ The multinomial model adds useful detail for hesitant respondents. For recommend
 
 The Users vs Non-Users analysis supports a contact effect. Compared with non-users, users reported lower overprescribing concerns on Q11, the belief that doctors prescribe psychiatric medications more than necessary (median 3 vs 4, p=0.0428), and lower dependence concern intensity on Q12, the belief that most psychiatric medications cause psychological or physical dependence (p=0.0317), and they were more likely to agree with Q13, the belief that modern medications are safer than older ones (median 4 vs 3, p=0.0002). Practical differences were small for Q11 and Q12 by both rank and nominal metrics (Q11: Cliff’s delta -0.108, Cramer’s V=0.094; Q12: Cliff’s delta -0.112, Cramer’s V=0.108), while Q13 showed the strongest contact contrast, approaching moderate by Cliff’s delta (0.198) and small-to-moderate by Cramer’s V (0.139). In practical terms, direct or family-level exposure to psychiatric medication appears to improve trust, but it does not fully remove stigma.
 
-## B. Comparison With Iraqi and Regional Literature
+## Comparison With Iraqi and Regional Literature
 
 The present survey aligns with earlier Iraqi evidence that public understanding and stigma can coexist. Sadik et al. (2010) reported that many Iraqis accepted biomedical causes of mental illness while still expressing strong social distance and blame. Our findings show a comparable duality: many respondents would recommend medication, yet large proportions still consider it unsafe or socially problematic. Evidence from Baghdad university students also reports persistent stigma despite high educational exposure, which is consistent with the current sample profile where high education did not independently remove negative medication beliefs (Hussein Alwan et al., 2025).
 
@@ -286,7 +280,7 @@ The findings also fit Iraqi service-use realities. Iraqi clinicians have reporte
 
 Our results are also compatible with broader adherence evidence. Systematic reviews show that adherence is strongly affected by social support, stigma, and perceived treatment burden rather than diagnosis alone (Gast & Mathes, 2019; Abdisa et al., 2020). The current survey did not measure longitudinal adherence, but the strong effects of fear and dependence beliefs indicate that these same mechanisms are active at the acceptance stage in Iraq. In this sense, acceptance barriers and adherence barriers likely sit on the same pathway.
 
-## C. Implications for Pharmacy Practice and Public Health
+## Implications for Pharmacy Practice and Public Health
 
 For Iraqi pharmacy practice, the data show that counseling should prioritize three messages: realistic safety information on modern psychiatric medications, clear distinction between therapeutic dependence and substance misuse, and transparent explanation of prescribing decisions. The regression results indicate that these topics are directly linked to recommendation behavior, so they should become standard counseling content in both community pharmacies and hospital settings.
 
@@ -296,13 +290,13 @@ Pharmacists can also use contact-informed communication. Because users showed mo
 
 At public health level, the results support integrating anti-stigma and medication-literacy components into primary care mental health services. Regional evidence shows that integrated primary care models improve outcomes in low-resource settings when they combine clinical care with structured education and follow-up (Cubillos et al., 2021). For Iraq, this means linking physician diagnosis, pharmacist counseling, and brief public education in one pathway rather than treating these as separate activities.
 
-## D. Strengths and Limitations of the Present Study
+## Strengths and Limitations of the Present Study
 
 The study has several strengths. It provides one of the larger recent Iraqi datasets on psychiatric medication acceptance (N=877), preserves response structure through multinomial modeling, and complements the primary model with contact-group and exploratory phenotype analyses. This analytic sequence gives more policy-relevant information than single binary comparisons.
 
 The study also has limits. First, the cross-sectional design does not establish causality, so the reported associations should not be interpreted as directional effects over time. Second, complete-case modeling created model-specific analytic samples, with n=647 for the primary hierarchical model, n=406 for the sensitivity model, and n=837 for the multinomial model. This reduction from the full descriptive sample (N=877) can introduce selection bias if respondents with missing values differ systematically in stigma beliefs or medication experience, and it narrows how far the adjusted model estimates can be generalized to the wider Iraqi public. Third, the sample was mostly female and highly university-educated, so findings may not fully represent older, rural, or less educated Iraqi populations. Fourth, self-reported attitudes are vulnerable to social desirability bias and may either understate or overstate stigma.
 
-## E. Priority Research Gaps
+## Priority Research Gaps
 
 Future Iraqi research should test whether targeted pharmacist-led counseling can reduce fear and dependence beliefs and then improve actual treatment initiation and adherence. Longitudinal follow-up is needed to connect acceptance attitudes with refill behavior, persistence, and relapse outcomes. Multisite sampling across governorates should also examine urban-rural differences and service-access disparities, especially in areas with lower specialist density.
 
@@ -310,11 +304,9 @@ The exploratory stigma phenotypes identified in this study also need confirmator
 
 <div class="page-break"></div>
 
-[[CHAPTER_TITLE:Chapter Five|||Conclusions and Suggestions]]
+# Chapter Five: Conclusions and Suggestions
 
-# VI. RECOMMENDATIONS
-
-## A. Policy-Level Recommendations
+## Policy-Level Suggestions
 
 The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and Primary Care Directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.
 
@@ -322,7 +314,7 @@ National guidance should also formalize integrated mental health care in primary
 
 Policy should also support public campaigns that include religious and community leaders to address care delays linked to traditional help-seeking pathways (Younis et al., 2020). The aim is not to dismiss cultural practices, but to align them with timely referral to formal mental health services.
 
-## B. Practice-Level Recommendations (Pharmacists, Physicians, Primary Care)
+## Practice-Level Suggestions (Pharmacists, Physicians, Primary Care)
 
 Pharmacists should implement structured counseling at first dispensing and refill visits for psychiatric medications. Counseling should cover expected benefits, common adverse effects, misconceptions about inevitable addiction, and signs that require physician follow-up. The present survey findings justify this focus because beliefs on overprescribing, dependence, and safety were statistically linked to recommendation behavior.
 
@@ -330,31 +322,31 @@ Physicians should use brief shared-decision communication in outpatient and inpa
 
 Primary care teams should create a simple referral-feedback loop between clinics and community pharmacies so patients receive consistent messages. Inconsistency across providers can strengthen uncertainty, which remained visible in the multinomial model.
 
-## C. Education and Awareness Recommendations
+## Education and Awareness Suggestions
 
 Pharmacy and medical curricula in Iraq should include practical training on stigma-sensitive communication about psychiatric medication. Students should learn how to address dependence concerns, social blame, and family objections in clear Arabic and English clinical language. This recommendation is supported by local and regional evidence showing that stigma remains present even among highly educated groups (Hussein Alwan et al., 2025; Elyamani et al., 2021).
 
 Public education campaigns should prioritize message testing before national rollout. Because the survey identified exploratory belief profiles, one uniform message will likely have limited impact. Campaigns should adapt tone and content to subgroups with high fear, high dependence concern, or high distrust of prescribing.
 
-## D. Research Recommendations
+## Research Suggestions
 
 Future Iraqi studies should evaluate intervention effectiveness rather than only describing attitudes. Priority designs include pragmatic trials of pharmacist-led counseling, integrated primary care psychoeducation, and contact-based anti-stigma messaging. Outcomes should include both belief change and behavioral endpoints such as clinic attendance, initiation of prescribed treatment, refill continuity, and relapse-related hospitalization.
 
 Researchers should also conduct repeated cross-sectional surveys with harmonized measures to monitor trend changes in acceptance, safety perception, and recommendation willingness over time. This will allow policymakers to track whether reforms produce measurable public attitude improvement.
 
-# VII. CONCLUSION
+## Conclusion
 
-## A. What the Cross-Sectional Study Adds
+### What the Cross-Sectional Study Adds
 
 This study adds current Iraqi primary data showing that public acceptance of psychiatric medication is not binary. Many respondents supported recommending treatment, yet large proportions still doubted safety and social acceptability. Key predictors were attitudinal beliefs and fear rather than most demographic variables, which identifies practical targets for intervention.
 
-## B. What the Combined Evidence (Survey + Literature) Indicates for Iraq
+### What the Combined Evidence (Survey + Literature) Indicates for Iraq
 
 When interpreted with Iraqi and regional literature, the survey indicates that Iraq faces a trust-and-literacy gap more than a simple awareness gap. People may recognize mental health needs but still hesitate because of dependence concerns, overprescribing beliefs, and stigma shaped by social and cultural context. This pattern is consistent with earlier Iraqi public attitude studies and wider Arab mental health literacy findings.
 
 The evidence also indicates that pharmacists are positioned to close this gap. In a system with limited specialist capacity, pharmacist-led counseling and coordinated primary care communication can translate treatment availability into treatment acceptance.
 
-## C. Closing Evidence-Based Statement
+### Closing Evidence-Based Statement
 
 The evidence from this study supports a clear national direction for Iraq: improve psychiatric medication acceptance by reducing fear, correcting dependence myths, and strengthening trust in modern treatment through integrated, pharmacist-inclusive care. If policy and practice align around these targets, Iraq can reduce treatment delay, improve adherence pathways, and narrow the mental health treatment gap.
 

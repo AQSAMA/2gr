@@ -1,6 +1,34 @@
-# II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
+# Chapter One: Introduction, aims of the study and review of literature
 
-## A. Stigma and Public Attitudes
+## Background and Context
+
+Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability. This history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).
+
+At the same time, service capacity did not expand at the same pace as need. Iraqi psychiatry moved through periods of growth and then major workforce loss, especially after conflict-related migration waves, which left a long gap between population demand and specialist availability (Younis & Khunda, 2020; Sadik et al., 2010).
+
+Current system-level indicators support this gap. National commentary describes a continuing shortage of psychiatrists, limited specialized facilities, and weak access in many areas outside major centers (Saied et al., 2023). Earlier Iraqi public-health work also documented a high burden of common mental disorders and a very low proportion of people with mental disorders receiving formal treatment (Sadik et al., 2010). Evidence from post-conflict care literature further shows that service use is shaped not only by availability, but also by fear of labeling, social judgment, and delayed help-seeking even when symptoms are significant (Burnam et al., 2009).
+
+These structural and social conditions make psychiatric medication use a public-health issue, not only a clinical issue. When access to specialist follow-up is limited, decisions about whether psychiatric medicines are acceptable, safe, or socially risky often move into family and community spaces. In Iraq, those decisions are influenced by collective memory of conflict, concerns about dependence, and distrust of mental health services, while public education and mental health literacy remain uneven across groups (Saied et al., 2023; Sadik et al., 2010).
+
+## Problem Statement
+
+Iraq faces a double challenge. The first challenge is a treatment-capacity gap, with limited workforce and service coverage relative to the burden of mental disorders. The second challenge is a public-acceptance gap, where stigma and negative social beliefs can reduce care-seeking, delay treatment initiation, and weaken long-term medication use. Iraqi evidence indicates that many people recognize biological and psychosocial causes of mental illness, yet still hold restrictive social attitudes about people living with mental disorders (Sadik et al., 2010). This pattern means awareness alone does not automatically produce acceptance.
+
+The available literature gives strong signals on stigma and service barriers, but it does not provide a current, integrated Iraqi cross-sectional picture focused directly on psychiatric medication acceptance in the general public. The present study addresses this local evidence gap by using a dedicated survey framework that links demographic factors, prior medication exposure, core beliefs about psychiatric medicines, and willingness to recommend treatment.
+
+## Study Aim and Research Questions
+
+This study aims to measure psychiatric medication acceptance in Iraq and identify factors associated with willingness to recommend psychiatric medication when needed.
+
+The study asks four linked questions. First, what is the distribution of public responses on core acceptance outcomes, including perceived safety, acceptability, recommendation willingness, and social concern? Second, after adjustment for demographic characteristics and prior psychiatric medication use, which beliefs independently predict recommendation willingness? Third, when hesitation is preserved as a separate response category, how do predictors differ across no, yes, and not sure recommendation responses? Fourth, do people with personal experience of psychiatric medication differ from non-users in key belief items related to prescribing trust, dependence concerns, and perceptions of medication progress?
+
+## Study Significance
+
+This study has direct value for pharmacy practice in Iraq. Pharmacists are often the most accessible health professionals in daily care pathways, especially when specialist psychiatric follow-up is delayed. Clear evidence on which beliefs are associated with acceptance can help pharmacists provide targeted counseling, address dependence fears, and improve communication with patients and families.
+
+The study also supports clinicians, educators, and health planners. For clinical teams, it clarifies where social perceptions may interfere with evidence-based treatment. For pharmacy and medical education, it provides Iraq-specific data that can strengthen teaching on stigma-sensitive counseling and psychopharmacology communication. For policy and service planning, it offers current local evidence that can support anti-stigma messaging, community engagement, and integration of mental health support in primary-care and public-health programs.
+
+## Stigma and Public Attitudes
 
 Evidence across Arab and international settings shows that stigma remains a major barrier to mental health care, but its expression varies by culture, service structure, and public literacy. In Arab populations, stigma does not operate only as individual prejudice. It is reinforced by family reputation concerns, social exclusion risks, and public narratives that connect mental illness with danger, moral weakness, or shame (Zolezzi et al., 2018; Booth et al., 2024). This multi-layered pattern helps explain why people may verbally support treatment in principle while still discouraging disclosure or formal care in practice.
 
@@ -10,7 +38,7 @@ Iraqi university evidence adds local detail to this pattern. Among Baghdad stude
 
 Regional and international trends indicate gradual improvement in acceptance of psychiatric professionals and treatment in some settings, yet medication-specific hesitation often remains higher than psychotherapy acceptance (Angermeyer et al., 2017). For Iraq, this contrast matters because medication is frequently the first scalable intervention in a constrained service system. If medication acceptance lags behind service expansion, the practical benefit of system investment will remain limited.
 
-## B. Medication Beliefs and Acceptance
+## Medication Beliefs and Acceptance
 
 Medication acceptance is strongly linked to how people cognitively represent necessity, harm, dependence risk, and long-term control. The Beliefs about Medicines framework shows that adherence behavior is shaped by a balance between perceived need and perceived harm, not by knowledge level alone (Horne et al., 1999). This model remains useful for psychiatric medications because concern-driven non-use can occur even when people acknowledge treatment effectiveness.
 
@@ -18,7 +46,7 @@ Population data outside Iraq show that favorable attitudes toward psychiatric me
 
 Gulf-region literacy evidence shows that low or uneven mental health literacy coexists with persistent negative attitudes and stigma, including among some health-related groups (Elyamani et al., 2021). Iraqi refugee evidence supports this point by showing that even in highly trauma-exposed populations, recognition of formal psychiatric labels can remain low while selective trust in specific forms of help remains high (Slewa-Younan et al., 2014). Taken together, these findings suggest that communication approaches framed around understandable explanations of benefit, safety monitoring, and expected treatment course may be more acceptable than label-centered messaging alone.
 
-## C. Adherence and Determinants
+## Adherence and Determinants
 
 Adherence evidence consistently shows that non-adherence is multi-determined and cannot be explained by one variable. Systematic synthesis identifies social support, socioeconomic position, depression burden, treatment costs, and health-system barriers as recurrent determinants, while some demographic effects vary by context and measurement method (Gast & Mathes, 2019). This indicates that adherence strategies in Iraq should combine clinical counseling with structural supports rather than relying on patient motivation alone.
 
@@ -26,10 +54,12 @@ Psychiatric-specific evidence highlights a strong relationship between stigma pr
 
 Family and caregiver context adds another layer that is highly relevant to Iraqi social structure. Systematic review evidence in child and adolescent psychiatry shows that parental beliefs, family functioning, and caregiver mental health influence adherence trajectories (Kalaman et al., 2023). In Iraq, where family decision-making remains central in treatment choices, this supports a practice model in which counseling targets both patient and family belief systems.
 
-## D. Iraqi and Regional Service Realities
+## Iraqi and Regional Service Realities
 
 Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Raghad F., 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.
 
 Community and student-level Iraqi evidence reflects parallel concerns. Research in Basra medical-group students reports measurable psychotropic drug use patterns alongside anxiety and depression burden, suggesting that even health-educated populations may face unresolved medication and mental health challenges (Kadhim et al., 2024). At the care-seeking level, Iraqi psychiatric-clinic evidence indicates frequent prior or concurrent use of faith-healing pathways, often before psychiatric consultation, which can delay formal treatment and fragment continuity of care (Younis et al., 2020).
 
 Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.
+
+<div style="page-break-after: always;"></div>

@@ -1,4 +1,4 @@
-# IV. RESULTS
+# Chapter Three: Results
 
 ## IV.A Sample Profile and Descriptive Statistics
 
