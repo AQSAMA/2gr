@@ -26,12 +26,12 @@ The following sections are recognized by the college project arrangement but are
 
 To align the current manuscript architecture with the college-required chapter format:
 
-1. **Chapter One** = current **I. INTRODUCTION** + **II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)**
-2. **Chapter Two** = current **III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)**
-3. **Chapter Three** = current **IV. RESULTS (PRIMARY SURVEY FINDINGS)**
-4. **Chapter Four** = current **V. DISCUSSION**
-5. **Chapter Five** = current **VI. RECOMMENDATIONS** + **VII. CONCLUSION**
-6. **References** = current **VIII. REFERENCES**
+1. **Chapter One** = current **1. INTRODUCTION** + **2. LITERATURE REVIEW (SUPPORTIVE CONTEXT)**
+2. **Chapter Two** = current **3. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)**
+3. **Chapter Three** = current **4. RESULTS (PRIMARY SURVEY FINDINGS)**
+4. **Chapter Four** = current **5. DISCUSSION**
+5. **Chapter Five** = current **6. RECOMMENDATIONS** + **7. CONCLUSION**
+6. **References** = current **8. REFERENCES**
 
 This mapping is structural and does not change source-scoping or result-provenance rules in this outline.
 
@@ -52,7 +52,7 @@ Therefore:
 
 ---
 
-## I. INTRODUCTION
+## 1. INTRODUCTION
 
 ### A. Background and Context
 **Purpose:** Explain why psychiatric medication acceptance matters in Iraq.
@@ -74,7 +74,7 @@ Therefore:
 
 ---
 
-## II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
+## 2. LITERATURE REVIEW (SUPPORTIVE CONTEXT)
 
 **Scope Rule:** This chapter gives conceptual and regional context.  
 It does **not** report the new survey as literature.
@@ -111,7 +111,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
+## 3. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)
 
 ### A. Study Design and Setting
 **Purpose:** Describe cross-sectional design, setting, and study period.
@@ -139,7 +139,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## IV. RESULTS (PRIMARY SURVEY FINDINGS)
+## 4. RESULTS (PRIMARY SURVEY FINDINGS)
 
 **Scope Rule:** Numeric results in this chapter come only from `survey_data_results.md`.
 
@@ -177,7 +177,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## V. DISCUSSION
+## 5. DISCUSSION
 
 ### A. Interpretation of Primary Findings
 **Purpose:** Explain what the survey findings mean in the Iraqi context.
@@ -185,7 +185,7 @@ It does **not** report the new survey as literature.
 
 ### B. Comparison With Iraqi and Regional Literature
 **Purpose:** Compare the observed survey pattern with mapped literature.
-**Sources:** Relevant mapped files from Section II.
+**Sources:** Relevant mapped files from Section 2.
 
 ### C. Implications for Pharmacy Practice and Public Health
 **Purpose:** Translate findings into pharmacist-relevant implications.
@@ -198,7 +198,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## VI. RECOMMENDATIONS
+## 6. RECOMMENDATIONS
 
 ### A. Policy-Level Recommendations
 ### B. Practice-Level Recommendations (Pharmacists, Physicians, Primary Care)
@@ -211,7 +211,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## VII. CONCLUSION
+## 7. CONCLUSION
 
 ### A. What the Cross-Sectional Study Adds
 ### B. What the Combined Evidence (Survey + Literature) Indicates for Iraq
@@ -219,7 +219,7 @@ It does **not** report the new survey as literature.
 
 ---
 
-## VIII. REFERENCES
+## 8. REFERENCES
 
 Use `references.md` as the master APA bibliography source.
 

@@ -1,4 +1,4 @@
-# VI. RECOMMENDATIONS
+# 6. RECOMMENDATIONS
 
 ## A. Policy-Level Recommendations
 
@@ -28,7 +28,7 @@ Future Iraqi studies should evaluate intervention effectiveness rather than only
 
 Researchers should also conduct repeated cross-sectional surveys with harmonized measures to monitor trend changes in acceptance, safety perception, and recommendation willingness over time. This will allow policymakers to track whether reforms produce measurable public attitude improvement.
 
-# VII. CONCLUSION
+# 7. CONCLUSION
 
 ## A. What the Cross-Sectional Study Adds
 

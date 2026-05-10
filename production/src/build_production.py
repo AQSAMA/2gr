@@ -46,11 +46,11 @@ FRONT_MATTER_PAGES: list[str] = []
 
 
 CHAPTER_INSERTIONS = [
-    ("# I. INTRODUCTION", "Chapter One", "Introduction"),
-    ("# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)", "Chapter Two", "Materials and Methods"),
-    ("# IV. RESULTS", "Chapter Three", "Results"),
-    ("# V. DISCUSSION", "Chapter Four", "Discussion"),
-    ("# VI. RECOMMENDATIONS", "Chapter Five", "Conclusions and Suggestions"),
+    ("# 1. INTRODUCTION", "Chapter One", "Introduction"),
+    ("# 3. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)", "Chapter Two", "Materials and Methods"),
+    ("# 4. RESULTS", "Chapter Three", "Results"),
+    ("# 5. DISCUSSION", "Chapter Four", "Discussion"),
+    ("# 6. RECOMMENDATIONS", "Chapter Five", "Conclusions and Suggestions"),
 ]
 
 
@@ -195,7 +195,7 @@ def assemble_markdown() -> Path:
         if appendix_path.exists():
             parts.append(appendix_path.read_text(encoding="utf-8").strip())
 
-    parts.append("# VIII. REFERENCES")
+    parts.append("# 8. REFERENCES")
     parts.append(REFERENCES_FILE.read_text(encoding="utf-8").strip())
 
     merged = "\n\n".join(parts).strip() + "\n"
@@ -430,7 +430,7 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             p = doc.add_paragraph(data)
             p.style = doc.styles["Heading 1"]
             p.paragraph_format.first_line_indent = Inches(0)
-            in_references = data.strip().upper() == "VIII. REFERENCES"
+            in_references = data.strip().upper() == "8. REFERENCES"
             started = True
             chapter_just_emitted = False
             continue
@@ -685,7 +685,7 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
             if started and not chapter_just_emitted:
                 story.append(PageBreak())
             story.append(Paragraph(data, h1))
-            in_references = data.strip().upper() == "VIII. REFERENCES"
+            in_references = data.strip().upper() == "8. REFERENCES"
             started = True
             chapter_just_emitted = False
         elif kind == "h2":

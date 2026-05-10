@@ -1,4 +1,4 @@
-#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title, running_header
+#import "common.typ": render-blocks, navigation-frontmatter, manuscript_title
 
 #let render-manuscript(blocks) = render-blocks(
   blocks,

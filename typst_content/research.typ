@@ -9,19 +9,32 @@
 #let gold = rgb("#b58b2a")
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
+#let citation-color = rgb("#2c5282")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
+
+// The running head sits at the top RIGHT and appears on every page whose
+// section has set a non-empty running head via `#set-running-head(...)`.
+// Chapter interstitial pages disable the header entirely via
+// `set page(header: none)`, and the cover/preliminary pages keep the
+// default empty state so their header is blank.
 #let regular-page-header = context {
   let head = running-head.get()
   if head != "" {
-    align(left)[#text(size: 9pt, fill: navy)[#head]]
+    align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
   }
 }
 
 #set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
+
+// Muted academic navy for parenthetical in-text citations such as
+// "(Author, 2020)" or "(Author et al., 2020; Other, 2019)". The leading
+// capital letter in the required lookbehind avoids matching numeric
+// parentheses like "(p=0.0001)" or "(adjusted OR 0.504, ...)".
+#show regex("\([A-Z][^()]*?\d{4}[a-z]?\)"): it => text(fill: citation-color, it)
 
 #show heading.where(level: 1): it => block(above: 10pt, below: 8pt)[
   #text(size: 18pt, weight: "bold", fill: navy)[#it.body]
@@ -42,6 +55,7 @@
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
   #pagebreak(weak: true)
+  #[#metadata(none) <section-start>]
   #h1(s)
 ]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
@@ -75,13 +89,17 @@
 
 #let start-main-numbering() = [
   #pagebreak(weak: true)
-  #set page(numbering: "1", number-align: top + center)
+  #set page(numbering: "1", number-align: bottom + center)
   #counter(page).update(1)
 ]
 
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// Cover page: Roman-numbered from page 1. The entire front matter uses
+// Roman numerals; Arabic numbering begins at the abstract.
+#set page(numbering: "i", number-align: bottom + center)
+#counter(page).update(1)
 #align(center)[
+  #image("../figures/University_logo.png", width: 2.25cm)
+  #v(0.16cm)
   #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \
   #text(size: 15pt, weight: "bold", fill: navy)[University of Al-Maarif] \
@@ -107,10 +125,8 @@ Zainab Mashal Nayef]
   #text(size: 14pt)[May, 2026]
 ]
 
-// Roman-numbered preliminary pages.
+// Roman-numbered preliminary pages continue from the cover.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
 #front-title[Certification of the Supervisor]
 #p("I certify that this project entitled “Psychiatric Medication Use and Public Acceptance in Iraq” was prepared by the fifth-year students Abdul Rahman Wakaa Ali, Ali Basem Hammoud, Shifa Safi Aboud, Zainab Mashal Nayef under my supervision at the College of Pharmacy/University of Al-Maarif in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
 #align(right)[#text(weight: "bold")[Supervisor's name: Hameed Adnan]]
@@ -123,7 +139,13 @@ Zainab Mashal Nayef]
 
 #pagebreak()
 #front-title[Table of Contents]
-#outline(title: none, depth: 2)
+// The table of contents is sized to fill exactly one page without overflow.
+// Depth 2 shows chapters + sections; entry size and spacing are tuned to
+// use the available vertical space comfortably.
+#{
+  show outline.entry: it => block(above: 0.45em, below: 0.45em, text(size: 12pt, it))
+  outline(title: none, depth: 2, indent: auto)
+}
 
 #pagebreak()
 #front-title[List of Figures]
@@ -146,14 +168,14 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 
 
 #start-main-numbering()
-#set-running-head("")
+#set-running-head("Abstract")
 #section-title("ABSTRACT")
 #p("Psychiatric medication acceptance in Iraq remains a public health challenge because mental health needs are high while treatment hesitation persists. This study examined psychiatric medication use and public acceptance in Iraq using an original cross-sectional survey with supportive literature context. We analyzed responses from 877 participants using descriptive statistics, hierarchical logistic regression, multinomial logistic regression, Users vs Non-Users comparisons, and exploratory stigma-phenotype analysis.")
 #p("The sample was mostly female, young, and university educated. Public attitudes were mixed: recommendation willingness was higher than perceived safety and acceptability, showing that many respondents were open to treatment in principle but still worried about medication risks. In adjusted models, recommendation was more likely among women and among respondents who trusted newer psychiatric medications, and less likely among those with stronger fear and overprescribing concerns. In the multinomial model, dependence concern reduced the likelihood of clear recommendation. Users also reported more favorable beliefs than non-users, especially for confidence in modern medications.")
 #p("These findings indicate ambivalent public attitudes rather than uniform rejection. The strongest barriers were fear, mistrust, and dependence concerns, more than most demographic factors. Compared with Iraqi and regional literature, the results suggest a persistent trust-and-literacy gap that affects treatment uptake. Policy and practice should prioritize pharmacist-led counseling, integrated primary mental health care, and anti-stigma communication to improve medication acceptance and reduce Iraq’s treatment gap.")
 #chapter-page("Chapter One", "Introduction")
 #set-running-head("Introduction")
-#section-title("I. INTRODUCTION")
+#section-title("1. INTRODUCTION")
 #h2("A. Background and Context")
 #p("Iraq’s mental health burden developed under repeated war, displacement, sanctions, and political instability. This history still shapes how people understand psychiatric care today. Evidence from Iraqi and regional reporting shows that exposure to conflict, bereavement, and social disruption increased anxiety, depression, and trauma-related conditions in both urban and displaced populations (Saied et al., 2023; Younis & Khunda, 2020).")
 #p("At the same time, service capacity did not expand at the same pace as need. Iraqi psychiatry moved through periods of growth and then major workforce loss, especially after conflict-related migration waves, which left a long gap between population demand and specialist availability (Younis & Khunda, 2020; Sadik et al., 2010).")
@@ -168,7 +190,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #h2("D. Study Significance")
 #p("This study has direct value for pharmacy practice in Iraq. Pharmacists are often the most accessible health professionals in daily care pathways, especially when specialist psychiatric follow-up is delayed. Clear evidence on which beliefs are associated with acceptance can help pharmacists provide targeted counseling, address dependence fears, and improve communication with patients and families.")
 #p("The study also supports clinicians, educators, and health planners. For clinical teams, it clarifies where social perceptions may interfere with evidence-based treatment. For pharmacy and medical education, it provides Iraq-specific data that can strengthen teaching on stigma-sensitive counseling and psychopharmacology communication. For policy and service planning, it offers current local evidence that can support anti-stigma messaging, community engagement, and integration of mental health support in primary-care and public-health programs.")
-#section-title("II. LITERATURE REVIEW (SUPPORTIVE CONTEXT)")
+#section-title("2. LITERATURE REVIEW (SUPPORTIVE CONTEXT)")
 #h2("A. Stigma and Public Attitudes")
 #p("Evidence across Arab and international settings shows that stigma remains a major barrier to mental health care, but its expression varies by culture, service structure, and public literacy. In Arab populations, stigma does not operate only as individual prejudice. It is reinforced by family reputation concerns, social exclusion risks, and public narratives that connect mental illness with danger, moral weakness, or shame (Zolezzi et al., 2018; Booth et al., 2024). This multi-layered pattern helps explain why people may verbally support treatment in principle while still discouraging disclosure or formal care in practice.")
 #p("Comparative evidence also shows that stigma influences both treatment timing and treatment pathway. Reviews on help-seeking report that public stigma, self-stigma, and institutional stigma can independently reduce formal service use, with delayed care commonly observed in groups exposed to prolonged conflict stress (Rasheed et al., 2026). Although military populations differ from civilian Iraqi populations, the mechanism is relevant to Iraq because conflict exposure and social labeling pressures are shared contextual factors.")
@@ -183,12 +205,12 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("Psychiatric-specific evidence highlights a strong relationship between stigma processes and medication behavior. In mental health settings, internalized stigma is associated with poorer adherence, higher relapse pressure, and reduced social functioning (Abdisa et al., 2020). Intervention reviews in schizophrenia show that information-only psychoeducation often has limited effect, whereas approaches that include motivational, behavioral, and community-support components show better adherence outcomes (Zygmunt et al., 2002).")
 #p("Family and caregiver context adds another layer that is highly relevant to Iraqi social structure. Systematic review evidence in child and adolescent psychiatry shows that parental beliefs, family functioning, and caregiver mental health influence adherence trajectories (Kalaman et al., 2023). In Iraq, where family decision-making remains central in treatment choices, this supports a practice model in which counseling targets both patient and family belief systems.")
 #h2("D. Iraqi and Regional Service Realities")
-#p("Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Raghad F., 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.")
+#p("Recent Iraqi prescribing evidence shows a meaningful gap between guideline principles and inpatient practice in high-acuity psychiatric care. Data from Baghdad report substantial antipsychotic polypharmacy and a notable proportion of high-dose prescribing, with specific prescribing patterns associated with elevated high-dose exposure (Nassr & Wadeea, 2026). This matters for public acceptance because visible adverse effects and complex regimens can strengthen community fears about psychiatric medication safety.")
 #p("Community and student-level Iraqi evidence reflects parallel concerns. Research in Basra medical-group students reports measurable psychotropic drug use patterns alongside anxiety and depression burden, suggesting that even health-educated populations may face unresolved medication and mental health challenges (Kadhim et al., 2024). At the care-seeking level, Iraqi psychiatric-clinic evidence indicates frequent prior or concurrent use of faith-healing pathways, often before psychiatric consultation, which can delay formal treatment and fragment continuity of care (Younis et al., 2020).")
 #p("Regional systems research supports service integration as a practical direction. Reviews from the Middle East and North Africa describe chronic workforce imbalance, urban-rural disparity, funding constraints, and stigma-linked access barriers, despite policy development and educational advances (Okasha et al., 2025). In low- and middle-income settings, integration of mental health services into primary care shows benefit for access and outcomes, although implementation quality and local adaptation remain decisive (Cubillos et al., 2021). For Iraq, this suggests that medication acceptance should be addressed as part of integrated primary-care mental health strategy, not as a stand-alone communication issue.")
 #chapter-page("Chapter Two", "Materials and Methods")
 #set-running-head("Materials and Methods")
-#section-title("III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)")
+#section-title("3. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)")
 #h2("A. Study Design and Setting")
 #p("This study used an original cross-sectional survey design to examine psychiatric medication use and public acceptance in Iraq. The analytic dataset included 877 respondent records after questionnaire cleaning and standardization, as documented in the unified analysis outputs and preprocessing workflow. The design was observational and non-interventional, and all analyses were conducted on de-identified survey records.")
 #p("The available materials indicate an Iraq-focused online questionnaire dataset with Arabic item wording translated into English for analysis. The dataset does not include governorate identifiers, institution identifiers, or site-level fields, so the setting is reported as an Iraq-wide online sample rather than a facility-based sample.")
@@ -220,40 +242,40 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #p("Because the design is cross-sectional, associations should not be interpreted as causal effects. Complete-case modeling produced model-specific analytic samples (n=647 in the primary hierarchical model, n=406 in the sensitivity model, and n=837 in the multinomial model) and may introduce selection effects if missingness is not random. The achieved sample was dominated by younger and university-educated respondents, which may limit generalizability to older or less-educated Iraqi populations. Some instrument blocks had substantial missingness, so primary inference relied on the most complete and policy-relevant core variables.")
 #chapter-page("Chapter Three", "Results")
 #set-running-head("Results")
-#section-title("IV. RESULTS")
-#h2("IV.A Sample Profile and Descriptive Statistics")
+#section-title("4. RESULTS")
+#h2("4.A Sample Profile and Descriptive Statistics")
 #p("The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.")
 #p("To keep model reporting readable, this chapter repeats each questionnaire code with a brief definition when it appears. Q6 refers to safety perception of psychiatric medication, Q7 refers to acceptability of psychiatric medication, Q8 refers to willingness to recommend psychiatric medication, and Q9 refers to social concern about interacting with a person who uses psychiatric medication. Q11 refers to the belief that doctors prescribe psychiatric medications more than necessary, Q12 refers to the belief that most psychiatric medications cause psychological or physical dependence, Q13 refers to the belief that modern psychiatric medications are safer than older ones, and Q31 refers to prior psychiatric medication use status.")
 #p("Across core belief items, agreement levels were high for two statements and moderate for one statement. For Q11 (doctors prescribe psychiatric medications more than necessary), 51.55% agreed, 34.67% were neutral, and 13.78% disagreed. For Q12 (most psychiatric medications cause psychological or physical dependence), 67.40% agreed, 27.65% were neutral, and 4.95% disagreed. For Q13 (modern psychiatric medications are safer than older ones), 51.95% agreed, 35.86% were neutral, and 12.18% disagreed. The main question structure is shown in the corresponding figure below. The gender-stratified recommendation pattern is shown in the corresponding figure below. The diverging Likert distribution for Q11 and Q13 is shown in the corresponding figure below.")
 #fig("../figures/27_donut_main_questions.png", "Figure 1. 27 donut main questions")
 #fig("../figures/31_gender_recommendation_breakdown.png", "Figure 2. 31 gender recommendation breakdown")
 #fig("../figures/19_likert_diverging_q11_q13.png", "Figure 3. 19 likert diverging q11 q13")
-#h2("IV.B Main Outcome Distributions")
+#h2("4.B Main Outcome Distributions")
 #p("The primary attitude outcomes showed mixed acceptance patterns. For Q6 (safety perception), 23.65% answered yes, 31.23% answered not sure, and 45.12% answered no. For Q7 (acceptability), 30.80% answered yes, 17.70% answered not sure, and 51.49% answered no. For Q8 (recommendation willingness), 57.65% answered yes, 11.62% answered not sure, and 30.72% answered no. For Q9 (social concern), 37.77% answered yes, 13.09% answered not sure, and 49.14% answered no.")
 #p("Bivariate correlations among core variables were as follows: Q11 (belief that doctors prescribe psychiatric medications more than necessary) with Q12 (belief that most psychiatric medications cause psychological or physical dependence), r=0.269; Q13 (belief that modern psychiatric medications are safer than older ones) with Q11, r=-0.066; Q13 with Q12, r=-0.038; recommendation willingness (Q8) with Q11, r=-0.086; recommendation willingness (Q8) with Q12, r=-0.087; recommendation willingness (Q8) with Q13, r=0.077; acceptability (Q7) with recommendation willingness (Q8), r=0.232; and social concern (Q9) with recommendation willingness (Q8), r=-0.042.")
-#h2("IV.C Hierarchical Logistic Regression (Primary Model)")
+#h2("4.C Hierarchical Logistic Regression (Primary Model)")
 #p("The primary hierarchical logistic regression used a binary recommendation outcome (Q8, willingness to recommend psychiatric medication, yes vs no) with complete-case n=647. Model fit improved across blocks, with McFadden pseudo R² increasing from 0.0040 in Block 1 to 0.0116 in Block 2 and 0.0686 in Block 3. The Block 1 likelihood ratio p-value was 0.5037, Block 2 p-value was 0.0847, and Block 3 p-value was <0.0001.")
 #p("In the final primary block, the largest directional effect was fear, which was associated with substantially lower recommendation odds (adjusted OR 0.504, 95% CI 0.358 to 0.711, p<0.0001). Q13 (belief that modern psychiatric medications are safer than older ones) showed a moderate positive effect size, with higher confidence in newer medications associated with higher recommendation odds (adjusted OR 1.507, 95% CI 1.248 to 1.820, p<0.0001). Gender showed a smaller-to-moderate positive shift (adjusted OR 1.516, 95% CI 1.043 to 2.205, p=0.0294), while Q11 (belief that doctors prescribe psychiatric medications more than necessary) showed a small inverse effect (adjusted OR 0.830, 95% CI 0.696 to 0.991, p=0.0396). Age, educational level, marital status, prior use (Q31), and Q12 (belief that most psychiatric medications cause psychological or physical dependence) were not statistically significant in this final block. The adjusted effect profile is visualized in the corresponding figure below.")
 #fig("../figures/03_primary_adjusted_or_forest.png", "Figure 4. 03 primary adjusted or forest")
 #p("A separate sensitivity model that added Q6 (safety perception) and Q7 (acceptability) used complete-case n=406 and produced McFadden pseudo R² of 0.2440 (fit type: mle). This model was reported as a sensitivity analysis because Q6 and Q7 are proximal to the recommendation outcome.")
-#h2("IV.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)")
+#h2("4.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)")
 #p("Multinomial logistic regression preserved the three-category recommendation structure with complete-case n=837 and model log-likelihood -748.910 (fit type: mle). The outcome categories were coded as No (reference), Yes, and Not sure, corresponding to Q8=0, Q8=1, and Q8=2.")
 #p("For the first non-reference equation (Q8=1 Yes vs reference No, where Q8 is willingness to recommend psychiatric medication), Q13 (belief that modern psychiatric medications are safer than older ones) showed the strongest positive practical shift (RRR 1.585, 95% CI 1.328 to 1.892, p<0.0001), with gender showing a moderate positive shift (RRR 1.558, 95% CI 1.097 to 2.214, p=0.0133). Q12 (belief that most psychiatric medications cause psychological or physical dependence) showed a small-to-moderate inverse shift (RRR 0.794, 95% CI 0.651 to 0.970, p=0.0239). Other predictors in this equation were not statistically significant.")
 #p("For the second non-reference equation (Q8=2 Not sure vs reference No, where Q8 is willingness to recommend psychiatric medication), gender showed the largest shift in the multinomial model (RRR 2.171, 95% CI 1.211 to 3.894, p=0.0093), indicating a stronger practical effect than in the Yes-vs-No equation, while age, education, marital status, prior use (Q31, prior psychiatric medication use), Q11 (belief that doctors prescribe psychiatric medications more than necessary), Q12 (belief that most psychiatric medications cause psychological or physical dependence), and Q13 (belief that modern psychiatric medications are safer than older ones) were not statistically significant. The comparative predictor pattern is displayed in the corresponding figure below.")
 #fig("../figures/08_multinomial_key_predictor_comparison.png", "Figure 5. 08 multinomial key predictor comparison")
-#h2("IV.E The Contact Hypothesis (Users vs Non-Users)")
+#h2("4.E The Contact Hypothesis (Users vs Non-Users)")
 #p("The contact analysis compared Users vs Non-Users using prior use status from Q31 (prior psychiatric medication use; Users n=127, Non-Users n=716). Mann-Whitney U tests were statistically significant for Q11 (belief that doctors prescribe psychiatric medications more than necessary), Q12 (belief that most psychiatric medications cause psychological or physical dependence), and Q13 (belief that modern psychiatric medications are safer than older ones), while chi-square tests were statistically significant for Q12 and Q13 but not for Q11.")
 #p("For Q11 (belief that doctors prescribe psychiatric medications more than necessary), the Users median was 3.00 and the Non-Users median was 4.00, with small inverse practical differences (Cliff’s delta -0.108; Cramer’s V=0.094), Mann-Whitney U p=0.0428, chi-square p=0.1170, and N=843. For Q12 (belief that most psychiatric medications cause psychological or physical dependence), both medians were 4.00, with small inverse practical differences (Cliff’s delta -0.112; Cramer’s V=0.108), Mann-Whitney U p=0.0317, chi-square p=0.0428, and N=840. For Q13 (belief that modern psychiatric medications are safer than older ones), the Users median was 4.00 and the Non-Users median was 3.00, with the largest contact effect in this section, approaching moderate by rank effect size (Cliff’s delta 0.198) and remaining small-to-moderate by nominal association (Cramer’s V=0.139), Mann-Whitney U p=0.0002, chi-square p=0.0027, and N=842.")
-#h2("IV.F Exploratory Stigma Phenotypes (Clearly Labeled)")
+#h2("4.F Exploratory Stigma Phenotypes (Clearly Labeled)")
 #p("Exploratory k-means clustering on standardized Q11–Q13 (Q11: belief that doctors prescribe psychiatric medications more than necessary; Q12: belief that most psychiatric medications cause psychological or physical dependence; Q13: belief that modern psychiatric medications are safer than older ones) evaluated k=2, k=3, and k=4. Silhouette scores were 0.274 for k=2, 0.272 for k=3, and 0.303 for k=4, so k=4 was selected by maximum silhouette criterion. These k-means profiles are data-driven exploratory groupings, not confirmed latent classes. The silhouette values indicate relative fit among the tested k values in this dataset, and they do not establish a definitive underlying class structure.")
 #p("The four profiles had the following mean structures. Profile 0 (n=183) showed Q11 mean 4.404, Q12 mean 4.115, and Q13 mean 4.311. Profile 1 (n=230) showed Q11 mean 2.961, Q12 mean 2.804, and Q13 mean 3.578. Profile 2 (n=232) showed Q11 mean 2.694, Q12 mean 4.250, and Q13 mean 3.720. Profile 3 (n=223) showed Q11 mean 4.359, Q12 mean 4.291, and Q13 mean 2.610. Profile-level mean contrasts are shown in the corresponding figure below.")
 #fig("../figures/14_profile_means_heatmap.png", "Figure 6. 14 profile means heatmap")
-#h2("IV.G Results Summary")
+#h2("4.G Results Summary")
 #p("The survey included 877 participants and showed a sample pattern with higher female representation and concentration in younger, university-educated, and single respondents based on variable-specific valid denominators. In descriptive outcomes, recommendation willingness had the highest yes proportion (57.65%), while safety and acceptability showed higher no proportions than yes proportions. In the primary hierarchical logistic model (n=647), the strongest statistically supported predictors in the final block were gender, Q11, Q13, and fear. In the multinomial model (n=837), gender remained significant in both non-reference equations, while Q13 and Q12 were significant in one non-reference equation only. In Users vs Non-Users analyses, Mann-Whitney tests were significant for Q11, Q12, and Q13, and chi-square tests were significant for Q12 and Q13 only. Exploratory phenotype analysis identified a four-profile solution with the highest silhouette score among tested cluster counts.")
 #pagebreak()
 #chapter-page("Chapter Four", "Discussion")
 #set-running-head("Discussion")
-#section-title("V. DISCUSSION")
+#section-title("5. DISCUSSION")
 #h2("A. Interpretation of Primary Findings")
 #p("This cross-sectional survey shows a mixed public position toward psychiatric medication in Iraq rather than uniform rejection or uniform support. Recommendation willingness was 57.65%, while 11.62% were not sure and 30.72% were against recommendation. Acceptability was lower: 30.80% considered psychiatric medication acceptable, 17.70% were not sure, and 51.49% considered it unacceptable. Safety perception was similarly low: 23.65% considered medication safe, 31.23% were not sure, and 45.12% considered it unsafe. This pattern suggests that many respondents accept medication in selected situations but still carry safety concerns and social hesitation.")
 #p("The primary regression results clarify which beliefs matter most in this ambivalence. In practical magnitude terms, fear was the strongest directional predictor and showed a substantial inverse association with recommendation (adjusted OR 0.504, p<0.0001). Agreement with Q13, the belief that modern psychiatric medicines are safer than older ones, showed a moderate positive association (adjusted OR 1.507, p<0.0001). Female gender showed a smaller-to-moderate positive shift (adjusted OR 1.516, p=0.0294), while stronger agreement with Q11, the belief that doctors prescribe psychiatric medications more than necessary, showed a small inverse shift (adjusted OR 0.830, p=0.0396). These findings show that recommendation behavior in Iraq is shaped more by trust and safety perception than by basic demographics.")
@@ -278,7 +300,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #pagebreak()
 #chapter-page("Chapter Five", "Conclusions and Suggestions")
 #set-running-head("Conclusions and Suggestions")
-#section-title("VI. RECOMMENDATIONS")
+#section-title("6. RECOMMENDATIONS")
 #h2("A. Policy-Level Recommendations")
 #p("The Iraqi Ministry of Health should adopt a national psychiatric medication acceptance strategy that links stigma reduction with medication safety communication. The survey shows that fear and low confidence in modern medication safety are central barriers. Policy messaging should therefore move beyond general awareness and directly address these beliefs. Standardized language should correct dependence misconceptions, explain modern medication safety, and acknowledge local cultural concerns. As an initial step, the Ministry can assign a joint technical group from the Mental Health Directorate, Pharmacy Directorate, and Primary Care Directorate. This group should produce one national counseling package and one public communication package for pilot implementation in selected governorates within 12 months.")
 #p("National guidance should also formalize integrated mental health care in primary care settings, with defined roles for psychiatrists, primary care physicians, and pharmacists. Regional evidence supports integrated models for improving access and outcomes in resource-limited systems (Cubillos et al., 2021; Okasha et al., 2025). For Iraq, this model can reduce specialist bottlenecks and create earlier treatment contact points.")
@@ -293,7 +315,7 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #h2("D. Research Recommendations")
 #p("Future Iraqi studies should evaluate intervention effectiveness rather than only describing attitudes. Priority designs include pragmatic trials of pharmacist-led counseling, integrated primary care psychoeducation, and contact-based anti-stigma messaging. Outcomes should include both belief change and behavioral endpoints such as clinic attendance, initiation of prescribed treatment, refill continuity, and relapse-related hospitalization.")
 #p("Researchers should also conduct repeated cross-sectional surveys with harmonized measures to monitor trend changes in acceptance, safety perception, and recommendation willingness over time. This will allow policymakers to track whether reforms produce measurable public attitude improvement.")
-#section-title("VII. CONCLUSION")
+#section-title("7. CONCLUSION")
 #h2("A. What the Cross-Sectional Study Adds")
 #p("This study adds current Iraqi primary data showing that public acceptance of psychiatric medication is not binary. Many respondents supported recommending treatment, yet large proportions still doubted safety and social acceptability. Key predictors were attitudinal beliefs and fear rather than most demographic variables, which identifies practical targets for intervention.")
 #h2("B. What the Combined Evidence (Survey + Literature) Indicates for Iraq")
@@ -302,56 +324,27 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #h2("C. Closing Evidence-Based Statement")
 #p("The evidence from this study supports a clear national direction for Iraq: improve psychiatric medication acceptance by reducing fear, correcting dependence myths, and strengthening trust in modern treatment through integrated, pharmacist-inclusive care. If policy and practice align around these targets, Iraq can reduce treatment delay, improve adherence pathways, and narrow the mental health treatment gap.")
 #pagebreak()
-#section-title("VIII. REFERENCES")
+#set-running-head("References")
+#section-title("8. REFERENCES")
 #refp("Abdisa, Eba, Ginenus Fekadu, Shimelis Girma, et al. “Self-Stigma and Medication Adherence among Patients with Mental Illness Treated at Jimma University Medical Center, Southwest Ethiopia.” International Journal of Mental Health Systems 14, no. 1 (2020): 56. https://doi.org/10.1186/s13033-020-00391-6.")
-#refp("Abdul Kareem, Makwan, and Hezha Mahmood. “Adherence to Pharmacological Treatment Among Patients with Schizophrenia: Adherence to Pharmacological Treatment Among Patients with Schizophrenia.” Iraqi National Journal of Medicine 4, no. 1 (2022): 31–42. https://doi.org/10.37319/IQNJM.4.1.4.")
-#refp("Abi Hana, Racha, Maguy Arnous, Eva Heim, et al. “Mental Health Stigma at Primary Health Care Centres in Lebanon: Qualitative Study.” International Journal of Mental Health Systems 16, no. 1 (2022): 23. https://doi.org/10.1186/s13033-022-00533-y.")
-#refp("Adewuya, Abiodun O., and Roger O. A. Makanjuola. “Lay Beliefs Regarding Causes of Mental Illness in Nigeria: Pattern and Correlates.” Social Psychiatry and Psychiatric Epidemiology 43, no. 4 (2008): 336–41. https://doi.org/10.1007/s00127-007-0305-x.")
-#refp("Al-Asadi, Jasim Naeem, and Zainab B. Hussein. “Depression among Infertile Women in Basrah, Iraq: Prevalence and Risk Factors.” Journal of the Chinese Medical Association: JCMA 78, no. 11 (2015): 673–77. https://doi.org/10.1016/j.jcma.2015.07.009.")
-#refp("Al-Awadhi, Anwar, Farid Atawneh, M. ZiadY Alalyan, AltafAhmad Shahid, Sulaiman Al-Alkhadhari, and MuhammadAjmal Zahid. “Nurses’ Attitude towards Patients with Mental Illness in a General Hospital in Kuwait.” Saudi Journal of Medicine and Medical Sciences 5, no. 1 (2017): 31. https://doi.org/10.4103/1658-631X.194249.")
-#refp("Albaroodi, Khansaa A. Ibrahim. “Pharmacists’ Knowledge Regarding Drug Disposal in Karbala.” Pharmacy 7, no. 2 (2019): 57. https://doi.org/10.3390/pharmacy7020057.")
-#refp("Al-Hemiary, Nesif J., Jawad K. Al-Diwan, Albert L. Hasson, and Richard A. Rawson. “Drug and Alcohol Use in Iraq: Findings of the Inaugural Iraqi Community Epidemiological Workgroup.” Substance Use & Misuse 49, no. 13 (2014): 1759–63. https://doi.org/10.3109/10826084.2014.913633.")
-#refp("Al-Jawadi, Asma A., and Shatha Abdul-Rhman. “Prevalence of Childhood and Early Adolescence Mental Disorders among Children Attending Primary Health Care Centers in Mosul, Iraq: A Cross-Sectional Study.” BMC Public Health 7, no. 1 (2007): 274. https://doi.org/10.1186/1471-2458-7-274.")
-#refp("Almazeedi, Hind, and Mohammad T. Alsuwaidan. “‘Integrating Kuwait’s Mental Health System to End Stigma: A Call to Action.’” Journal of Mental Health 23, no. 1 (2014): 1–3. https://doi.org/10.3109/09638237.2013.775407.")
-#refp("Al Omari, Omar, Blessy Prabha Valsaraj, Moawiah Khatatbeh, et al. “Self and Public Stigma towards Mental Illnesses and Its Predictors among University Students in 11 Arabic‐speaking Countries: A Multi‐site Study.” International Journal of Mental Health Nursing 32, no. 6 (2023): 1745–55. https://doi.org/10.1111/inm.13206.")
 #refp("Angermeyer, Matthias C., Sandra Van Der Auwera, Mauro G. Carta, and Georg Schomerus. “Public Attitudes towards Psychiatry and Psychiatric Treatment at the Beginning of the 21st Century: A Systematic Review and Meta‐analysis of Population Surveys.” World Psychiatry 16, no. 1 (2017): 50–61. https://doi.org/10.1002/wps.20383.")
-#refp("Berge, Erik Eng, Roger Hagen, and Joar Øveraas Halvorsen. “PTSD Relapse in Veterans of Iraq and Afghanistan: A Systematic Review.” Military Psychology 32, no. 4 (2020): 300–312. https://doi.org/10.1080/08995605.2020.1754123.")
 #refp("Booth, Wendy A., Mabrouka Abuhmida, and Felix Anyanwu. “Mental Health Stigma: A Conundrum for Healthcare Practitioners in Conservative Communities.” Frontiers in Public Health 12 (May 2024): 1384521. https://doi.org/10.3389/fpubh.2024.1384521.")
 #refp("Burnam, M. Audrey, Lisa S. Meredith, Terri Tanielian, and Lisa H. Jaycox. “Mental Health Care For Iraq And Afghanistan War Veterans.” Health Affairs 28, no. 3 (2009): 771–82. https://doi.org/10.1377/hlthaff.28.3.771.")
 #refp("Cubillos, Leonardo, Sophia M. Bartels, William C. Torrey, et al. “The Effectiveness and Cost-Effectiveness of Integrating Mental Health Services in Primary Care in Low- and Middle-Income Countries: Systematic Review.” BJPsych Bulletin 45, no. 1 (2021): 40–52. https://doi.org/10.1192/bjb.2020.35.")
-#refp("Dikeç, Gül, and Kübra Timarcıoğlu. “Medication Adherence to Psychotropic Medication and Relationship with Psychiatric Symptoms among Syrian Refugees in Turkey: A Pilot Study.” Trauma Care 3, no. 1 (2023): 37–45. https://doi.org/10.3390/traumacare3010005.")
 #refp("Elyamani, Rowaida, Sarah Naja, Ayman Al-Dahshan, Hamed Hamoud, Mohammed Iheb Bougmiza, and Noora Alkubaisi. “Mental Health Literacy in Arab States of the Gulf Cooperation Council: A Systematic Review.” PLOS ONE 16, no. 1 (2021): e0245156. https://doi.org/10.1371/journal.pone.0245156.")
 #refp("Gast, Alina, and Tim Mathes. “Medication Adherence Influencing Factors—an (Updated) Overview of Systematic Reviews.” Systematic Reviews 8, no. 1 (2019): 112. https://doi.org/10.1186/s13643-019-1014-8.")
-#refp("Häge, Alexander, Lisa Weymann, Lucia Bliznak, Viktoria Märker, Konstantin Mechler, and Ralf W. Dittmann. “Non-adherence to Psychotropic Medication Among Adolescents – A Systematic Review of the Literature.” Zeitschrift für Kinder- und Jugendpsychiatrie und Psychotherapie 46, no. 1 (2018): 69–78. https://doi.org/10.1024/1422-4917/a000505.")
-#refp("Hamrin, Vanya, Erin M. McCarthy, and Veda Tyson. “Pediatric Psychotropic Medication Initiation and Adherence: A Literature Review Based on Social Exchange Theory.” Journal of Child and Adolescent Psychiatric Nursing 23, no. 3 (2010): 151–72. https://doi.org/10.1111/j.1744-6171.2010.00237.x.")
-#refp("Herbert, Sophia M. C., Joni C. Carroll, Kim C. Coley, Stephanie Harriman McGrath, and Melissa Somma McGivney. “A Student Pharmacist Quality Engagement Team to Support Initial Implementation of Comprehensive Medication Management within Independent Community Pharmacies.” Pharmacy 8, no. 3 (2020): 141. https://doi.org/10.3390/pharmacy8030141.")
-#refp("Hisle-Gorman, Elizabeth, Apryl Susi, and Gregory H. Gorman. “Mental Health Trends in Military Pediatrics.” Psychiatric Services 70, no. 8 (2019): 657–64. https://doi.org/10.1176/appi.ps.201800101.")
-#refp("Hoge, Charles W., Carl A. Castro, Stephen C. Messer, Dennis McGurk, Dave I. Cotting, and Robert L. Koffman. “Combat Duty in Iraq and Afghanistan, Mental Health Problems, and Barriers to Care.” New England Journal of Medicine 351, no. 1 (2004): 13–22. https://doi.org/10.1056/NEJMoa040603.")
-#refp("Hoge, Charles W., Christopher G. Ivany, Edward A. Brusher, et al. “Transformation of Mental Health Care for U.S. Soldiers and Families During the Iraq and Afghanistan Wars: Where Science and Politics Intersect.” American Journal of Psychiatry 173, no. 4 (2016): 334–43. https://doi.org/10.1176/appi.ajp.2015.15040553.")
 #refp("Horne, Robert, John Weinman, and Maittew Hankins. “The Beliefs about Medicines Questionnaire: The Development and Evaluation of a New Method for Assessing the Cognitive Representation of Medication.” Psychology & Health 14, no. 1 (1999): 1–24. https://doi.org/10.1080/08870449908407311.")
 #refp("Hussein Alwan, Iman, Mohammed Fadhil Ali, and Zeyad Tariq Madalla. “Factors Influencing Stigma Toward Mental Illness Among Students at the University of Baghdad.” International Journal of Body, Mind and Culture 12, no. 6 (2025): 161–70. https://doi.org/10.61838/ijbmc.v12i5.945.")
-#refp("Ibrahim, Hawkar, Verena Ertl, Claudia Catani, Azad Ali Ismail, and Frank Neuner. “Trauma and Perceived Social Rejection among Yazidi Women and Girls Who Survived Enslavement and Genocide.” BMC Medicine 16, no. 1 (2018): 154. https://doi.org/10.1186/s12916-018-1140-5.")
 #refp("Kadhim, Sheima Nadim, Zainab Haroon Ahmed, and Muntadher Luay Abdulsahib. “ANXIETY, DEPRESSION, AND PSYCHOTROPIC DRUGS USAGE BY UNIVERSITY STUDENTS OF MEDICAL GROUP IN BASRA, IRAQ.” Universal Journal of Pharmaceutical Research, ahead of print, May 15, 2024. https://doi.org/10.22270/ujpr.v9i2.1081.")
 #refp("Kalaman, Clarisse Roswini, Norhayati Ibrahim, Vinorra Shaker, et al. “Parental Factors Associated with Child or Adolescent Medication Adherence: A Systematic Review.” Healthcare 11, no. 4 (2023): 501. https://doi.org/10.3390/healthcare11040501.")
-#refp("Kwan, Yu Heng, Si Dun Weng, Dionne Hui Fang Loh, et al. “Measurement Properties of Existing Patient-Reported Outcome Measures on Medication Adherence: Systematic Review.” Journal of Medical Internet Research 22, no. 10 (2020): e19179. https://doi.org/10.2196/19179.")
-#refp("Leucht, S., T. Burkard, J. Henderson, M. Maj, and N. Sartorius. “Physical Illness and Schizophrenia: A Review of the Literature.” Acta Psychiatrica Scandinavica 116, no. 5 (2007): 317–33. https://doi.org/10.1111/j.1600-0447.2007.01095.x.")
-#refp("Leucht, Stefan, Andrea Cipriani, Loukia Spineli, et al. “Comparative Efficacy and Tolerability of 15 Antipsychotic Drugs in Schizophrenia: A Multiple-Treatments Meta-Analysis.” The Lancet 382, no. 9896 (2013): 951–62. https://doi.org/10.1016/S0140-6736(13)60733-3.")
-#refp("Mohammed, Mrywan Abdulmajeed, and Konul Memmedova. “Prevalence of Mental Health Problems among Iraqi University Students during the COVID-19 Pandemic.” Sustainability 15, no. 3 (2023): 1746. https://doi.org/10.3390/su15031746.")
 #refp("Mojtabai, Ramin. “Americans’ Attitudes Toward Psychiatric Medications: 1998–2006.” Psychiatric Services 60, no. 8 (2009): 1015–23. https://doi.org/10.1176/ps.2009.60.8.1015.")
-#refp("Nassr, Ola A., and Raghad F. “Prevalence and Predictors of High-Dose Antipsychotic Therapy among Adult Psychiatric Inpatients in Baghdad, Iraq.” South African Journal of Psychiatry 32, no. 0 (2026): a2606. https://doi.org/10.4102/SAJPSYCHIATRY.v32i0.2606.")
+#refp("Nassr, Ola A., and Raghad F. Wadeea. “Prevalence and Predictors of High-Dose Antipsychotic Therapy among Adult Psychiatric Inpatients in Baghdad, Iraq.” South African Journal of Psychiatry 32, no. 0 (2026): a2606. https://doi.org/10.4102/SAJPSYCHIATRY.v32i0.2606.")
 #refp("Okasha, Tarek, Nermin M. Shaker, and Dina Aly El-Gabry. “Mental Health Services in Egypt, the Middle East, and North Africa.” International Review of Psychiatry 37, nos. 3–4 (2025): 306–14. https://doi.org/10.1080/09540261.2024.2400143.")
-#refp("Ouanes, Sami, Imen Becetti, Suhaila Ghuloum, et al. “Patterns of Prescription of Antipsychotics in Qatar.” PLOS ONE 15, no. 11 (2020): e0241986. https://doi.org/10.1371/journal.pone.0241986.")
 #refp("Rasheed, Sana, Eisha Kashif, Rida Arif, et al. “The Impact of Stigma on Health Care-Seeking Behavior in Military Personnel with Mental Health Challenges.” Annals of Medicine and Surgery (2012) 88, no. 1 (2026): 630–36. https://doi.org/10.1097/MS9.0000000000004569.")
-#refp("Roder, V. “Integrated Psychological Therapy (IPT) for Schizophrenia: Is It Effective?” Schizophrenia Bulletin 32, no. Supplement 1 (2006): S81–93. https://doi.org/10.1093/schbul/sbl021.")
 #refp("Sadik, Sabah, Marie Bradley, Saad Al-Hasoon, and Rachel Jenkins. “Public Perception of Mental Health in Iraq.” International Journal of Mental Health Systems 4, no. 1 (2010): 26. https://doi.org/10.1186/1752-4458-4-26.")
 #refp("Saied, AbdulRahman A., Sirwan Khalid Ahmed, Asmaa A. Metwally, and Hani Aiash. “Iraq’s Mental Health Crisis: A Way Forward?” The Lancet 402, no. 10409 (2023): 1235–36. https://doi.org/10.1016/S0140-6736(23)01283-7.")
-#refp("Saied, AbdulRahman A., Asmaa A. Metwally, Sirwan Khalid Ahmed, Rukhsar Muhmmad Omar, and Salar Omar Abdulqadir. “National Suicide Prevention Strategy in Iraq.” Asian Journal of Psychiatry 82 (April 2023): 103486. https://doi.org/10.1016/j.ajp.2023.103486.")
 #refp("Slewa-Younan, Shameran, Jonathan Mond, Elise Bussion, et al. “Mental Health Literacy of Resettled Iraqi Refugees in Australia: Knowledge about Posttraumatic Stress Disorder and Beliefs about Helpfulness of Interventions.” BMC Psychiatry 14, no. 1 (2014): 320. https://doi.org/10.1186/s12888-014-0320-x.")
-#refp("Uribe Guajardo, Maria Gabriela, Shameran Slewa-Younan, Betty Ann Kitchener, Haider Mannan, Yaser Mohammad, and Anthony Francis Jorm. “Improving the Capacity of Community-Based Workers in Australia to Provide Initial Assistance to Iraqi Refugees with Mental Health Problems: An Uncontrolled Evaluation of a Mental Health Literacy Course.” International Journal of Mental Health Systems 12, no. 1 (2018): 2. https://doi.org/10.1186/s13033-018-0180-8.")
-#refp("Van, Connie, Daniel Costa, Penny Abbott, Bernadette Mitchell, and Ines Krass. “Community Pharmacist Attitudes towards Collaboration with General Practitioners: Development and Validation of a Measure and a Model.” BMC Health Services Research 12, no. 1 (2012): 320. https://doi.org/10.1186/1472-6963-12-320.")
-#refp("Younis, Maha S. “Tears of Ishtar: Women’s Mental Health in Iraq.” The Lancet. Psychiatry 2, no. 2 (2015): 119–21. https://doi.org/10.1016/S2215-0366(14)00061-3.")
 #refp("Younis, Maha S., and Deema Khunda. “Maha Sulaiman Younis: A Personal History of Psychiatry in Iraq through War and Conflict.” GLOBAL PSYCHIATRY ARCHIVES 3, no. 2 (2020): 113–18. https://doi.org/10.52095/gpa.2020.1355.")
 #refp("Younis, Maha S., Riyadh K. Lafta, and Saba Dhiaa. “Faith Healers Are Taking over the Role of Psychiatrists in Iraq.” Qatar Medical Journal 2019, no. 3 (2020). https://doi.org/10.5339/qmj.2019.13.")
-#refp("Younis, Maha Sulaiman, and Riyadh Khudhiar Lafta. “The Plight of Women in Iraq: Gender Disparity, Violence, and Mental Health.” International Journal of Social Psychiatry 67, no. 8 (2021): 977–83. https://doi.org/10.1177/00207640211003602.")
 #refp("Zolezzi, Monica, Maha Alamri, Shahd Shaar, and Daniel Rainkie. “Stigma Associated with Mental Illness and Its Treatment in the Arab Culture: A Systematic Review.” International Journal of Social Psychiatry 64, no. 6 (2018): 597–609. https://doi.org/10.1177/0020764018789200.")
 #refp("Zygmunt, Annette, Mark Olfson, Carol A. Boyer, and David Mechanic. “Interventions to Improve Medication Adherence in Schizophrenia.” American Journal of Psychiatry 159, no. 10 (2002): 1653–64. https://doi.org/10.1176/appi.ajp.159.10.1653.")

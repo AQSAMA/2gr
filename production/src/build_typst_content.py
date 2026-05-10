@@ -32,12 +32,14 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 
 TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
-STUDENTS = [
+# Student names are sorted alphabetically for every downstream use
+# (cover, supervisor certification, DOCX metadata).
+STUDENTS = sorted([
     "Abdul Rahman Wakaa Ali",
     "Ali Basem Hammoud",
     "Shifa Safi Aboud",
     "Zainab Mashal Nayef",
-]
+])
 SUPERVISOR = "Hameed Adnan"
 UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
@@ -51,6 +53,45 @@ LOGO_CANDIDATES = (
     "almaarif logo.png",
     "al-maarif logo.png",
 )
+
+# Muted academic navy for in-text citation highlighting. Subtle enough to
+# preserve readability while distinguishing citations from body prose.
+CITATION_COLOR_HEX = "2C5282"  # used by python-docx RGBColor.from_string
+CITATION_COLOR_TYPST = "#2c5282"
+
+# A parenthetical in-text citation starts with an uppercase author surname
+# and contains a 4-digit year. This avoids matching numeric parentheticals
+# like "(0.504)", statistical inline stats like "(p=0.0001)", or reference
+# year suffixes like "(2020): 56" that live inside the bibliography lines.
+CITATION_REGEX = re.compile(r"\([A-Z][^()]*?\d{4}[a-z]?\)")
+
+# Pairs of (surname prefix, distinctive title keyword) that identify each
+# reference actually cited in the manuscript text. Used to filter the master
+# bibliography so only cited sources appear in the final rendered list.
+CITED_REFERENCES: list[tuple[str, str]] = [
+    ("Abdisa", "Self-Stigma"),
+    ("Angermeyer", "Public Attitudes towards Psychiatry"),
+    ("Booth", "Conundrum for Healthcare"),
+    ("Burnam", "War Veterans"),
+    ("Cubillos", "Integrating Mental Health Services"),
+    ("Elyamani", "Arab States of the Gulf"),
+    ("Gast", "Medication Adherence Influencing"),
+    ("Horne", "Beliefs about Medicines"),
+    ("Hussein Alwan", "Stigma Toward Mental Illness"),
+    ("Kadhim", "ANXIETY, DEPRESSION"),
+    ("Kalaman", "Parental Factors"),
+    ("Mojtabai", "Americans"),
+    ("Nassr", "High-Dose Antipsychotic"),
+    ("Okasha", "Middle East, and North Africa"),
+    ("Rasheed", "Health Care-Seeking"),
+    ("Sadik", "Public Perception of Mental Health"),
+    ("Saied", "Mental Health Crisis"),
+    ("Slewa-Younan", "Resettled Iraqi Refugees"),
+    ("Younis", "Personal History of Psychiatry"),
+    ("Younis", "Faith Healers"),
+    ("Zolezzi", "Stigma Associated with Mental Illness"),
+    ("Zygmunt", "Interventions to Improve Medication Adherence"),
+]
 
 
 def find_university_logo() -> Path | None:
@@ -87,14 +128,36 @@ def ensure_dirs() -> None:
     TYPST_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def is_cited_reference(line: str) -> bool:
+    """Return True if a bibliography line matches at least one cited source."""
+    for surname, keyword in CITED_REFERENCES:
+        # Surname should appear near the very start of the reference entry.
+        head = line[: len(surname) + 6]
+        if surname in head and keyword.lower() in line.lower():
+            return True
+    return False
+
+
+def filter_cited_references(references: list[str]) -> list[str]:
+    filtered = [ref for ref in references if is_cited_reference(ref)]
+    # Preserve the master bibliography ordering (alphabetical) but remove
+    # duplicates that the filter may introduce when keyword matches overlap.
+    seen = set()
+    unique: list[str] = []
+    for ref in filtered:
+        if ref not in seen:
+            seen.add(ref)
+            unique.append(ref)
+    return unique
+
 
 def _split_references(md_text: str) -> tuple[str, list[str]]:
-    marker = "\n# VIII. REFERENCES\n"
+    marker = "\n# 8. REFERENCES\n"
     if marker not in md_text:
         return md_text, []
     before, after = md_text.split(marker, 1)
     references = [clean_text(line) for line in after.splitlines() if clean_text(line)]
-    return before + marker, references
+    return before + marker, filter_cited_references(references)
 
 
 def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
@@ -112,7 +175,7 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
                 skip_cover = False
                 target = main_calls
                 target.append("#start-main-numbering()")
-                target.append('#set-running-head("")')
+                target.append('#set-running-head("Abstract")')
             else:
                 continue
 
@@ -124,8 +187,11 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text.upper() == "VIII. REFERENCES":
+            if text.upper() == "8. REFERENCES":
                 in_references = True
+                # References live outside any numbered chapter, so switch the
+                # running head to "References" before emitting the heading.
+                target.append('#set-running-head("References")')
             target.append(f"#section-title({typst_string(text)})")
             continue
 
@@ -153,11 +219,13 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
 
     if references:
         if not in_references:
-            target.append(f"#section-title({typst_string('VIII. REFERENCES')})")
+            target.append('#set-running-head("References")')
+            target.append(f"#section-title({typst_string('8. REFERENCES')})")
         for reference in references:
             target.append(f"#refp({typst_string(reference)})")
 
     return front_calls, main_calls
+
 
 def render_typst_source(md_path: Path) -> str:
     front_calls, main_calls = collect_manuscript_calls(md_path)
@@ -181,19 +249,32 @@ def render_typst_source(md_path: Path) -> str:
 #let gold = rgb("#b58b2a")
 #let ink = rgb("#111827")
 #let pale = rgb("#f7f9fc")
+#let citation-color = rgb("{CITATION_COLOR_TYPST}")
 #let page-border = rect(width: 100%, height: 100%, stroke: 0.8pt + navy)
 #let running-head = state("running-head", "")
 #let set-running-head(s) = running-head.update(s)
+
+// The running head sits at the top RIGHT and appears on every page whose
+// section has set a non-empty running head via `#set-running-head(...)`.
+// Chapter interstitial pages disable the header entirely via
+// `set page(header: none)`, and the cover/preliminary pages keep the
+// default empty state so their header is blank.
 #let regular-page-header = context {{
   let head = running-head.get()
   if head != "" {{
-    align(left)[#text(size: 9pt, fill: navy)[#head]]
+    align(right)[#text(size: 9pt, fill: navy, style: "italic")[#head]]
   }}
 }}
 
 #set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
+
+// Muted academic navy for parenthetical in-text citations such as
+// "(Author, 2020)" or "(Author et al., 2020; Other, 2019)". The leading
+// capital letter in the required lookbehind avoids matching numeric
+// parentheses like "(p=0.0001)" or "(adjusted OR 0.504, ...)".
+#show regex("\\([A-Z][^()]*?\\d{{4}}[a-z]?\\)"): it => text(fill: citation-color, it)
 
 #show heading.where(level: 1): it => block(above: 10pt, below: 8pt)[
   #text(size: 18pt, weight: "bold", fill: navy)[#it.body]
@@ -214,6 +295,7 @@ def render_typst_source(md_path: Path) -> str:
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
   #pagebreak(weak: true)
+  #[#metadata(none) <section-start>]
   #h1(s)
 ]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
@@ -247,12 +329,14 @@ def render_typst_source(md_path: Path) -> str:
 
 #let start-main-numbering() = [
   #pagebreak(weak: true)
-  #set page(numbering: "1", number-align: top + center)
+  #set page(numbering: "1", number-align: bottom + center)
   #counter(page).update(1)
 ]
 
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// Cover page: Roman-numbered from page 1. The entire front matter uses
+// Roman numerals; Arabic numbering begins at the abstract.
+#set page(numbering: "i", number-align: bottom + center)
+#counter(page).update(1)
 #align(center)[
 {logo_block}  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \\
@@ -276,12 +360,10 @@ def render_typst_source(md_path: Path) -> str:
   #text(size: 14pt)[{MONTH_YEAR}]
 ]
 
-// Roman-numbered preliminary pages.
+// Roman-numbered preliminary pages continue from the cover.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
 #front-title[Certification of the Supervisor]
-#p("I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
+#p("I certify that this project entitled \u201c{TITLE}\u201d was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
 #align(right)[#text(weight: "bold")[Supervisor's name: {SUPERVISOR}]]
 #v(0.55cm)
 #front-title[Dedication]
@@ -292,7 +374,13 @@ def render_typst_source(md_path: Path) -> str:
 
 #pagebreak()
 #front-title[Table of Contents]
-#outline(title: none, depth: 2)
+// The table of contents is sized to fill exactly one page without overflow.
+// Depth 2 shows chapters + sections; entry size and spacing are tuned to
+// use the available vertical space comfortably.
+#{{
+  show outline.entry: it => block(above: 0.45em, below: 0.45em, text(size: 12pt, it))
+  outline(title: none, depth: 2, indent: auto)
+}}
 
 #pagebreak()
 #front-title[List of Figures]
@@ -310,7 +398,7 @@ OR: Odds Ratio \\
 PTSD: Post-Traumatic Stress Disorder \\
 RRR: Relative Risk Ratio \\
 Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting \\
-R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries]
+R\u00b2: Coefficient of determination, reported as pseudo R\u00b2 in logistic model fit summaries]
 
 '''
     return preamble + "\n".join(front_calls) + "\n\n" + "\n".join(main_calls) + "\n"
@@ -375,8 +463,10 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
 
         if kind == "h1":
             text = clean_text(data)
-            if text.upper() == "VIII. REFERENCES":
+            if text.upper() == "8. REFERENCES":
                 in_references = True
+                blocks.append(("references_section", text))
+                continue
             blocks.append(("section", text))
             continue
 
@@ -401,7 +491,7 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
 
     if references:
         if not in_references:
-            blocks.append(("section", "VIII. REFERENCES"))
+            blocks.append(("references_section", "8. REFERENCES"))
         for reference in references:
             blocks.append(("reference", reference))
 
@@ -496,28 +586,46 @@ def _configure_section(
     _set_page_border(section)
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
+    # Academic convention: the first page of each chapter shows no running
+    # head, so we enable Word's "different first page" whenever the section
+    # has a running head to suppress on its opener.
     section.different_first_page_header_footer = empty_first_running_head
 
     for paragraph in section.header.paragraphs:
         paragraph.clear()
     for paragraph in section.first_page_header.paragraphs:
         paragraph.clear()
+    for paragraph in section.footer.paragraphs:
+        paragraph.clear()
+    for paragraph in section.first_page_footer.paragraphs:
+        paragraph.clear()
 
     if numbered:
         if start is not None:
             _set_page_numbering(section, number_format, start)
+
+        # Centered page number in the footer keeps pagination clean and
+        # independent from the running head in the header.
+        footer = section.footer.paragraphs[0]
+        footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        footer.paragraph_format.first_line_indent = Inches(0)
+        _add_field_run(footer, "PAGE")
         if empty_first_running_head:
-            first_header = section.first_page_header.paragraphs[0]
-            first_header.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            _add_field_run(first_header, "PAGE")
-        header = section.header.paragraphs[0]
-        header.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            first_footer = section.first_page_footer.paragraphs[0]
+            first_footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            first_footer.paragraph_format.first_line_indent = Inches(0)
+            _add_field_run(first_footer, "PAGE")
+
         if running_head:
+            # Running head lives in the header, right-aligned, italic. The
+            # first-page header of the section stays empty so chapter-opening
+            # pages are clean per academic convention.
+            header = section.header.paragraphs[0]
+            header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            header.paragraph_format.first_line_indent = Inches(0)
             run = header.add_run(running_head)
+            run.italic = True
             _set_run_font(run, size=9, color="102A43")
-        page_paragraph = section.header.add_paragraph()
-        page_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _add_field_run(page_paragraph, "PAGE")
 
 
 def _setup_docx_styles(doc: Document) -> None:
@@ -535,6 +643,15 @@ def _setup_docx_styles(doc: Document) -> None:
         style.font.size = Pt(size)
         style.font.bold = True
         style.font.color.rgb = RGBColor.from_string("102A43")
+
+    # Compact TOC styles help the automatic Word TOC fit on one page when
+    # users refresh fields after opening the document.
+    for style_name, size in [("TOC 1", 11), ("TOC 2", 10), ("TOC 3", 10)]:
+        if style_name in doc.styles:
+            style = doc.styles[style_name]
+            style.font.name = "Times New Roman"
+            style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+            style.font.size = Pt(size)
 
 
 def _center_paragraph(doc: Document, text: str = "", size: int | float = 14, bold: bool = False, color: str | None = None):
@@ -554,14 +671,41 @@ def _front_title(doc: Document, title: str) -> None:
     paragraph.paragraph_format.space_after = Pt(8)
 
 
-def _add_body_paragraph(doc: Document, text: str) -> None:
-    paragraph = doc.add_paragraph(text)
+def _add_paragraph_with_citations(doc: Document, text: str, *, size: float = 14, hanging: bool = False, justify: bool = True) -> None:
+    """Add a body paragraph, colouring parenthetical in-text citations."""
+    paragraph = doc.add_paragraph()
     paragraph.paragraph_format.line_spacing = 1.5
-    paragraph.paragraph_format.first_line_indent = Inches(0.5)
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    if hanging:
+        paragraph.paragraph_format.first_line_indent = Inches(-0.5)
+        paragraph.paragraph_format.left_indent = Inches(0.5)
+        paragraph.paragraph_format.space_before = Pt(3)
+        paragraph.paragraph_format.space_after = Pt(5)
+    else:
+        paragraph.paragraph_format.first_line_indent = Inches(0.5)
+    if justify:
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+    cursor = 0
+    for match in CITATION_REGEX.finditer(text):
+        if match.start() > cursor:
+            plain_run = paragraph.add_run(text[cursor:match.start()])
+            _set_run_font(plain_run, size=size)
+        cite_run = paragraph.add_run(match.group(0))
+        _set_run_font(cite_run, size=size, color=CITATION_COLOR_HEX)
+        cursor = match.end()
+    if cursor < len(text):
+        tail = paragraph.add_run(text[cursor:])
+        _set_run_font(tail, size=size)
+
+
+def _add_body_paragraph(doc: Document, text: str) -> None:
+    _add_paragraph_with_citations(doc, text, size=14, hanging=False)
 
 
 def _add_reference_paragraph(doc: Document, text: str) -> None:
+    # Reference entries use a hanging indent and a smaller body size.
+    # Citation coloring is intentionally skipped here because the Chicago
+    # bibliography format uses "(Year)" which is not an in-text citation.
     paragraph = doc.add_paragraph(text)
     paragraph.paragraph_format.first_line_indent = Inches(-0.5)
     paragraph.paragraph_format.left_indent = Inches(0.5)
@@ -608,7 +752,7 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     _front_title(doc, "Certification of the Supervisor")
     _add_body_paragraph(
         doc,
-        f"I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {', '.join(STUDENTS)} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
+        f"I certify that this project entitled \u201c{TITLE}\u201d was prepared by the fifth-year students {', '.join(STUDENTS)} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
     )
     paragraph = doc.add_paragraph(f"Supervisor's name: {SUPERVISOR}")
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -631,6 +775,9 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     _front_title(doc, "Table of Contents")
     paragraph = doc.add_paragraph()
     paragraph.paragraph_format.first_line_indent = Inches(0)
+    # Depth 2 is enough to show chapters + main sections and, combined with
+    # the tightened TOC styles in _setup_docx_styles, keeps the outline
+    # compact enough to fit on a single page when Word refreshes fields.
     _add_field_run(paragraph, r'TOC \o "1-2" \h \z \u')
 
     doc.add_page_break()
@@ -650,7 +797,7 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
         "PTSD: Post-Traumatic Stress Disorder",
         "RRR: Relative Risk Ratio",
         "Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting",
-        "R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries",
+        "R\u00b2: Coefficient of determination, reported as pseudo R\u00b2 in logistic model fit summaries",
     ]
     for item in abbreviations:
         paragraph = doc.add_paragraph(item)
@@ -662,6 +809,11 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     figure_captions = [data.split("|||", 1)[0] for kind, data in blocks if kind == "image"]
 
     doc = Document()
+    # Store the sorted student list in the document metadata so tools that
+    # read DOCX properties see the same alphabetical ordering used visually.
+    doc.core_properties.title = TITLE
+    doc.core_properties.author = ", ".join(STUDENTS)
+
     _setup_docx_styles(doc)
     _configure_section(doc.sections[0], numbered=False)
     _add_cover_page(doc)
@@ -673,13 +825,26 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     main_started = False
     in_references = False
     chapter_just_added = False
+    current_running_head = ""
+
+    def emit_section_page_break() -> None:
+        nonlocal chapter_just_added
+        if chapter_just_added:
+            chapter_just_added = False
+        else:
+            doc.add_page_break()
 
     for kind, data in blocks:
         if kind == "start_main" and not main_started:
+            # The abstract is the first Arabic-numbered page. It opens a new
+            # Word section with decimal numbering starting at 1 and no
+            # running head (academic convention keeps front-matter-like
+            # items such as the abstract un-titled in the header).
             section = doc.add_section(WD_SECTION.NEW_PAGE)
             _configure_section(section, numbered=True, number_format="decimal", start=1)
             main_started = True
             chapter_just_added = False
+            current_running_head = ""
             continue
 
         if kind == "chapter":
@@ -693,6 +858,7 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
                 running_head=chapter_name,
                 empty_first_running_head=True,
             )
+            current_running_head = chapter_name
             paragraph = _center_paragraph(doc, chapter_number, size=32, bold=True, color="102A43")
             paragraph.paragraph_format.space_before = Inches(3)
             _center_paragraph(doc, chapter_name, size=20, bold=True, color="102A43")
@@ -700,16 +866,34 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
             chapter_just_added = True
             continue
 
-        if kind == "section":
-            if chapter_just_added:
-                chapter_just_added = False
-            else:
-                doc.add_page_break()
+        if kind == "references_section":
+            # References get a dedicated section so the running head reads
+            # "References" rather than inheriting the previous chapter.
+            section = doc.add_section(WD_SECTION.NEW_PAGE)
+            _configure_section(
+                section,
+                numbered=True,
+                number_format="decimal",
+                start=None,
+                running_head="References",
+                empty_first_running_head=True,
+            )
+            current_running_head = "References"
             paragraph = doc.add_paragraph(data)
             paragraph.style = doc.styles["Heading 1"]
             paragraph.paragraph_format.first_line_indent = Inches(0)
             paragraph.paragraph_format.space_after = Pt(8)
-            in_references = data.upper() == "VIII. REFERENCES"
+            in_references = True
+            chapter_just_added = True
+            continue
+
+        if kind == "section":
+            emit_section_page_break()
+            paragraph = doc.add_paragraph(data)
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_after = Pt(8)
+            in_references = data.upper() == "8. REFERENCES"
             continue
 
         if kind == "h2":
@@ -758,6 +942,7 @@ def copy_docx_output() -> bool:
     shutil.copy2(source_docx, TYPST_DOCX)
     print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
+
 
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()

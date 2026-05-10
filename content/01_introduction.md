@@ -1,4 +1,4 @@
-# I. INTRODUCTION
+# 1. INTRODUCTION
 
 ## A. Background and Context
 
