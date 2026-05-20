@@ -91,7 +91,17 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             if kind == "h1" and data.strip().upper() == "ABSTRACT":
                 skip_cover = False
                 target = main_calls
-                target.append("#start-main-numbering()")
+                # Switch to arabic numbering at the top level so the
+                # ``#set page(...)`` rule actually applies to all
+                # subsequent pages. (Putting these inside a content
+                # function leaves the set-rule scoped to that function
+                # and the rest of the document keeps the old format.)
+                target.append("#pagebreak(weak: true)")
+                target.append(
+                    '#set page(numbering: "1", '
+                    "header: regular-page-header, footer: page-number-footer)"
+                )
+                target.append("#counter(page).update(1)")
                 target.append('#set-running-head("")')
             else:
                 continue
@@ -170,8 +180,19 @@ def render_typst_source(md_path: Path) -> str:
     align(left)[#text(size: 9pt, fill: navy)[#head]]
   }}
 }}
+// Centered footer that prints the page number using whatever numbering
+// format is active for the page (roman for preliminaries, arabic for the
+// main matter). This is required because a custom ``header`` suppresses
+// Typst's automatic page-number rendering, so without an explicit footer
+// no number would be visible at all.
+#let page-number-footer = context [
+  #align(center)[
+    #text(size: 10pt, fill: navy)[
+      #counter(page).display(here().page-numbering())
+    ]
+  ]
+]
 
-#set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
 
@@ -187,9 +208,12 @@ def render_typst_source(md_path: Path) -> str:
 
 #let center-line(s, size: 14pt, weight: "regular", fill: ink) = align(center)[#text(size: size, weight: weight, fill: fill)[#s]]
 #let p(s) = par(first-line-indent: 1.27cm, justify: true)[#s]
-#let refp(s) = block(above: 3pt, below: 5pt)[
+// Reference paragraph: a normal first-line indent (no hanging indent)
+// with comfortable spacing between entries so the bibliography reads as a
+// list of paragraphs instead of a dense merged block.
+#let refp(s) = block(above: 0pt, below: 14pt, breakable: true)[
   #set text(size: 12pt)
-  #par(first-line-indent: 0pt, hanging-indent: 0.5in, justify: true)[#s]
+  #par(first-line-indent: 1.27cm, justify: true, leading: 0.6em)[#s]
 ]
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
@@ -209,7 +233,9 @@ def render_typst_source(md_path: Path) -> str:
 
 #let chapter-page(chapter, title) = [
   #pagebreak(weak: true)
-  #set page(header: none)
+  // Hide both header and footer on the chapter title page so the page
+  // counts toward the total but shows no running head and no number.
+  #set page(header: none, footer: none)
   #align(center + horizon)[
     #box(width: 84%, inset: 28pt, stroke: 1pt + navy, fill: pale)[
       #align(center)[
@@ -222,17 +248,15 @@ def render_typst_source(md_path: Path) -> str:
     ]
   ]
   #pagebreak()
-  #set page(header: regular-page-header)
+  #set page(header: regular-page-header, footer: page-number-footer)
 ]
 
-#let start-main-numbering() = [
-  #pagebreak(weak: true)
-  #set page(numbering: "1", number-align: top + center)
-  #counter(page).update(1)
-]
-
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// ===== Cover page =====
+// Numbered as roman page i so the cover counts toward the preliminary
+// page total, but header and footer are suppressed so no number is
+// visible on the cover itself.
+#set page(paper: "a4", margin: 1.5cm, background: page-border, numbering: "i", header: none, footer: none)
+#counter(page).update(1)
 #align(center)[
 {logo_block}  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \\
@@ -256,14 +280,11 @@ def render_typst_source(md_path: Path) -> str:
   #text(size: 14pt)[{MONTH_YEAR}]
 ]
 
-// Roman-numbered preliminary pages.
+// ===== Roman-numbered preliminary pages =====
+// Roman numbering continues from the cover (so this page is ii). The
+// header and footer return so each preliminary page shows its number.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
-#front-title[Certification of the Supervisor]
-#p("I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
-#align(right)[#text(weight: "bold")[Supervisor's name: {SUPERVISOR}]]
-#v(0.55cm)
+#set page(numbering: "i", header: regular-page-header, footer: page-number-footer)
 #front-title[Dedication]
 #p("We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.")
 #v(0.35cm)
@@ -430,20 +451,28 @@ def _set_page_border(section) -> None:
         borders.append(element)
 
 
-def _set_page_numbering(section, fmt: str, start: int = 1) -> None:
+def _set_page_numbering(section, fmt: str, start: int | None = 1) -> None:
     sect_pr = section._sectPr
     pg_num = sect_pr.find(qn("w:pgNumType"))
     if pg_num is None:
         pg_num = OxmlElement("w:pgNumType")
         sect_pr.append(pg_num)
     pg_num.set(qn("w:fmt"), fmt)
-    pg_num.set(qn("w:start"), str(start))
+    if start is None:
+        # Remove any existing start attribute so the section continues
+        # numbering from the previous section instead of restarting.
+        if pg_num.get(qn("w:start")) is not None:
+            del pg_num.attrib[qn("w:start")]
+    else:
+        pg_num.set(qn("w:start"), str(start))
 
 
-def _add_field_run(paragraph, instruction: str) -> None:
+def _add_field_run(paragraph, instruction: str, *, dirty: bool = False) -> None:
     run = paragraph.add_run()
     fld_begin = OxmlElement("w:fldChar")
     fld_begin.set(qn("w:fldCharType"), "begin")
+    if dirty:
+        fld_begin.set(qn("w:dirty"), "true")
     run._r.append(fld_begin)
     instr = OxmlElement("w:instrText")
     instr.set(qn("xml:space"), "preserve")
@@ -467,7 +496,7 @@ def _configure_section(
     number_format: str = "decimal",
     start: int | None = 1,
     running_head: str = "",
-    empty_first_running_head: bool = False,
+    empty_first_page: bool = False,
 ) -> None:
     section.left_margin = Cm(1.5)
     section.right_margin = Cm(1.5)
@@ -476,20 +505,18 @@ def _configure_section(
     _set_page_border(section)
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
-    section.different_first_page_header_footer = empty_first_running_head
+    section.different_first_page_header_footer = empty_first_page
 
+    # Always start with cleared headers; we add content selectively below.
     for paragraph in section.header.paragraphs:
         paragraph.clear()
     for paragraph in section.first_page_header.paragraphs:
         paragraph.clear()
 
     if numbered:
-        if start is not None:
-            _set_page_numbering(section, number_format, start)
-        if empty_first_running_head:
-            first_header = section.first_page_header.paragraphs[0]
-            first_header.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            _add_field_run(first_header, "PAGE")
+        _set_page_numbering(section, number_format, start)
+        # Regular header: optional running head on the left and a centered
+        # PAGE field that renders the page number in the section's format.
         header = section.header.paragraphs[0]
         header.alignment = WD_ALIGN_PARAGRAPH.LEFT
         if running_head:
@@ -498,6 +525,9 @@ def _configure_section(
         page_paragraph = section.header.add_paragraph()
         page_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         _add_field_run(page_paragraph, "PAGE")
+        # When ``empty_first_page`` is requested the first-page header stays
+        # empty (already cleared above) so cover/chapter title pages count
+        # toward the page total but display no number or running head.
 
 
 def _setup_docx_styles(doc: Document) -> None:
@@ -543,10 +573,14 @@ def _add_body_paragraph(doc: Document, text: str) -> None:
 
 def _add_reference_paragraph(doc: Document, text: str) -> None:
     paragraph = doc.add_paragraph(text)
-    paragraph.paragraph_format.first_line_indent = Inches(-0.5)
-    paragraph.paragraph_format.left_indent = Inches(0.5)
-    paragraph.paragraph_format.space_before = Pt(3)
-    paragraph.paragraph_format.space_after = Pt(5)
+    # Normal first-line indent (no hanging indent), with comfortable
+    # spacing between successive references so the bibliography reads as a
+    # list of paragraphs rather than a single dense block.
+    paragraph.paragraph_format.first_line_indent = Inches(0.3)
+    paragraph.paragraph_format.left_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Pt(8)
+    paragraph.paragraph_format.line_spacing = 1.15
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for run in paragraph.runs:
         _set_run_font(run, size=12)
@@ -585,17 +619,6 @@ def _add_cover_page(doc: Document) -> None:
 
 
 def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
-    _front_title(doc, "Certification of the Supervisor")
-    _add_body_paragraph(
-        doc,
-        f"I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {', '.join(STUDENTS)} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
-    )
-    paragraph = doc.add_paragraph(f"Supervisor's name: {SUPERVISOR}")
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    paragraph.paragraph_format.first_line_indent = Inches(0)
-    paragraph.runs[0].bold = True
-    _set_run_font(paragraph.runs[0], size=14, bold=True)
-
     _front_title(doc, "Dedication")
     _add_body_paragraph(
         doc,
@@ -611,7 +634,9 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     _front_title(doc, "Table of Contents")
     paragraph = doc.add_paragraph()
     paragraph.paragraph_format.first_line_indent = Inches(0)
-    _add_field_run(paragraph, r'TOC \o "1-2" \h \z \u')
+    # ``dirty=True`` tells Word the field needs to be regenerated, so the
+    # TOC fills automatically on first open instead of staying blank.
+    _add_field_run(paragraph, r'TOC \o "1-2" \h \z \u', dirty=True)
 
     doc.add_page_break()
     _front_title(doc, "List of Figures")
@@ -637,17 +662,50 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
         paragraph.paragraph_format.first_line_indent = Inches(0)
 
 
+def _set_update_fields_on_open(doc: Document) -> None:
+    """Tell Word to refresh all fields (TOC, PAGE, etc.) on open.
+
+    Without this the TOC field can render as a blank gap until the user
+    manually right-clicks and chooses *Update Field*.
+    """
+    settings = doc.settings.element
+    update_fields = settings.find(qn("w:updateFields"))
+    if update_fields is None:
+        update_fields = OxmlElement("w:updateFields")
+        settings.append(update_fields)
+    update_fields.set(qn("w:val"), "true")
+
+
 def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     blocks = collect_docx_blocks(md_path)
     figure_captions = [data.split("|||", 1)[0] for kind, data in blocks if kind == "image"]
 
     doc = Document()
     _setup_docx_styles(doc)
-    _configure_section(doc.sections[0], numbered=False)
+    _set_update_fields_on_open(doc)
+
+    # Section 0: cover page only. Counts toward Roman numbering as page i
+    # but the first-page header is empty so no number is displayed.
+    _configure_section(
+        doc.sections[0],
+        numbered=True,
+        number_format="lowerRoman",
+        start=1,
+        empty_first_page=True,
+    )
     _add_cover_page(doc)
 
+    # Section 1: remaining preliminary pages (Dedication, Acknowledgment,
+    # Table of Contents, List of Figures, List of Tables, List of
+    # Abbreviations). ``start=None`` lets numbering continue from the
+    # cover, so this section starts at page ii.
     front_section = doc.add_section(WD_SECTION.NEW_PAGE)
-    _configure_section(front_section, numbered=True, number_format="lowerRoman", start=1)
+    _configure_section(
+        front_section,
+        numbered=True,
+        number_format="lowerRoman",
+        start=None,
+    )
     _add_preliminary_pages(doc, figure_captions)
 
     main_started = False
@@ -656,14 +714,23 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
 
     for kind, data in blocks:
         if kind == "start_main" and not main_started:
+            # Section 2: abstract and onwards. Restart at Arabic 1.
             section = doc.add_section(WD_SECTION.NEW_PAGE)
-            _configure_section(section, numbered=True, number_format="decimal", start=1)
+            _configure_section(
+                section,
+                numbered=True,
+                number_format="decimal",
+                start=1,
+            )
             main_started = True
             chapter_just_added = False
             continue
 
         if kind == "chapter":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
+            # New section per chapter so each can carry its own running
+            # head, but ``start=None`` makes numbering continue across
+            # chapters instead of restarting at 1 every time.
             section = doc.add_section(WD_SECTION.NEW_PAGE)
             _configure_section(
                 section,
@@ -671,7 +738,7 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
                 number_format="decimal",
                 start=None,
                 running_head=chapter_name,
-                empty_first_running_head=True,
+                empty_first_page=True,
             )
             paragraph = _center_paragraph(doc, chapter_number, size=32, bold=True, color="102A43")
             paragraph.paragraph_format.space_before = Inches(3)
