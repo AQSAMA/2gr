@@ -153,6 +153,41 @@ def _print_process_output(output: str | bytes | None) -> None:
         print(output.strip())
 
 
+def convert_design_to_docx(entry: Path, out_docx: Path) -> bool:
+    pandoc = shutil.which("pandoc")
+    if pandoc is None:
+        print("WARNING: pandoc is not installed; Method B DOCX compilation was skipped.")
+        return False
+
+    try:
+        result = subprocess.run(
+            [
+                pandoc,
+                str(entry),
+                "-o", str(out_docx),
+                f"--resource-path={METHOD_B_DIR.parent.parent}"
+            ],
+            cwd=METHOD_B_DIR,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired as exc:
+        print(f"WARNING: Pandoc failed for {entry.name}; continuing with remaining outputs.")
+        print("Pandoc compilation timed out after 300 seconds.")
+        _print_process_output(exc.stdout)
+        _print_process_output(exc.stderr)
+        return False
+
+    if result.returncode != 0:
+        print(f"WARNING: Pandoc failed for {entry.name}; continuing with remaining outputs.")
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
+        return False
+    return True
+
+
 def compile_design(entry: Path, out_pdf: Path) -> bool:
     typst = shutil.which("typst")
     if typst is None:
@@ -198,9 +233,14 @@ def run_method_b(md_path: Path | None = None) -> None:
     for design in DESIGNS:
         entry = write_design_entry(design)
         out_pdf = OUTPUT_DIR / f"{design}.pdf"
+        out_docx = OUTPUT_DIR / f"{design}.docx"
+
         if compile_design(entry, out_pdf):
             compiled += 1
             print(f"Method B PDF: {out_pdf}")
+
+        if convert_design_to_docx(entry, out_docx):
+            print(f"Method B DOCX: {out_docx}")
 
     if compiled == 0:
         print("WARNING: No Method B PDFs were produced. Install typst to enable Typst PDF output.")
