@@ -187,9 +187,9 @@ def render_typst_source(md_path: Path) -> str:
 
 #let center-line(s, size: 14pt, weight: "regular", fill: ink) = align(center)[#text(size: size, weight: weight, fill: fill)[#s]]
 #let p(s) = par(first-line-indent: 1.27cm, justify: true)[#s]
-#let refp(s) = block(above: 3pt, below: 5pt)[
+#let refp(s) = block(above: 4pt, below: 8pt)[
   #set text(size: 12pt)
-  #par(first-line-indent: 0pt, hanging-indent: 0.5in, justify: true)[#s]
+  #par(first-line-indent: 0.5cm, justify: true)[#s]
 ]
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
@@ -231,8 +231,9 @@ def render_typst_source(md_path: Path) -> str:
   #counter(page).update(1)
 ]
 
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// Cover page and preliminary pages use Roman numbering.
+#set page(numbering: "i", number-align: top + center)
+#counter(page).update(1)
 #align(center)[
 {logo_block}  #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \\
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \\
@@ -258,12 +259,6 @@ def render_typst_source(md_path: Path) -> str:
 
 // Roman-numbered preliminary pages.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
-#front-title[Certification of the Supervisor]
-#p("I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {students} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
-#align(right)[#text(weight: "bold")[Supervisor's name: {SUPERVISOR}]]
-#v(0.55cm)
 #front-title[Dedication]
 #p("We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.")
 #v(0.35cm)
@@ -271,6 +266,8 @@ def render_typst_source(md_path: Path) -> str:
 #p("We thank Dr. {SUPERVISOR} for his supervision, guidance, and careful advice throughout this project. We are also grateful to the College of Pharmacy at {UNIVERSITY}, to the participants who gave their time to answer the survey, and to our colleagues who supported the data collection and revision process.")
 
 #pagebreak()
+#set page(numbering: "1", number-align: top + center)
+#counter(page).update(1)
 #front-title[Table of Contents]
 #outline(title: none, depth: 2)
 
@@ -543,10 +540,10 @@ def _add_body_paragraph(doc: Document, text: str) -> None:
 
 def _add_reference_paragraph(doc: Document, text: str) -> None:
     paragraph = doc.add_paragraph(text)
-    paragraph.paragraph_format.first_line_indent = Inches(-0.5)
-    paragraph.paragraph_format.left_indent = Inches(0.5)
-    paragraph.paragraph_format.space_before = Pt(3)
-    paragraph.paragraph_format.space_after = Pt(5)
+    paragraph.paragraph_format.first_line_indent = Inches(0.2)
+    paragraph.paragraph_format.left_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Pt(4)
+    paragraph.paragraph_format.space_after = Pt(8)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for run in paragraph.runs:
         _set_run_font(run, size=12)
@@ -585,17 +582,6 @@ def _add_cover_page(doc: Document) -> None:
 
 
 def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
-    _front_title(doc, "Certification of the Supervisor")
-    _add_body_paragraph(
-        doc,
-        f"I certify that this project entitled “{TITLE}” was prepared by the fifth-year students {', '.join(STUDENTS)} under my supervision at the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
-    )
-    paragraph = doc.add_paragraph(f"Supervisor's name: {SUPERVISOR}")
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    paragraph.paragraph_format.first_line_indent = Inches(0)
-    paragraph.runs[0].bold = True
-    _set_run_font(paragraph.runs[0], size=14, bold=True)
-
     _front_title(doc, "Dedication")
     _add_body_paragraph(
         doc,
@@ -643,12 +629,15 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
 
     doc = Document()
     _setup_docx_styles(doc)
-    _configure_section(doc.sections[0], numbered=False)
+    _configure_section(doc.sections[0], numbered=True, number_format="lowerRoman", start=1)
     _add_cover_page(doc)
 
     front_section = doc.add_section(WD_SECTION.NEW_PAGE)
-    _configure_section(front_section, numbered=True, number_format="lowerRoman", start=1)
+    _configure_section(front_section, numbered=True, number_format="lowerRoman", start=None)
     _add_preliminary_pages(doc, figure_captions)
+
+    toc_section = doc.add_section(WD_SECTION.NEW_PAGE)
+    _configure_section(toc_section, numbered=True, number_format="decimal", start=1)
 
     main_started = False
     in_references = False
