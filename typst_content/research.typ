@@ -18,8 +18,19 @@
     align(left)[#text(size: 9pt, fill: navy)[#head]]
   }
 }
+// Centered footer that prints the page number using whatever numbering
+// format is active for the page (roman for preliminaries, arabic for the
+// main matter). This is required because a custom ``header`` suppresses
+// Typst's automatic page-number rendering, so without an explicit footer
+// no number would be visible at all.
+#let page-number-footer = context [
+  #align(center)[
+    #text(size: 10pt, fill: navy)[
+      #counter(page).display(here().page-numbering())
+    ]
+  ]
+]
 
-#set page(paper: "a4", margin: 1.5cm, background: page-border, header: regular-page-header)
 #set text(font: ("Times New Roman", "Times"), size: 14pt, fill: ink)
 #set par(leading: 0.55em, justify: true)
 
@@ -35,9 +46,12 @@
 
 #let center-line(s, size: 14pt, weight: "regular", fill: ink) = align(center)[#text(size: size, weight: weight, fill: fill)[#s]]
 #let p(s) = par(first-line-indent: 1.27cm, justify: true)[#s]
-#let refp(s) = block(above: 3pt, below: 5pt)[
+// Reference paragraph: a normal first-line indent (no hanging indent)
+// with comfortable spacing between entries so the bibliography reads as a
+// list of paragraphs instead of a dense merged block.
+#let refp(s) = block(above: 0pt, below: 14pt, breakable: true)[
   #set text(size: 12pt)
-  #par(first-line-indent: 0pt, hanging-indent: 0.5in, justify: true)[#s]
+  #par(first-line-indent: 1.27cm, justify: true, leading: 0.6em)[#s]
 ]
 #let h1(s) = heading(level: 1, outlined: true)[#s]
 #let section-title(s) = [
@@ -57,7 +71,9 @@
 
 #let chapter-page(chapter, title) = [
   #pagebreak(weak: true)
-  #set page(header: none)
+  // Hide both header and footer on the chapter title page so the page
+  // counts toward the total but shows no running head and no number.
+  #set page(header: none, footer: none)
   #align(center + horizon)[
     #box(width: 84%, inset: 28pt, stroke: 1pt + navy, fill: pale)[
       #align(center)[
@@ -70,17 +86,15 @@
     ]
   ]
   #pagebreak()
-  #set page(header: regular-page-header)
+  #set page(header: regular-page-header, footer: page-number-footer)
 ]
 
-#let start-main-numbering() = [
-  #pagebreak(weak: true)
-  #set page(numbering: "1", number-align: top + center)
-  #counter(page).update(1)
-]
-
-// Cover page: unnumbered. Certification begins on the second page.
-#set page(numbering: none)
+// ===== Cover page =====
+// Numbered as roman page i so the cover counts toward the preliminary
+// page total, but header and footer are suppressed so no number is
+// visible on the cover itself.
+#set page(paper: "a4", margin: 1.5cm, background: page-border, numbering: "i", header: none, footer: none)
+#counter(page).update(1)
 #align(center)[
   #image("../figures/University_logo.png", width: 2.25cm)
   #v(0.16cm)
@@ -109,14 +123,11 @@ Zainab Mashal Nayef]
   #text(size: 14pt)[May, 2026]
 ]
 
-// Roman-numbered preliminary pages.
+// ===== Roman-numbered preliminary pages =====
+// Roman numbering continues from the cover (so this page is ii). The
+// header and footer return so each preliminary page shows its number.
 #pagebreak()
-#set page(numbering: "i", number-align: top + center)
-#counter(page).update(1)
-#front-title[Certification of the Supervisor]
-#p("I certify that this project entitled “Psychiatric Medication Use and Public Acceptance in Iraq” was prepared by the fifth-year students Abdul Rahman Wakaa Ali, Ali Basem Hammoud, Shifa Safi Aboud, Zainab Mashal Nayef under my supervision at the College of Pharmacy/University of Al-Maarif in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.")
-#align(right)[#text(weight: "bold")[Supervisor's name: Hameed Adnan]]
-#v(0.55cm)
+#set page(numbering: "i", header: regular-page-header, footer: page-number-footer)
 #front-title[Dedication]
 #p("We dedicate this work to our families, whose patience made long study days easier, and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful when it serves people with honesty and compassion.")
 #v(0.35cm)
@@ -147,7 +158,9 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 
 
 
-#start-main-numbering()
+#pagebreak(weak: true)
+#set page(numbering: "1", header: regular-page-header, footer: page-number-footer)
+#counter(page).update(1)
 #set-running-head("")
 #section-title("ABSTRACT")
 #p("Psychiatric medication acceptance in Iraq remains a public health challenge because mental health needs are high while treatment hesitation persists. This study examined psychiatric medication use and public acceptance in Iraq using an original cross-sectional survey with supportive literature context. We analyzed responses from 877 participants using descriptive statistics, hierarchical logistic regression, multinomial logistic regression, Users vs Non-Users comparisons, and exploratory stigma-phenotype analysis.")
