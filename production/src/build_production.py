@@ -16,7 +16,7 @@ the document structure mirrors the Typst pipeline:
       supervisor, month/year),
     * preliminary pages with lower-roman page numbers (Certification,
       Dedication, Acknowledgment, Table of Contents, List of Figures,
-      List of Tables, List of Abbreviations),
+      List of Abbreviations),
     * main matter from the Abstract onward with arabic page numbers,
     * page headers carrying the page number plus the chapter name as a
       running head once each chapter starts.
@@ -665,7 +665,7 @@ ABBREVIATIONS = [
     ("OR", "Odds Ratio"),
     ("PTSD", "Post-Traumatic Stress Disorder"),
     ("RRR", "Relative Risk Ratio"),
-    ("Q6/Q7/Q8/Q9/Q11/Q12/Q13",
+    ("Q6/Q7/Q8/Q9/Q11/Q12/Q13/Q31",
      "Survey question item codes used in analysis and reporting"),
     ("R\u00b2",
      "Coefficient of determination, reported as pseudo R\u00b2 in logistic "
@@ -734,17 +734,7 @@ def _add_preliminary_pages(doc: Document) -> None:
     add_field_run(p, r'TOC \h \z \c "Figure"', default_text="(Update field in Word.)")
     doc.add_page_break()
 
-    # 6. List of Tables
-    _add_front_title(doc, "List of Tables")
-    _add_body_paragraph(
-        doc,
-        "No manuscript tables are currently embedded as formal tables in this "
-        "production source. Statistical results are reported in the text and "
-        "figures.",
-    )
-    doc.add_page_break()
-
-    # 7. List of Abbreviations
+    # 6. List of Abbreviations
     _add_front_title(doc, "List of Abbreviations")
     for short, long in ABBREVIATIONS:
         para = doc.add_paragraph()
@@ -984,11 +974,6 @@ def _latex_preliminary_block() -> list[str]:
         "\\tableofcontents",
         "\\newpage",
         "\\listoffigures",
-        "\\newpage",
-        "\\section*{List of Tables}",
-        "\\addcontentsline{toc}{section}{List of Tables}",
-        "No manuscript tables are currently embedded as formal tables in this production source. "
-        "Statistical results are reported in the text and figures.",
         "\\newpage",
         "\\section*{List of Abbreviations}",
         "\\addcontentsline{toc}{section}{List of Abbreviations}",
@@ -1396,14 +1381,6 @@ def _pdf_preliminary_story(styles: dict[str, ParagraphStyle]) -> list:
     story.append(Paragraph(
         "(See the auto-generated DOCX or compiled Typst PDF for the live, "
         "field-driven List of Figures.)",
-        styles["body"],
-    ))
-    story.append(PageBreak())
-
-    story.append(front("List of Tables"))
-    story.append(Paragraph(
-        "No manuscript tables are currently embedded as formal tables in this "
-        "production source. Statistical results are reported in the text and figures.",
         styles["body"],
     ))
     story.append(PageBreak())
