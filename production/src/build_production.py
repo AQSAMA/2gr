@@ -52,6 +52,12 @@ FRONT_MATTER_PAGES: list[str] = [
     "List of Abbreviations",
 ]
 
+TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
+UNIVERSITY = "University of Al-Maarif"
+COLLEGE = "College of Pharmacy"
+SUPERVISOR = "Hameed Adnan"
+MONTH_YEAR = "May, 2026"
+
 
 CHAPTER_INSERTIONS = [
     ("# I. INTRODUCTION", "Chapter One", "Introduction"),
@@ -208,6 +214,7 @@ def assemble_markdown() -> Path:
 
     merged = "\n\n".join(parts).strip() + "\n"
     merged = normalize_page_breaks(merged)
+    merged = inject_front_matter_pages(merged)
     merged = inject_chapter_title_pages(merged)
     merged = transform_inline_figure_links(merged)
     merged = normalize_figure_captions(merged)
@@ -437,15 +444,58 @@ def build_docx(md_path: Path, out_path: Path) -> None:
         if add_page_break:
             doc.add_page_break()
 
+    def add_cover_page() -> None:
+        logo = FIGURES_DIR / "University_logo.png"
+        p = doc.add_paragraph()
+        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        p.paragraph_format.first_line_indent = Inches(0)
+        if logo.exists():
+            run = p.add_run()
+            run.add_picture(str(logo), width=Inches(1.1))
+
+        for line in [
+            "Republic of Iraq",
+            "Ministry of Higher Education and Scientific Research",
+            UNIVERSITY,
+            COLLEGE,
+            "",
+            TITLE,
+            "",
+            "A Project Submitted to",
+            f"The {COLLEGE}, {UNIVERSITY}, Department of Clinical Pharmacy, in Partial Fulfillment for the Bachelor of Pharmacy",
+            "",
+            "Supervised by:",
+            SUPERVISOR,
+            "",
+            MONTH_YEAR,
+        ]:
+            row = doc.add_paragraph(line)
+            row.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            row.paragraph_format.first_line_indent = Inches(0)
+            if row.runs:
+                row.runs[0].font.name = "Times New Roman"
+                row.runs[0]._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+                row.runs[0].font.size = Pt(14 if line != TITLE else 20)
+                if line in {TITLE, UNIVERSITY, COLLEGE, SUPERVISOR}:
+                    row.runs[0].bold = True
+        doc.add_page_break()
+
     section = doc.sections[0]
-    set_section_page_number(section, number_format="decimal", restart_at=1)
+    set_section_page_number(section, number_format="upperRoman", restart_at=1)
+    add_cover_page()
 
     started = False
     chapter_just_emitted = False
     in_references = False
     roman_started = False
     arabic_started = False
+    before_abstract = True
     for kind, data in iter_markdown_blocks(text):
+        if before_abstract:
+            if kind == "h1" and data.strip().upper() == "ABSTRACT":
+                before_abstract = False
+            elif kind != "frontmatter":
+                continue
         if kind == "frontmatter":
             if not roman_started:
                 section = doc.add_section()
