@@ -13,3 +13,7 @@ __pycache__/
 # Editable Typst generated outputs
 typst_content/output/*
 !typst_content/output/.gitkeep
+production/method_b_typst/output/*
+!production/method_b_typst/output/.gitkeep
+production/method_b_typst/generated/*
+!production/method_b_typst/generated/.gitkeep
