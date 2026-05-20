@@ -82,6 +82,8 @@
 // Cover page: unnumbered. Certification begins on the second page.
 #set page(numbering: none)
 #align(center)[
+  #image("../figures/University_logo.png", width: 2.25cm)
+  #v(0.16cm)
   #text(size: 15pt, weight: "bold", fill: navy)[Republic of Iraq] \
   #text(size: 15pt, weight: "bold", fill: navy)[Ministry of Higher Education and Scientific Research] \
   #text(size: 15pt, weight: "bold", fill: navy)[University of Al-Maarif] \

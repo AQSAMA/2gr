@@ -8,11 +8,18 @@ manuscript at ``production/assembled/comprehensive_research.md``:
     research_method_a.pdf   - Reportlab PDF (companion).
     research_method_a.tex   - Standalone LaTeX source (companion).
 
-The visual design - cover page, framed front matter, page borders,
-roman -> arabic page-number switch, chapter title pages, running heads,
-figure caption auto-numbering - mirrors the Typst pipeline in
-``production/method_b_typst/templates/`` and ``typst_content/research.typ``
-so any of these outputs can be presented as the final thesis copy.
+This is an independent build (NOT a copy of the Typst output). The visual
+style is intentionally plain (no page borders, no decorative coloring), but
+the document structure mirrors the Typst pipeline:
+
+    * a formal cover page (logo, university header, title, students,
+      supervisor, month/year),
+    * preliminary pages with lower-roman page numbers (Certification,
+      Dedication, Acknowledgment, Table of Contents, List of Figures,
+      List of Tables, List of Abbreviations),
+    * main matter from the Abstract onward with arabic page numbers,
+    * page headers carrying the page number plus the chapter name as a
+      running head once each chapter starts.
 """
 from __future__ import annotations
 
@@ -27,9 +34,8 @@ from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Cm, Inches, Pt, RGBColor
+from docx.shared import Cm, Inches, Pt
 
-from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -83,8 +89,7 @@ CHAPTER_INSERTIONS = [
 
 
 # ---------------------------------------------------------------------------
-# Manuscript metadata (single source of truth for both the Python and
-# Typst-content DOCX paths).
+# Manuscript metadata (single source of truth shared with build_typst_content).
 # ---------------------------------------------------------------------------
 TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
 STUDENTS = [
@@ -110,7 +115,10 @@ LOGO_CANDIDATES = (
     "al-maarif logo.png",
 )
 
-# Color palette mirrors typst_content/research.typ (navy/gold).
+# These constants stay available for the Typst-content builder, which is
+# styled. The Method A DOCX/PDF/TEX themselves do NOT use them - the
+# Method A path keeps its plain visual style (no decorative borders,
+# no decorative coloring).
 NAVY_HEX = "102A43"
 GOLD_HEX = "B58B2A"
 INK_HEX = "111827"
@@ -352,8 +360,7 @@ def collect_thesis_blocks(md_path: Path) -> list[tuple[str, str]]:
 
     The cover-content placeholders in ``content/00_cover.md`` are skipped
     (everything before the ``# ABSTRACT`` heading) because the cover and
-    preliminary pages are produced programmatically to keep formatting in
-    sync with the Typst pipeline.
+    preliminary pages are produced programmatically.
     """
     blocks: list[tuple[str, str]] = []
     skip_cover = True
@@ -395,6 +402,7 @@ def collect_thesis_blocks(md_path: Path) -> list[tuple[str, str]]:
 # ---------------------------------------------------------------------------
 def set_run_font(run, size: float | None = None, bold: bool | None = None,
                  color: str | None = None, italic: bool | None = None) -> None:
+    from docx.shared import RGBColor
     run.font.name = "Times New Roman"
     run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
     if size is not None:
@@ -408,6 +416,8 @@ def set_run_font(run, size: float | None = None, bold: bool | None = None,
 
 
 def set_paragraph_border(paragraph, color: str = GOLD_HEX, size: str = "8") -> None:
+    """Add a four-edge border around a paragraph (used by build_typst_content,
+    NOT by the plain Method A DOCX)."""
     p_pr = paragraph._p.get_or_add_pPr()
     borders = p_pr.find(qn("w:pBdr"))
     if borders is None:
@@ -420,29 +430,6 @@ def set_paragraph_border(paragraph, color: str = GOLD_HEX, size: str = "8") -> N
         element.set(qn("w:space"), "4")
         element.set(qn("w:color"), color)
         borders.append(element)
-
-
-def set_section_page_border(section) -> None:
-    sect_pr = section._sectPr
-    borders = sect_pr.find(qn("w:pgBorders"))
-    if borders is None:
-        borders = OxmlElement("w:pgBorders")
-        borders.set(qn("w:offsetFrom"), "page")
-        sect_pr.append(borders)
-    for edge in ("top", "left", "bottom", "right"):
-        element = OxmlElement(f"w:{edge}")
-        element.set(qn("w:val"), "single")
-        element.set(qn("w:sz"), "8")
-        element.set(qn("w:space"), "18")
-        element.set(qn("w:color"), NAVY_HEX)
-        borders.append(element)
-
-
-def clear_section_page_border(section) -> None:
-    sect_pr = section._sectPr
-    borders = sect_pr.find(qn("w:pgBorders"))
-    if borders is not None:
-        sect_pr.remove(borders)
 
 
 def set_section_page_numbering(section, fmt: str, start: int | None) -> None:
@@ -495,20 +482,18 @@ def configure_section(
     numbered: bool,
     number_format: str = "decimal",
     start: int | None = None,
-    border: bool = True,
     running_head: str = "",
     suppress_first_page_header: bool = False,
 ) -> None:
-    """Apply margins, borders, page numbering, header to a Word section."""
+    """Apply margins, page numbering, and the page header to a Word section.
+
+    No page borders or decorative styling are applied; this keeps the plain
+    visual style of the Method A DOCX.
+    """
     section.left_margin = Cm(1.5)
     section.right_margin = Cm(1.5)
     section.top_margin = Cm(1.5)
     section.bottom_margin = Cm(1.5)
-
-    if border:
-        set_section_page_border(section)
-    else:
-        clear_section_page_border(section)
 
     section.header.is_linked_to_previous = False
     section.footer.is_linked_to_previous = False
@@ -528,19 +513,18 @@ def configure_section(
         head.paragraph_format.first_line_indent = Inches(0)
         if running_head:
             run = head.add_run(running_head)
-            set_run_font(run, size=9, color=NAVY_HEX)
+            set_run_font(run, size=10)
 
         page_para = section.header.add_paragraph()
         page_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         page_para.paragraph_format.first_line_indent = Inches(0)
         marker = page_para.add_run()
-        set_run_font(marker, size=10, color=NAVY_HEX)
+        set_run_font(marker, size=10)
         add_field_run(page_para, "PAGE")
 
         if section.different_first_page_header_footer:
             # Chapter title pages still show the page number, but no
-            # running head (matches typst_content behaviour around
-            # `set page(header: none)` for chapter pages).
+            # running head.
             first_page = section.first_page_header.paragraphs[0]
             first_page.alignment = WD_ALIGN_PARAGRAPH.CENTER
             first_page.paragraph_format.first_line_indent = Inches(0)
@@ -564,7 +548,6 @@ def setup_docx_styles(doc: Document) -> None:
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
         style.font.size = Pt(size)
         style.font.bold = True
-        style.font.color.rgb = RGBColor.from_string(NAVY_HEX)
 
 
 # ---------------------------------------------------------------------------
@@ -576,7 +559,6 @@ def _add_centered_paragraph(
     size: float = 14,
     bold: bool = False,
     italic: bool = False,
-    color: str | None = None,
     space_before: float | None = None,
     space_after: float | None = None,
 ):
@@ -589,15 +571,15 @@ def _add_centered_paragraph(
         paragraph.paragraph_format.space_after = Pt(space_after)
     if text:
         run = paragraph.add_run(text)
-        set_run_font(run, size=size, bold=bold, italic=italic, color=color)
+        set_run_font(run, size=size, bold=bold, italic=italic)
     return paragraph
 
 
 def _add_front_title(doc: Document, title: str) -> None:
-    paragraph = _add_centered_paragraph(doc, title, size=22, bold=True, color=NAVY_HEX)
-    set_paragraph_border(paragraph, color=GOLD_HEX, size="10")
+    """Plain centered front-matter section title (no border, no color)."""
+    paragraph = _add_centered_paragraph(doc, title, size=20, bold=True)
     paragraph.paragraph_format.space_before = Pt(8)
-    paragraph.paragraph_format.space_after = Pt(12)
+    paragraph.paragraph_format.space_after = Pt(14)
 
 
 def _add_body_paragraph(doc: Document, text: str) -> None:
@@ -626,13 +608,15 @@ def _add_figure_caption(doc: Document, caption_text: str) -> None:
     p.paragraph_format.space_before = Pt(2)
     p.paragraph_format.space_after = Pt(8)
     label = p.add_run("Figure ")
-    set_run_font(label, size=12, bold=True, color=NAVY_HEX)
+    set_run_font(label, size=12, bold=True)
     add_field_run(p, r"SEQ Figure \* ARABIC", default_text="0")
     tail = p.add_run(f". {cleaned}")
-    set_run_font(tail, size=12, color=NAVY_HEX)
+    set_run_font(tail, size=12)
 
 
 def _add_cover_page(doc: Document) -> None:
+    """Plain cover page: logo, institutional header, title, students,
+    supervisor, month/year. No frame, no decorative coloring."""
     logo_path = find_university_logo()
     if logo_path is not None:
         holder = doc.add_paragraph()
@@ -648,13 +632,12 @@ def _add_cover_page(doc: Document) -> None:
         UNIVERSITY,
         COLLEGE,
     ]:
-        _add_centered_paragraph(doc, line, size=15, bold=True, color=NAVY_HEX)
+        _add_centered_paragraph(doc, line, size=14, bold=True)
 
-    title = _add_centered_paragraph(
-        doc, TITLE, size=24, bold=True, color=NAVY_HEX,
-        space_before=10, space_after=14,
+    _add_centered_paragraph(
+        doc, TITLE, size=22, bold=True,
+        space_before=20, space_after=18,
     )
-    set_paragraph_border(title, color=GOLD_HEX, size="12")
 
     _add_centered_paragraph(doc, "A Project Submitted to", size=14)
     _add_centered_paragraph(
@@ -664,14 +647,14 @@ def _add_cover_page(doc: Document) -> None:
         size=13,
     )
 
-    _add_centered_paragraph(doc, "By", size=14, bold=True, space_before=8)
+    _add_centered_paragraph(doc, "By", size=14, bold=True, space_before=12)
     for student in STUDENTS:
-        _add_centered_paragraph(doc, student, size=20, bold=True, color=NAVY_HEX)
+        _add_centered_paragraph(doc, student, size=18, bold=True)
 
-    _add_centered_paragraph(doc, "Supervised by:", size=14, bold=True, space_before=10)
-    _add_centered_paragraph(doc, SUPERVISOR, size=20, bold=True, color=NAVY_HEX)
-    _add_centered_paragraph(doc, SUPERVISOR_DEGREE, size=16)
-    _add_centered_paragraph(doc, MONTH_YEAR, size=14, space_before=12)
+    _add_centered_paragraph(doc, "Supervised by:", size=14, bold=True, space_before=12)
+    _add_centered_paragraph(doc, SUPERVISOR, size=18, bold=True)
+    _add_centered_paragraph(doc, SUPERVISOR_DEGREE, size=14)
+    _add_centered_paragraph(doc, MONTH_YEAR, size=14, space_before=14)
 
 
 ABBREVIATIONS = [
@@ -705,7 +688,7 @@ def _add_preliminary_pages(doc: Document) -> None:
     sig.paragraph_format.first_line_indent = Inches(0)
     sig.paragraph_format.space_before = Pt(18)
     sig_run = sig.add_run(f"Supervisor's name: {SUPERVISOR}")
-    set_run_font(sig_run, size=14, bold=True, color=NAVY_HEX)
+    set_run_font(sig_run, size=14, bold=True)
     doc.add_page_break()
 
     # 2. Dedication
@@ -738,7 +721,7 @@ def _add_preliminary_pages(doc: Document) -> None:
     note.alignment = WD_ALIGN_PARAGRAPH.CENTER
     note.paragraph_format.first_line_indent = Inches(0)
     note_run = note.add_run("Right-click and choose Update Field, or press F9 in Word, to refresh.")
-    set_run_font(note_run, size=10, italic=True, color=NAVY_HEX)
+    set_run_font(note_run, size=10, italic=True)
     p = doc.add_paragraph()
     p.paragraph_format.first_line_indent = Inches(0)
     add_field_run(p, r'TOC \o "1-2" \h \z \u', default_text="(Update field in Word.)")
@@ -768,39 +751,41 @@ def _add_preliminary_pages(doc: Document) -> None:
         para.paragraph_format.first_line_indent = Inches(0)
         para.paragraph_format.space_after = Pt(2)
         run_short = para.add_run(f"{short}: ")
-        set_run_font(run_short, size=14, bold=True, color=NAVY_HEX)
+        set_run_font(run_short, size=14, bold=True)
         run_long = para.add_run(long)
         set_run_font(run_long, size=14)
 
 
 def _add_chapter_title_page(doc: Document, chapter_number: str, chapter_name: str) -> None:
-    """Render a centered chapter title page with thin gold rules above and below.
+    """Plain centered chapter title page with em-dash rules above and below.
 
-    Mirrors the rule-based chapter-page style used in the Typst designs.
+    Matches the original Method A style: no decorative coloring, no frame.
     """
     spacer = doc.add_paragraph()
     spacer.paragraph_format.first_line_indent = Inches(0)
-    spacer.paragraph_format.space_before = Pt(180)
+    spacer.paragraph_format.space_before = Inches(3.0)
 
-    rule_top = _add_centered_paragraph(
-        doc, "\u2500" * 30, size=12, color=GOLD_HEX,
+    rule_top = doc.add_paragraph()
+    rule_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    rule_top.paragraph_format.first_line_indent = Inches(0)
+    rule_top.paragraph_format.space_after = Pt(8)
+    rule_top_run = rule_top.add_run("\u2500" * 12)
+    set_run_font(rule_top_run, size=18)
+
+    _add_centered_paragraph(
+        doc, chapter_number, size=32, bold=True,
+        space_before=4, space_after=8,
+    )
+    _add_centered_paragraph(
+        doc, chapter_name, size=18, bold=True,
         space_before=0, space_after=10,
     )
-    # Force the rule paragraph to keep zero first-line indent and stay centered.
-    rule_top.paragraph_format.first_line_indent = Inches(0)
 
-    _add_centered_paragraph(
-        doc, chapter_number, size=32, bold=True, color=NAVY_HEX,
-        space_before=8, space_after=8,
-    )
-    _add_centered_paragraph(
-        doc, chapter_name, size=20, bold=True, color=NAVY_HEX,
-        space_before=4, space_after=12,
-    )
-    _add_centered_paragraph(
-        doc, "\u2500" * 30, size=12, color=GOLD_HEX,
-        space_before=0, space_after=0,
-    )
+    rule_bottom = doc.add_paragraph()
+    rule_bottom.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    rule_bottom.paragraph_format.first_line_indent = Inches(0)
+    rule_bottom_run = rule_bottom.add_run("\u2500" * 12)
+    set_run_font(rule_bottom_run, size=18)
 
 
 # ---------------------------------------------------------------------------
@@ -811,8 +796,8 @@ def build_docx(md_path: Path, out_path: Path) -> None:
     doc = Document()
     setup_docx_styles(doc)
 
-    # Section 0: cover. No page numbers, no border.
-    configure_section(doc.sections[0], numbered=False, border=False)
+    # Section 0: cover. No page numbers, no decorations.
+    configure_section(doc.sections[0], numbered=False)
     _add_cover_page(doc)
 
     # Section 1: preliminary pages. Lower-roman numerals starting at i.
@@ -822,7 +807,6 @@ def build_docx(md_path: Path, out_path: Path) -> None:
         numbered=True,
         number_format="lowerRoman",
         start=1,
-        border=True,
     )
     _add_preliminary_pages(doc)
 
@@ -833,7 +817,6 @@ def build_docx(md_path: Path, out_path: Path) -> None:
         numbered=True,
         number_format="decimal",
         start=1,
-        border=True,
         running_head="",
     )
 
@@ -850,7 +833,6 @@ def build_docx(md_path: Path, out_path: Path) -> None:
                 numbered=True,
                 number_format="decimal",
                 start=None,
-                border=True,
                 running_head=chapter_name,
                 suppress_first_page_header=True,
             )
@@ -951,8 +933,8 @@ def _latex_cover_block() -> list[str]:
         "{\\large\\bfseries Republic of Iraq}\\\\",
         "{\\large\\bfseries Ministry of Higher Education and Scientific Research}\\\\",
         f"{{\\large\\bfseries {escape_latex(UNIVERSITY)}}}\\\\",
-        f"{{\\large\\bfseries {escape_latex(COLLEGE)}}}\\\\[18pt]",
-        "\\fbox{\\parbox{0.88\\textwidth}{\\centering\\Large\\bfseries " + escape_latex(TITLE) + "}}\\\\[18pt]",
+        f"{{\\large\\bfseries {escape_latex(COLLEGE)}}}\\\\[28pt]",
+        "{\\Large\\bfseries " + escape_latex(TITLE) + "}\\\\[22pt]",
         "{A Project Submitted to}\\\\",
         f"{{The {escape_latex(COLLEGE)}, {escape_latex(UNIVERSITY)}, {escape_latex(DEPARTMENT)},"
         " in Partial Fulfillment for the Bachelor of Pharmacy}}\\\\[14pt]",
@@ -1034,10 +1016,10 @@ def build_tex(md_path: Path, out_path: Path) -> None:
             body.append("\\newpage")
             body.append("\\thispagestyle{plain}")
             body.append("\\begin{center}\\vspace*{0.30\\textheight}")
-            body.append("{\\Large\\bfseries\\rule{6cm}{0.4pt}}\\\\[10pt]")
+            body.append("{\\Large\\bfseries\\rule{4cm}{0.4pt}}\\\\[10pt]")
             body.append("{\\Huge\\bfseries " + escape_latex(chapter_number) + "}\\\\[8pt]")
-            body.append("{\\LARGE\\bfseries " + escape_latex(chapter_name) + "}\\\\[10pt]")
-            body.append("{\\Large\\bfseries\\rule{6cm}{0.4pt}}")
+            body.append("{\\Large\\bfseries " + escape_latex(chapter_name) + "}\\\\[10pt]")
+            body.append("{\\Large\\bfseries\\rule{4cm}{0.4pt}}")
             body.append("\\end{center}")
             body.append("\\newpage")
             chapter_just_emitted = True
@@ -1105,7 +1087,7 @@ def build_tex(md_path: Path, out_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Reportlab PDF builder (cover -> roman prelim -> arabic main with borders).
+# Reportlab PDF builder (cover -> roman prelim -> arabic main, plain style).
 # ---------------------------------------------------------------------------
 class _PdfState:
     """Mutable state shared between flowables and onPage callbacks."""
@@ -1120,11 +1102,6 @@ class _PdfState:
 
 
 _pdf_state = _PdfState()
-
-
-_NAVY_RGB = HexColor("#" + NAVY_HEX)
-_GOLD_RGB = HexColor("#" + GOLD_HEX)
-_INK_RGB = HexColor("#" + INK_HEX)
 
 
 class _SetChapterFlowable(Flowable):
@@ -1146,21 +1123,10 @@ def _record_section(name: str, doc) -> None:
         _pdf_state.section_starts[name] = doc.page
 
 
-def _draw_page_border(canvas, doc) -> None:
-    pw, ph = doc.pagesize
-    inset = 0.6 * cm
-    canvas.saveState()
-    canvas.setStrokeColor(_NAVY_RGB)
-    canvas.setLineWidth(0.6)
-    canvas.rect(inset, inset, pw - 2 * inset, ph - 2 * inset)
-    canvas.restoreState()
-
-
 def _draw_page_label(canvas, doc, label: str, running_head: str = "") -> None:
     pw, ph = doc.pagesize
     canvas.saveState()
     canvas.setFont("Times-Roman", 10)
-    canvas.setFillColor(_NAVY_RGB)
     canvas.drawCentredString(pw / 2, ph - 1.0 * cm, label)
     if running_head:
         canvas.drawString(1.8 * cm, ph - 1.0 * cm, running_head)
@@ -1169,26 +1135,23 @@ def _draw_page_label(canvas, doc, label: str, running_head: str = "") -> None:
 
 def _on_cover(canvas, doc) -> None:
     _record_section("cover", doc)
-    # Cover page: no border, no page number.
+    # Cover page: no page number, no decorations.
 
 
 def _on_prelim(canvas, doc) -> None:
     _record_section("prelim", doc)
-    _draw_page_border(canvas, doc)
     rel = doc.page - _pdf_state.section_starts["prelim"] + 1
     _draw_page_label(canvas, doc, _to_roman_lower(rel))
 
 
 def _on_main(canvas, doc) -> None:
     _record_section("main", doc)
-    _draw_page_border(canvas, doc)
     rel = doc.page - _pdf_state.section_starts["main"] + 1
     _draw_page_label(canvas, doc, str(rel), running_head=_pdf_state.chapter)
 
 
 def _on_main_chapter(canvas, doc) -> None:
     _record_section("main", doc)
-    _draw_page_border(canvas, doc)
     rel = doc.page - _pdf_state.section_starts["main"] + 1
     _draw_page_label(canvas, doc, str(rel))
 
@@ -1220,7 +1183,6 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         firstLineIndent=0.5 * 72,
         spaceBefore=2,
         spaceAfter=4,
-        textColor=_INK_RGB,
         alignment=4,  # justify
     )
     styles["refs"] = ParagraphStyle(
@@ -1241,7 +1203,6 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         leading=24,
         spaceBefore=12,
         spaceAfter=8,
-        textColor=_NAVY_RGB,
     )
     styles["h2"] = ParagraphStyle(
         "H2",
@@ -1251,25 +1212,22 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         leading=22,
         spaceBefore=8,
         spaceAfter=6,
-        textColor=_NAVY_RGB,
     )
     styles["centered_big"] = ParagraphStyle(
         "CenteredBig",
         parent=base["Normal"],
         fontName="Times-Bold",
-        fontSize=24,
-        leading=30,
+        fontSize=22,
+        leading=28,
         alignment=1,
-        textColor=_NAVY_RGB,
     )
-    styles["centered_title_lg"] = ParagraphStyle(
-        "CenteredTitleLg",
+    styles["centered_lg"] = ParagraphStyle(
+        "CenteredLg",
         parent=base["Normal"],
         fontName="Times-Bold",
-        fontSize=20,
-        leading=26,
+        fontSize=18,
+        leading=24,
         alignment=1,
-        textColor=_NAVY_RGB,
     )
     styles["centered_md"] = ParagraphStyle(
         "CenteredMd",
@@ -1278,7 +1236,6 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         fontSize=14,
         leading=20,
         alignment=1,
-        textColor=_INK_RGB,
     )
     styles["centered_md_bold"] = ParagraphStyle(
         "CenteredMdBold",
@@ -1289,10 +1246,9 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         "FrontTitle",
         parent=base["Normal"],
         fontName="Times-Bold",
-        fontSize=22,
-        leading=28,
+        fontSize=20,
+        leading=26,
         alignment=1,
-        textColor=_NAVY_RGB,
         spaceBefore=10,
         spaceAfter=14,
     )
@@ -1303,25 +1259,22 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         fontSize=32,
         leading=40,
         alignment=1,
-        textColor=_NAVY_RGB,
     )
     styles["chapter_name"] = ParagraphStyle(
         "ChapterName",
         parent=base["Normal"],
         fontName="Times-Bold",
-        fontSize=20,
-        leading=26,
+        fontSize=18,
+        leading=24,
         alignment=1,
-        textColor=_NAVY_RGB,
     )
     styles["chapter_rule"] = ParagraphStyle(
         "ChapterRule",
         parent=base["Normal"],
         fontName="Times-Roman",
-        fontSize=12,
-        leading=14,
+        fontSize=18,
+        leading=22,
         alignment=1,
-        textColor=_GOLD_RGB,
     )
     styles["caption"] = ParagraphStyle(
         "FigureCaption",
@@ -1332,7 +1285,6 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         alignment=1,
         spaceBefore=4,
         spaceAfter=10,
-        textColor=_NAVY_RGB,
     )
     styles["abbr"] = ParagraphStyle(
         "Abbr",
@@ -1340,7 +1292,6 @@ def _build_pdf_styles() -> dict[str, ParagraphStyle]:
         fontName="Times-Roman",
         fontSize=14,
         leading=20,
-        textColor=_INK_RGB,
         spaceAfter=2,
     )
     return styles
@@ -1366,9 +1317,9 @@ def _pdf_cover_story(styles: dict[str, ParagraphStyle]) -> list:
         COLLEGE,
     ]:
         story.append(Paragraph(line, styles["centered_md_bold"]))
-    story.append(Spacer(1, 14))
+    story.append(Spacer(1, 18))
     story.append(Paragraph(TITLE, styles["centered_big"]))
-    story.append(Spacer(1, 14))
+    story.append(Spacer(1, 18))
     story.append(Paragraph("A Project Submitted to", styles["centered_md"]))
     story.append(Paragraph(
         f"The {COLLEGE}, {UNIVERSITY}, {DEPARTMENT}, in Partial Fulfillment for the Bachelor of Pharmacy",
@@ -1377,10 +1328,10 @@ def _pdf_cover_story(styles: dict[str, ParagraphStyle]) -> list:
     story.append(Spacer(1, 14))
     story.append(Paragraph("By", styles["centered_md_bold"]))
     for student in STUDENTS:
-        story.append(Paragraph(student, styles["centered_title_lg"]))
+        story.append(Paragraph(student, styles["centered_lg"]))
     story.append(Spacer(1, 12))
     story.append(Paragraph("Supervised by:", styles["centered_md_bold"]))
-    story.append(Paragraph(SUPERVISOR, styles["centered_title_lg"]))
+    story.append(Paragraph(SUPERVISOR, styles["centered_lg"]))
     story.append(Paragraph(SUPERVISOR_DEGREE, styles["centered_md"]))
     story.append(Spacer(1, 14))
     story.append(Paragraph(MONTH_YEAR, styles["centered_md"]))
@@ -1405,7 +1356,7 @@ def _pdf_preliminary_story(styles: dict[str, ParagraphStyle]) -> list:
     sig_style = ParagraphStyle(
         "Sig", parent=styles["body"],
         firstLineIndent=0, alignment=2,
-        fontName="Times-Bold", textColor=_NAVY_RGB,
+        fontName="Times-Bold",
         spaceBefore=14,
     )
     story.append(Paragraph(f"Supervisor's name: {SUPERVISOR}", sig_style))
@@ -1459,16 +1410,13 @@ def _pdf_preliminary_story(styles: dict[str, ParagraphStyle]) -> list:
 
     story.append(front("List of Abbreviations"))
     for short, long in ABBREVIATIONS:
-        story.append(Paragraph(
-            f"<b><font color='#{NAVY_HEX}'>{short}:</font></b> {long}",
-            styles["abbr"],
-        ))
+        story.append(Paragraph(f"<b>{short}:</b> {long}", styles["abbr"]))
     return story
 
 
 def _pdf_chapter_title_story(chapter_number: str, chapter_name: str,
                              styles: dict[str, ParagraphStyle]) -> list:
-    rule = "\u2500" * 30
+    rule = "\u2500" * 12
     return [
         Spacer(1, 220),
         Paragraph(rule, styles["chapter_rule"]),
