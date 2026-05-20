@@ -1,24 +1,56 @@
 #!/usr/bin/env python3
+"""Method A (Python) production path.
+
+Produces three publishing-ready outputs from the assembled Markdown
+manuscript at ``production/assembled/comprehensive_research.md``:
+
+    research_method_a.docx  - Microsoft Word document. PRIMARY deliverable.
+    research_method_a.pdf   - Reportlab PDF (companion).
+    research_method_a.tex   - Standalone LaTeX source (companion).
+
+The visual design - cover page, framed front matter, page borders,
+roman -> arabic page-number switch, chapter title pages, running heads,
+figure caption auto-numbering - mirrors the Typst pipeline in
+``production/method_b_typst/templates/`` and ``typst_content/research.typ``
+so any of these outputs can be presented as the final thesis copy.
+"""
 from __future__ import annotations
 
 import re
 import shutil
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 from urllib.parse import unquote
 
 from docx import Document
+from docx.enum.section import WD_SECTION
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
-from docx.shared import Pt, Inches, Cm
 from docx.oxml.ns import qn
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.shared import Cm, Inches, Pt, RGBColor
+
+from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
+from reportlab.platypus import (
+    BaseDocTemplate,
+    Flowable,
+    Frame,
+    Image,
+    NextPageTemplate,
+    PageBreak,
+    PageTemplate,
+    Paragraph,
+    Spacer,
+)
 
 
+# ---------------------------------------------------------------------------
+# Repository layout (kept stable - imported by build_typst.py and
+# build_typst_content.py).
+# ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROD_ROOT = REPO_ROOT / "production"
 CONTENT_DIR = REPO_ROOT / "content"
@@ -41,10 +73,6 @@ CONTENT_FILES = [
 
 APPENDIX_FILES: list[str] = []
 
-
-FRONT_MATTER_PAGES: list[str] = []
-
-
 CHAPTER_INSERTIONS = [
     ("# I. INTRODUCTION", "Chapter One", "Introduction"),
     ("# III. METHODOLOGY (ORIGINAL CROSS-SECTIONAL STUDY)", "Chapter Two", "Materials and Methods"),
@@ -54,6 +82,59 @@ CHAPTER_INSERTIONS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Manuscript metadata (single source of truth for both the Python and
+# Typst-content DOCX paths).
+# ---------------------------------------------------------------------------
+TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
+STUDENTS = [
+    "Abdul Rahman Wakaa Ali",
+    "Ali Basem Hammoud",
+    "Shifa Safi Aboud",
+    "Zainab Mashal Nayef",
+]
+SUPERVISOR = "Hameed Adnan"
+SUPERVISOR_DEGREE = "Supervisor's Degree"
+UNIVERSITY = "University of Al-Maarif"
+COLLEGE = "College of Pharmacy"
+DEPARTMENT = "Department of Clinical Pharmacy"
+MONTH_YEAR = "May, 2026"
+
+LOGO_CANDIDATES = (
+    "University_logo.png",
+    "university logo.png",
+    "university_logo.png",
+    "University logo.png",
+    "University Logo.png",
+    "almaarif logo.png",
+    "al-maarif logo.png",
+)
+
+# Color palette mirrors typst_content/research.typ (navy/gold).
+NAVY_HEX = "102A43"
+GOLD_HEX = "B58B2A"
+INK_HEX = "111827"
+
+
+def find_university_logo() -> Optional[Path]:
+    """Locate the university logo PNG in the repo root or figures/."""
+    search_dirs = (REPO_ROOT, FIGURES_DIR)
+    for directory in search_dirs:
+        for filename in LOGO_CANDIDATES:
+            candidate = directory / filename
+            if candidate.exists():
+                return candidate
+    for directory in search_dirs:
+        for candidate in sorted(directory.glob("*.png")):
+            lowered = candidate.name.lower()
+            if "logo" in lowered or "maarif" in lowered:
+                return candidate
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Markdown assembly (shared by Method A, Method B and typst_content).
+# ---------------------------------------------------------------------------
 def ensure_dirs() -> None:
     for d in [ASSEMBLED_DIR, METHOD_A_DIR, PROD_FIGURES_DIR]:
         d.mkdir(parents=True, exist_ok=True)
@@ -77,15 +158,6 @@ def inject_chapter_title_pages(text: str) -> str:
         marker = f"\n\n[[CHAPTER_TITLE:{chapter_number}|||{chapter_name}]]\n\n{heading}"
         text = text.replace(f"\n\n{heading}", marker, 1)
     return text
-
-
-def inject_front_matter_pages(text: str) -> str:
-    markers = []
-    for page in FRONT_MATTER_PAGES:
-        markers.append(f"[[FRONT_MATTER:{page}]]")
-        markers.append('<div class="page-break"></div>')
-    front_matter_block = "\n\n".join(markers).strip()
-    return front_matter_block + "\n\n" + text
 
 
 def transform_inline_figure_links(text: str) -> str:
@@ -123,7 +195,7 @@ def normalize_figure_captions(text: str) -> str:
     image_pattern = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$")
     caption_pattern = re.compile(r"^\*\*Caption:\*\*\s*(.+?)\s*$")
     figure_no = 0
-    last_image_out_idx: int | None = None
+    last_image_out_idx: Optional[int] = None
     last_caption_consumed = True
 
     def build_image_line(caption: str, path: str) -> str:
@@ -165,22 +237,6 @@ def normalize_figure_captions(text: str) -> str:
             last_caption_consumed = True
 
     return "\n".join(out_lines)
-
-
-def collect_figure_md_files() -> list[Path]:
-    files = sorted(FIGURES_DIR.glob("*.md"), key=lambda p: p.name)
-    return files
-
-
-def rewrite_local_figure_links(md: str) -> str:
-    def repl(match: re.Match[str]) -> str:
-        alt = match.group(1)
-        path = match.group(2)
-        if "/" not in path:
-            return f"![{alt}](../figures/{path})"
-        return match.group(0)
-
-    return re.sub(r"!\[([^\]]*)\]\(([^\)]+)\)", repl, md)
 
 
 def assemble_markdown() -> Path:
@@ -280,251 +336,734 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
         yield ("paragraph", " ".join(paragraph_lines).strip())
 
 
-def build_docx(md_path: Path, out_path: Path) -> None:
-    text = md_path.read_text(encoding="utf-8")
-    doc = Document()
+def clean_inline_markdown(value: str) -> str:
+    """Strip light Markdown formatting (bold/italic/code/links) from a run."""
+    value = value.replace("\u00a0", " ")
+    value = re.sub(r"\*\*([^*]+)\*\*", r"\1", value)
+    value = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"\1", value)
+    value = re.sub(r"`([^`]+)`", r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    return value
 
-    section = doc.sections[0]
+
+def collect_thesis_blocks(md_path: Path) -> list[tuple[str, str]]:
+    """Return main-matter blocks from the assembled manuscript.
+
+    The cover-content placeholders in ``content/00_cover.md`` are skipped
+    (everything before the ``# ABSTRACT`` heading) because the cover and
+    preliminary pages are produced programmatically to keep formatting in
+    sync with the Typst pipeline.
+    """
+    blocks: list[tuple[str, str]] = []
+    skip_cover = True
+
+    for kind, data in iter_markdown_blocks(md_path.read_text(encoding="utf-8")):
+        if skip_cover:
+            if kind == "h1" and data.strip().upper() == "ABSTRACT":
+                skip_cover = False
+            else:
+                continue
+
+        if kind == "chaptertitle":
+            blocks.append(("chapter", data))
+            continue
+        if kind == "h1":
+            blocks.append(("h1", clean_inline_markdown(data)))
+            continue
+        if kind == "h2":
+            blocks.append(("h2", clean_inline_markdown(data)))
+            continue
+        if kind == "paragraph":
+            text = clean_inline_markdown(data)
+            if text:
+                blocks.append(("paragraph", text))
+            continue
+        if kind == "image":
+            caption, rel_path = data.split("|||", 1)
+            blocks.append(("image", f"{clean_inline_markdown(caption)}|||{rel_path}"))
+            continue
+        if kind == "pagebreak":
+            blocks.append(("pagebreak", ""))
+            continue
+
+    return blocks
+
+
+# ---------------------------------------------------------------------------
+# DOCX low-level OOXML helpers (used by both Method A and typst_content).
+# ---------------------------------------------------------------------------
+def set_run_font(run, size: float | None = None, bold: bool | None = None,
+                 color: str | None = None, italic: bool | None = None) -> None:
+    run.font.name = "Times New Roman"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    if size is not None:
+        run.font.size = Pt(size)
+    if bold is not None:
+        run.bold = bold
+    if italic is not None:
+        run.italic = italic
+    if color is not None:
+        run.font.color.rgb = RGBColor.from_string(color)
+
+
+def set_paragraph_border(paragraph, color: str = GOLD_HEX, size: str = "8") -> None:
+    p_pr = paragraph._p.get_or_add_pPr()
+    borders = p_pr.find(qn("w:pBdr"))
+    if borders is None:
+        borders = OxmlElement("w:pBdr")
+        p_pr.append(borders)
+    for edge in ("top", "left", "bottom", "right"):
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), size)
+        element.set(qn("w:space"), "4")
+        element.set(qn("w:color"), color)
+        borders.append(element)
+
+
+def set_section_page_border(section) -> None:
+    sect_pr = section._sectPr
+    borders = sect_pr.find(qn("w:pgBorders"))
+    if borders is None:
+        borders = OxmlElement("w:pgBorders")
+        borders.set(qn("w:offsetFrom"), "page")
+        sect_pr.append(borders)
+    for edge in ("top", "left", "bottom", "right"):
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), "8")
+        element.set(qn("w:space"), "18")
+        element.set(qn("w:color"), NAVY_HEX)
+        borders.append(element)
+
+
+def clear_section_page_border(section) -> None:
+    sect_pr = section._sectPr
+    borders = sect_pr.find(qn("w:pgBorders"))
+    if borders is not None:
+        sect_pr.remove(borders)
+
+
+def set_section_page_numbering(section, fmt: str, start: int | None) -> None:
+    sect_pr = section._sectPr
+    pg_num = sect_pr.find(qn("w:pgNumType"))
+    if pg_num is None:
+        pg_num = OxmlElement("w:pgNumType")
+        sect_pr.append(pg_num)
+    pg_num.set(qn("w:fmt"), fmt)
+    if start is not None:
+        pg_num.set(qn("w:start"), str(start))
+    elif pg_num.get(qn("w:start")) is not None:
+        # Continue numbering across sections by removing any inherited start.
+        del pg_num.attrib[qn("w:start")]
+
+
+def add_field_run(paragraph, instruction: str, default_text: str = " ") -> None:
+    """Insert a Word field run (PAGE / TOC / SEQ).
+
+    Word refreshes the field on first open (or when the user presses F9 /
+    right-clicks -> Update Field).
+    """
+    run = paragraph.add_run()
+    fld_begin = OxmlElement("w:fldChar")
+    fld_begin.set(qn("w:fldCharType"), "begin")
+    run._r.append(fld_begin)
+
+    instr = OxmlElement("w:instrText")
+    instr.set(qn("xml:space"), "preserve")
+    instr.text = instruction
+    run._r.append(instr)
+
+    fld_sep = OxmlElement("w:fldChar")
+    fld_sep.set(qn("w:fldCharType"), "separate")
+    run._r.append(fld_sep)
+
+    result = OxmlElement("w:t")
+    result.set(qn("xml:space"), "preserve")
+    result.text = default_text
+    run._r.append(result)
+
+    fld_end = OxmlElement("w:fldChar")
+    fld_end.set(qn("w:fldCharType"), "end")
+    run._r.append(fld_end)
+
+
+def configure_section(
+    section,
+    *,
+    numbered: bool,
+    number_format: str = "decimal",
+    start: int | None = None,
+    border: bool = True,
+    running_head: str = "",
+    suppress_first_page_header: bool = False,
+) -> None:
+    """Apply margins, borders, page numbering, header to a Word section."""
     section.left_margin = Cm(1.5)
     section.right_margin = Cm(1.5)
     section.top_margin = Cm(1.5)
     section.bottom_margin = Cm(1.5)
 
+    if border:
+        set_section_page_border(section)
+    else:
+        clear_section_page_border(section)
+
+    section.header.is_linked_to_previous = False
+    section.footer.is_linked_to_previous = False
+    section.different_first_page_header_footer = suppress_first_page_header
+
+    for paragraph in section.header.paragraphs:
+        paragraph.clear()
+    if section.different_first_page_header_footer:
+        for paragraph in section.first_page_header.paragraphs:
+            paragraph.clear()
+
+    if numbered:
+        set_section_page_numbering(section, number_format, start)
+
+        head = section.header.paragraphs[0]
+        head.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        head.paragraph_format.first_line_indent = Inches(0)
+        if running_head:
+            run = head.add_run(running_head)
+            set_run_font(run, size=9, color=NAVY_HEX)
+
+        page_para = section.header.add_paragraph()
+        page_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        page_para.paragraph_format.first_line_indent = Inches(0)
+        marker = page_para.add_run()
+        set_run_font(marker, size=10, color=NAVY_HEX)
+        add_field_run(page_para, "PAGE")
+
+        if section.different_first_page_header_footer:
+            # Chapter title pages still show the page number, but no
+            # running head (matches typst_content behaviour around
+            # `set page(header: none)` for chapter pages).
+            first_page = section.first_page_header.paragraphs[0]
+            first_page.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            first_page.paragraph_format.first_line_indent = Inches(0)
+            add_field_run(first_page, "PAGE")
+    else:
+        # Cover page: clean header, no number.
+        set_section_page_numbering(section, "decimal", None)
+
+
+def setup_docx_styles(doc: Document) -> None:
     normal = doc.styles["Normal"]
     normal.font.name = "Times New Roman"
     normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
     normal.font.size = Pt(14)
     normal.paragraph_format.line_spacing = 1.5
     normal.paragraph_format.first_line_indent = Inches(0.5)
-    heading_1 = doc.styles["Heading 1"]
-    heading_1.font.name = "Times New Roman"
-    heading_1._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-    heading_1.font.size = Pt(18)
-    heading_2 = doc.styles["Heading 2"]
-    heading_2.font.name = "Times New Roman"
-    heading_2._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-    heading_2.font.size = Pt(16)
 
-    def add_field_run(paragraph, instruction: str) -> None:
-        run = paragraph.add_run()
-        fld_begin = OxmlElement("w:fldChar")
-        fld_begin.set(qn("w:fldCharType"), "begin")
-        run._r.append(fld_begin)
+    for style_name, size in (("Heading 1", 18), ("Heading 2", 16)):
+        style = doc.styles[style_name]
+        style.font.name = "Times New Roman"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        style.font.size = Pt(size)
+        style.font.bold = True
+        style.font.color.rgb = RGBColor.from_string(NAVY_HEX)
 
-        instr = OxmlElement("w:instrText")
-        instr.set(qn("xml:space"), "preserve")
-        instr.text = instruction
-        run._r.append(instr)
 
-        fld_sep = OxmlElement("w:fldChar")
-        fld_sep.set(qn("w:fldCharType"), "separate")
-        run._r.append(fld_sep)
+# ---------------------------------------------------------------------------
+# DOCX content helpers
+# ---------------------------------------------------------------------------
+def _add_centered_paragraph(
+    doc: Document,
+    text: str = "",
+    size: float = 14,
+    bold: bool = False,
+    italic: bool = False,
+    color: str | None = None,
+    space_before: float | None = None,
+    space_after: float | None = None,
+):
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    if space_before is not None:
+        paragraph.paragraph_format.space_before = Pt(space_before)
+    if space_after is not None:
+        paragraph.paragraph_format.space_after = Pt(space_after)
+    if text:
+        run = paragraph.add_run(text)
+        set_run_font(run, size=size, bold=bold, italic=italic, color=color)
+    return paragraph
 
-        result = OxmlElement("w:t")
-        result.text = " "
-        run._r.append(result)
 
-        fld_end = OxmlElement("w:fldChar")
-        fld_end.set(qn("w:fldCharType"), "end")
-        run._r.append(fld_end)
+def _add_front_title(doc: Document, title: str) -> None:
+    paragraph = _add_centered_paragraph(doc, title, size=22, bold=True, color=NAVY_HEX)
+    set_paragraph_border(paragraph, color=GOLD_HEX, size="10")
+    paragraph.paragraph_format.space_before = Pt(8)
+    paragraph.paragraph_format.space_after = Pt(12)
 
-    def add_auto_list_field(page_title: str) -> None:
-        mapping = {
-            "Table of Contents": r'TOC \o "1-3" \h \z \u',
-            "List of Figures": r'TOC \h \z \c "Figure"',
-            "List of Tables": r'TOC \h \z \c "Table"',
-        }
-        field_code = mapping.get(page_title)
-        if not field_code:
-            return
-        p = doc.add_paragraph()
-        p.paragraph_format.first_line_indent = Inches(0)
-        add_field_run(p, field_code)
 
-    def add_figure_caption(caption_text: str) -> None:
-        cleaned = re.sub(r"^Figure\s+\d+\.\s*", "", caption_text).strip()
-        p = doc.add_paragraph()
-        p.style = doc.styles["Caption"]
-        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        p.paragraph_format.first_line_indent = Inches(0)
-        run_label = p.add_run("Figure ")
-        run_label.font.name = "Times New Roman"
-        run_label._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-        add_field_run(p, r"SEQ Figure \* ARABIC")
-        run_tail = p.add_run(f". {cleaned}")
-        run_tail.font.name = "Times New Roman"
-        run_tail._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+def _add_body_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.line_spacing = 1.5
+    paragraph.paragraph_format.first_line_indent = Inches(0.5)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-    def add_centered_title_page(
-        title: str,
-        subtitle: str | None = None,
-        with_rules: bool = False,
-        add_page_break: bool = True,
-    ) -> None:
-        p = doc.add_paragraph()
-        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        p.paragraph_format.first_line_indent = Inches(0)
-        p.paragraph_format.space_before = Inches(3.2)
-        p.paragraph_format.space_after = Inches(0.16)
-        if with_rules:
-            rule_top = p.add_run("────────────")
-            rule_top.font.name = "Times New Roman"
-            rule_top._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-            rule_top.font.size = Pt(18)
 
-        p2 = doc.add_paragraph(title)
-        p2.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        p2.paragraph_format.first_line_indent = Inches(0)
-        p2.paragraph_format.space_after = Inches(0.08)
-        run = p2.runs[0]
-        run.font.name = "Times New Roman"
-        run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-        run.font.size = Pt(32 if with_rules else 28)
-        run.bold = True
+def _add_reference_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.first_line_indent = Inches(-0.5)
+    paragraph.paragraph_format.left_indent = Inches(0.5)
+    paragraph.paragraph_format.space_before = Pt(3)
+    paragraph.paragraph_format.space_after = Pt(5)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for run in paragraph.runs:
+        set_run_font(run, size=12)
 
-        if subtitle:
-            p3 = doc.add_paragraph(subtitle)
-            p3.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            p3.paragraph_format.first_line_indent = Inches(0)
-            p3.paragraph_format.space_after = Inches(0.08)
-            sub_run = p3.runs[0]
-            sub_run.font.name = "Times New Roman"
-            sub_run._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-            sub_run.font.size = Pt(18)
-            sub_run.bold = True
 
-        if with_rules:
-            p4 = doc.add_paragraph()
-            p4.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            p4.paragraph_format.first_line_indent = Inches(0)
-            rule_bottom = p4.add_run("────────────")
-            rule_bottom.font.name = "Times New Roman"
-            rule_bottom._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-            rule_bottom.font.size = Pt(18)
+def _add_figure_caption(doc: Document, caption_text: str) -> None:
+    cleaned = re.sub(r"^Figure\s+\d+\.\s*", "", caption_text).strip()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.first_line_indent = Inches(0)
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(8)
+    label = p.add_run("Figure ")
+    set_run_font(label, size=12, bold=True, color=NAVY_HEX)
+    add_field_run(p, r"SEQ Figure \* ARABIC", default_text="0")
+    tail = p.add_run(f". {cleaned}")
+    set_run_font(tail, size=12, color=NAVY_HEX)
 
-        if add_page_break:
-            doc.add_page_break()
 
-    started = False
-    chapter_just_emitted = False
+def _add_cover_page(doc: Document) -> None:
+    logo_path = find_university_logo()
+    if logo_path is not None:
+        holder = doc.add_paragraph()
+        holder.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        holder.paragraph_format.first_line_indent = Inches(0)
+        holder.paragraph_format.space_after = Pt(2)
+        run = holder.add_run()
+        run.add_picture(str(logo_path), width=Inches(0.95))
+
+    for line in [
+        "Republic of Iraq",
+        "Ministry of Higher Education and Scientific Research",
+        UNIVERSITY,
+        COLLEGE,
+    ]:
+        _add_centered_paragraph(doc, line, size=15, bold=True, color=NAVY_HEX)
+
+    title = _add_centered_paragraph(
+        doc, TITLE, size=24, bold=True, color=NAVY_HEX,
+        space_before=10, space_after=14,
+    )
+    set_paragraph_border(title, color=GOLD_HEX, size="12")
+
+    _add_centered_paragraph(doc, "A Project Submitted to", size=14)
+    _add_centered_paragraph(
+        doc,
+        f"The {COLLEGE}, {UNIVERSITY}, {DEPARTMENT}, in Partial Fulfillment "
+        "for the Bachelor of Pharmacy",
+        size=13,
+    )
+
+    _add_centered_paragraph(doc, "By", size=14, bold=True, space_before=8)
+    for student in STUDENTS:
+        _add_centered_paragraph(doc, student, size=20, bold=True, color=NAVY_HEX)
+
+    _add_centered_paragraph(doc, "Supervised by:", size=14, bold=True, space_before=10)
+    _add_centered_paragraph(doc, SUPERVISOR, size=20, bold=True, color=NAVY_HEX)
+    _add_centered_paragraph(doc, SUPERVISOR_DEGREE, size=16)
+    _add_centered_paragraph(doc, MONTH_YEAR, size=14, space_before=12)
+
+
+ABBREVIATIONS = [
+    ("AOR", "Adjusted Odds Ratio"),
+    ("CI", "Confidence Interval"),
+    ("LLR", "Likelihood Ratio Test"),
+    ("MLE", "Maximum Likelihood Estimation"),
+    ("OR", "Odds Ratio"),
+    ("PTSD", "Post-Traumatic Stress Disorder"),
+    ("RRR", "Relative Risk Ratio"),
+    ("Q6/Q7/Q8/Q9/Q11/Q12/Q13",
+     "Survey question item codes used in analysis and reporting"),
+    ("R\u00b2",
+     "Coefficient of determination, reported as pseudo R\u00b2 in logistic "
+     "model fit summaries"),
+]
+
+
+def _add_preliminary_pages(doc: Document) -> None:
+    # 1. Certification of the Supervisor
+    _add_front_title(doc, "Certification of the Supervisor")
+    _add_body_paragraph(
+        doc,
+        f"I certify that this project entitled \u201c{TITLE}\u201d was prepared "
+        f"by the fifth-year students {', '.join(STUDENTS)} under my supervision at "
+        f"the {COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation "
+        "requirements for the Bachelor Degree in Pharmacy.",
+    )
+    sig = doc.add_paragraph()
+    sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    sig.paragraph_format.first_line_indent = Inches(0)
+    sig.paragraph_format.space_before = Pt(18)
+    sig_run = sig.add_run(f"Supervisor's name: {SUPERVISOR}")
+    set_run_font(sig_run, size=14, bold=True, color=NAVY_HEX)
+    doc.add_page_break()
+
+    # 2. Dedication
+    _add_front_title(doc, "Dedication")
+    _add_body_paragraph(
+        doc,
+        "We dedicate this work to our families, whose patience made long study "
+        "days easier, and to every Iraqi patient who deserves safe, respectful, "
+        "and evidence-based mental health care. We also dedicate it to the "
+        "teachers and pharmacists who taught us that science becomes meaningful "
+        "when it serves people with honesty and compassion.",
+    )
+    doc.add_page_break()
+
+    # 3. Acknowledgment
+    _add_front_title(doc, "Acknowledgment")
+    _add_body_paragraph(
+        doc,
+        f"We thank Dr. {SUPERVISOR} for his supervision, guidance, and careful "
+        f"advice throughout this project. We are also grateful to the {COLLEGE} "
+        f"at {UNIVERSITY}, to the participants who gave their time to answer the "
+        "survey, and to our colleagues who supported the data collection and "
+        "revision process.",
+    )
+    doc.add_page_break()
+
+    # 4. Table of Contents (Word TOC field)
+    _add_front_title(doc, "Table of Contents")
+    note = doc.add_paragraph()
+    note.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    note.paragraph_format.first_line_indent = Inches(0)
+    note_run = note.add_run("Right-click and choose Update Field, or press F9 in Word, to refresh.")
+    set_run_font(note_run, size=10, italic=True, color=NAVY_HEX)
+    p = doc.add_paragraph()
+    p.paragraph_format.first_line_indent = Inches(0)
+    add_field_run(p, r'TOC \o "1-2" \h \z \u', default_text="(Update field in Word.)")
+    doc.add_page_break()
+
+    # 5. List of Figures
+    _add_front_title(doc, "List of Figures")
+    p = doc.add_paragraph()
+    p.paragraph_format.first_line_indent = Inches(0)
+    add_field_run(p, r'TOC \h \z \c "Figure"', default_text="(Update field in Word.)")
+    doc.add_page_break()
+
+    # 6. List of Tables
+    _add_front_title(doc, "List of Tables")
+    _add_body_paragraph(
+        doc,
+        "No manuscript tables are currently embedded as formal tables in this "
+        "production source. Statistical results are reported in the text and "
+        "figures.",
+    )
+    doc.add_page_break()
+
+    # 7. List of Abbreviations
+    _add_front_title(doc, "List of Abbreviations")
+    for short, long in ABBREVIATIONS:
+        para = doc.add_paragraph()
+        para.paragraph_format.first_line_indent = Inches(0)
+        para.paragraph_format.space_after = Pt(2)
+        run_short = para.add_run(f"{short}: ")
+        set_run_font(run_short, size=14, bold=True, color=NAVY_HEX)
+        run_long = para.add_run(long)
+        set_run_font(run_long, size=14)
+
+
+def _add_chapter_title_page(doc: Document, chapter_number: str, chapter_name: str) -> None:
+    """Render a centered chapter title page with thin gold rules above and below.
+
+    Mirrors the rule-based chapter-page style used in the Typst designs.
+    """
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_before = Pt(180)
+
+    rule_top = _add_centered_paragraph(
+        doc, "\u2500" * 30, size=12, color=GOLD_HEX,
+        space_before=0, space_after=10,
+    )
+    # Force the rule paragraph to keep zero first-line indent and stay centered.
+    rule_top.paragraph_format.first_line_indent = Inches(0)
+
+    _add_centered_paragraph(
+        doc, chapter_number, size=32, bold=True, color=NAVY_HEX,
+        space_before=8, space_after=8,
+    )
+    _add_centered_paragraph(
+        doc, chapter_name, size=20, bold=True, color=NAVY_HEX,
+        space_before=4, space_after=12,
+    )
+    _add_centered_paragraph(
+        doc, "\u2500" * 30, size=12, color=GOLD_HEX,
+        space_before=0, space_after=0,
+    )
+
+
+# ---------------------------------------------------------------------------
+# DOCX builder
+# ---------------------------------------------------------------------------
+def build_docx(md_path: Path, out_path: Path) -> None:
+    blocks = collect_thesis_blocks(md_path)
+    doc = Document()
+    setup_docx_styles(doc)
+
+    # Section 0: cover. No page numbers, no border.
+    configure_section(doc.sections[0], numbered=False, border=False)
+    _add_cover_page(doc)
+
+    # Section 1: preliminary pages. Lower-roman numerals starting at i.
+    prelim = doc.add_section(WD_SECTION.NEW_PAGE)
+    configure_section(
+        prelim,
+        numbered=True,
+        number_format="lowerRoman",
+        start=1,
+        border=True,
+    )
+    _add_preliminary_pages(doc)
+
+    # Section 2: main matter starting at the Abstract. Decimal restart at 1.
+    main_section = doc.add_section(WD_SECTION.NEW_PAGE)
+    configure_section(
+        main_section,
+        numbered=True,
+        number_format="decimal",
+        start=1,
+        border=True,
+        running_head="",
+    )
+
     in_references = False
-    for kind, data in iter_markdown_blocks(text):
-        if kind == "frontmatter":
-            is_auto_list = data in {"Table of Contents", "List of Figures", "List of Tables"}
-            add_centered_title_page(data, with_rules=False, add_page_break=not is_auto_list)
-            if is_auto_list:
-                add_auto_list_field(data)
-                doc.add_page_break()
-            started = True
-            chapter_just_emitted = False
-            continue
-        if kind == "chaptertitle":
+    chapter_just_emitted = False
+    started = False
+
+    for kind, data in blocks:
+        if kind == "chapter":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
-            add_centered_title_page(chapter_number, subtitle=chapter_name, with_rules=True)
-            started = True
+            chapter_section = doc.add_section(WD_SECTION.NEW_PAGE)
+            configure_section(
+                chapter_section,
+                numbered=True,
+                number_format="decimal",
+                start=None,
+                border=True,
+                running_head=chapter_name,
+                suppress_first_page_header=True,
+            )
+            _add_chapter_title_page(doc, chapter_number, chapter_name)
+            doc.add_page_break()
             chapter_just_emitted = True
+            started = True
             continue
+
         if kind == "h1":
             if started and not chapter_just_emitted:
                 doc.add_page_break()
-            p = doc.add_paragraph(data)
-            p.style = doc.styles["Heading 1"]
-            p.paragraph_format.first_line_indent = Inches(0)
+            paragraph = doc.add_paragraph(data)
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_after = Pt(8)
             in_references = data.strip().upper() == "VIII. REFERENCES"
-            started = True
             chapter_just_emitted = False
+            started = True
             continue
+
         if kind == "h2":
-            p = doc.add_paragraph(data)
-            p.style = doc.styles["Heading 2"]
-            p.paragraph_format.first_line_indent = Inches(0)
-            started = True
+            paragraph = doc.add_paragraph(data)
+            paragraph.style = doc.styles["Heading 2"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
             chapter_just_emitted = False
+            started = True
             continue
+
         if kind == "paragraph":
-            p = doc.add_paragraph(data)
-            p.paragraph_format.line_spacing = 1.5
             if in_references:
-                p.paragraph_format.first_line_indent = Inches(0)
-                p.paragraph_format.space_after = Pt(8)
+                _add_reference_paragraph(doc, data)
             else:
-                p.paragraph_format.first_line_indent = Inches(0.5)
-            started = True
+                _add_body_paragraph(doc, data)
             chapter_just_emitted = False
+            started = True
             continue
+
         if kind == "image":
-            alt, rel_path = data.split("|||", 1)
+            caption, rel_path = data.split("|||", 1)
             img_path = (md_path.parent / rel_path).resolve()
             if img_path.exists():
-                p = doc.add_paragraph()
-                p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-                run = p.add_run()
-                run.add_picture(str(img_path), width=Inches(6.3))
-                add_figure_caption(alt)
-            started = True
+                holder = doc.add_paragraph()
+                holder.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                holder.paragraph_format.first_line_indent = Inches(0)
+                holder.paragraph_format.space_before = Pt(6)
+                run = holder.add_run()
+                run.add_picture(str(img_path), width=Inches(6.1))
+                _add_figure_caption(doc, caption)
             chapter_just_emitted = False
+            started = True
             continue
+
         if kind == "pagebreak":
             doc.add_page_break()
-            started = True
             chapter_just_emitted = False
+            started = True
 
     doc.save(out_path)
 
 
+# ---------------------------------------------------------------------------
+# LaTeX builder
+# ---------------------------------------------------------------------------
 def escape_latex(text: str) -> str:
     table = {
-        "\\": r"\\textbackslash{}",
-        "&": r"\\&",
-        "%": r"\\%",
-        "$": r"\\$",
-        "#": r"\\#",
-        "_": r"\\_",
-        "{": r"\\{",
-        "}": r"\\}",
-        "~": r"\\textasciitilde{}",
-        "^": r"\\textasciicircum{}",
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
     }
     return "".join(table.get(ch, ch) for ch in text)
 
 
-def build_tex(md_path: Path, out_path: Path) -> None:
-    text = md_path.read_text(encoding="utf-8")
-    body: list[str] = []
+def _latex_cover_block() -> list[str]:
+    students_block = " \\\\ \n".join(escape_latex(s) for s in STUDENTS)
+    logo_path = find_university_logo()
+    logo_line = ""
+    if logo_path is not None:
+        try:
+            rel = logo_path.relative_to(REPO_ROOT)
+        except ValueError:
+            rel = logo_path
+        logo_line = (
+            f"\\includegraphics[height=2.2cm]{{{escape_latex(str(rel).replace(chr(92), '/'))}}}\\\\[6pt]\n"
+        )
+    return [
+        "\\begin{titlepage}",
+        "\\thispagestyle{empty}",
+        "\\begin{center}",
+        logo_line,
+        "{\\large\\bfseries Republic of Iraq}\\\\",
+        "{\\large\\bfseries Ministry of Higher Education and Scientific Research}\\\\",
+        f"{{\\large\\bfseries {escape_latex(UNIVERSITY)}}}\\\\",
+        f"{{\\large\\bfseries {escape_latex(COLLEGE)}}}\\\\[18pt]",
+        "\\fbox{\\parbox{0.88\\textwidth}{\\centering\\Large\\bfseries " + escape_latex(TITLE) + "}}\\\\[18pt]",
+        "{A Project Submitted to}\\\\",
+        f"{{The {escape_latex(COLLEGE)}, {escape_latex(UNIVERSITY)}, {escape_latex(DEPARTMENT)},"
+        " in Partial Fulfillment for the Bachelor of Pharmacy}}\\\\[14pt]",
+        "{\\bfseries By}\\\\[6pt]",
+        f"{{\\Large\\bfseries {students_block}}}\\\\[14pt]",
+        "{\\bfseries Supervised by:}\\\\[4pt]",
+        f"{{\\Large\\bfseries {escape_latex(SUPERVISOR)}}}\\\\",
+        f"{{\\large {escape_latex(SUPERVISOR_DEGREE)}}}\\\\[14pt]",
+        f"{{{escape_latex(MONTH_YEAR)}}}",
+        "\\end{center}",
+        "\\end{titlepage}",
+    ]
 
-    for kind, data in iter_markdown_blocks(text):
-        if kind == "frontmatter":
-            body.append("\\newpage")
-            body.append("\\begin{center}\\vspace*{0.42\\textheight}")
-            body.append("{\\Large \\textbf{" + escape_latex(data) + "}}")
-            body.append("\\end{center}")
-            if data == "Table of Contents":
-                body.append("\\tableofcontents")
-            elif data == "List of Figures":
-                body.append("\\listoffigures")
-            elif data == "List of Tables":
-                body.append("\\listoftables")
-            body.append("\\newpage")
-        elif kind == "chaptertitle":
+
+def _latex_preliminary_block() -> list[str]:
+    students = ", ".join(escape_latex(s) for s in STUDENTS)
+    abbrev_lines = " \\\\ \n".join(
+        f"\\textbf{{{escape_latex(short)}}}: {escape_latex(long)}"
+        for short, long in ABBREVIATIONS
+    )
+    return [
+        "\\pagenumbering{roman}",
+        "\\setcounter{page}{1}",
+        "\\section*{Certification of the Supervisor}",
+        "\\addcontentsline{toc}{section}{Certification of the Supervisor}",
+        "I certify that this project entitled ``" + escape_latex(TITLE) + "'' was prepared by the fifth-year students "
+        + students
+        + f" under my supervision at the {escape_latex(COLLEGE)}/{escape_latex(UNIVERSITY)} "
+        "in partial fulfillment of the graduation requirements for the Bachelor Degree in Pharmacy.",
+        "",
+        f"\\begin{{flushright}}\\textbf{{Supervisor's name: {escape_latex(SUPERVISOR)}}}\\end{{flushright}}",
+        "\\newpage",
+        "\\section*{Dedication}",
+        "\\addcontentsline{toc}{section}{Dedication}",
+        "We dedicate this work to our families, whose patience made long study days easier, "
+        "and to every Iraqi patient who deserves safe, respectful, and evidence-based mental health care. "
+        "We also dedicate it to the teachers and pharmacists who taught us that science becomes meaningful "
+        "when it serves people with honesty and compassion.",
+        "\\newpage",
+        "\\section*{Acknowledgment}",
+        "\\addcontentsline{toc}{section}{Acknowledgment}",
+        f"We thank Dr.\\ {escape_latex(SUPERVISOR)} for his supervision, guidance, and careful advice throughout this project. "
+        f"We are also grateful to the {escape_latex(COLLEGE)} at {escape_latex(UNIVERSITY)}, "
+        "to the participants who gave their time to answer the survey, "
+        "and to our colleagues who supported the data collection and revision process.",
+        "\\newpage",
+        "\\tableofcontents",
+        "\\newpage",
+        "\\listoffigures",
+        "\\newpage",
+        "\\section*{List of Tables}",
+        "\\addcontentsline{toc}{section}{List of Tables}",
+        "No manuscript tables are currently embedded as formal tables in this production source. "
+        "Statistical results are reported in the text and figures.",
+        "\\newpage",
+        "\\section*{List of Abbreviations}",
+        "\\addcontentsline{toc}{section}{List of Abbreviations}",
+        abbrev_lines,
+    ]
+
+
+def build_tex(md_path: Path, out_path: Path) -> None:
+    blocks = collect_thesis_blocks(md_path)
+
+    body: list[str] = []
+    body.extend(_latex_cover_block())
+    body.extend(_latex_preliminary_block())
+
+    body.append("\\newpage")
+    body.append("\\pagenumbering{arabic}")
+    body.append("\\setcounter{page}{1}")
+
+    chapter_just_emitted = False
+    started = False
+
+    for kind, data in blocks:
+        if kind == "chapter":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
             body.append("\\newpage")
-            body.append("\\begin{center}\\vspace*{0.42\\textheight}")
-            body.append("{\\Large \\textbf{\\rule{5cm}{0.4pt}}}\\\\[0.4cm]")
-            body.append("{\\LARGE \\textbf{" + escape_latex(chapter_number) + "}}\\\\[0.15cm]")
-            body.append("{\\Large \\textbf{" + escape_latex(chapter_name) + "}}\\\\[0.35cm]")
-            body.append("{\\Large \\textbf{\\rule{5cm}{0.4pt}}}")
+            body.append("\\thispagestyle{plain}")
+            body.append("\\begin{center}\\vspace*{0.30\\textheight}")
+            body.append("{\\Large\\bfseries\\rule{6cm}{0.4pt}}\\\\[10pt]")
+            body.append("{\\Huge\\bfseries " + escape_latex(chapter_number) + "}\\\\[8pt]")
+            body.append("{\\LARGE\\bfseries " + escape_latex(chapter_name) + "}\\\\[10pt]")
+            body.append("{\\Large\\bfseries\\rule{6cm}{0.4pt}}")
             body.append("\\end{center}")
             body.append("\\newpage")
-        elif kind == "h1":
-            body.append("\\newpage")
+            chapter_just_emitted = True
+            started = True
+            continue
+        if kind == "h1":
+            if started and not chapter_just_emitted:
+                body.append("\\newpage")
             body.append(f"\\section*{{{escape_latex(data)}}}")
-        elif kind == "h2":
+            body.append(f"\\addcontentsline{{toc}}{{section}}{{{escape_latex(data)}}}")
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "h2":
             body.append(f"\\subsection*{{{escape_latex(data)}}}")
-        elif kind == "paragraph":
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "paragraph":
             body.append(escape_latex(data) + "\n")
-        elif kind == "image":
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "image":
             alt, rel_path = data.split("|||", 1)
-            rel = rel_path.replace('\\', '/')
+            rel = rel_path.replace("\\", "/")
             body.append(
                 "\\begin{figure}[h!]\n"
                 "\\centering\n"
@@ -532,195 +1071,534 @@ def build_tex(md_path: Path, out_path: Path) -> None:
                 f"\\caption{{{escape_latex(alt)}}}\n"
                 "\\end{figure}"
             )
-        elif kind == "pagebreak":
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "pagebreak":
             body.append("\\newpage")
+            chapter_just_emitted = False
+            started = True
+            continue
 
     tex = (
         "\\documentclass[12pt,a4paper]{article}\n"
-        "\\usepackage[left=3cm,right=2cm,top=2cm,bottom=2cm]{geometry}\n"
+        "\\usepackage[a4paper,margin=1.5cm]{geometry}\n"
         "\\usepackage{setspace}\n"
         "\\usepackage{graphicx}\n"
         "\\usepackage[T1]{fontenc}\n"
         "\\usepackage[utf8]{inputenc}\n"
         "\\usepackage{mathptmx}\n"
+        "\\usepackage{fancyhdr}\n"
+        "\\usepackage{titlesec}\n"
         "\\setstretch{1.5}\n"
         "\\setlength{\\parindent}{0.5in}\n"
+        "\\pagestyle{fancy}\n"
+        "\\fancyhf{}\n"
+        "\\fancyhead[C]{\\thepage}\n"
+        "\\fancyhead[L]{\\leftmark}\n"
+        "\\renewcommand{\\headrulewidth}{0.4pt}\n"
         "\\begin{document}\n\n"
-        + "\n\n".join(body)
+        + "\n".join(body)
         + "\n\n\\end{document}\n"
     )
     out_path.write_text(tex, encoding="utf-8")
 
 
-def _fit_image_width(img_path: Path, max_width_cm: float = 16.0) -> float:
-    try:
-        img = ImageReader(str(img_path))
-        iw, ih = img.getSize()
-        if iw <= 0 or ih <= 0:
-            return max_width_cm * cm
-        ratio = ih / iw
-        width_cm = max_width_cm
-        height_cm = width_cm * ratio
-        if height_cm > 20:
-            scale = 20 / height_cm
-            width_cm *= scale
-        return width_cm * cm
-    except Exception:
-        return max_width_cm * cm
+# ---------------------------------------------------------------------------
+# Reportlab PDF builder (cover -> roman prelim -> arabic main with borders).
+# ---------------------------------------------------------------------------
+class _PdfState:
+    """Mutable state shared between flowables and onPage callbacks."""
+
+    def __init__(self) -> None:
+        self.section_starts: dict[str, int] = {}
+        self.chapter: str = ""
+
+    def reset(self) -> None:
+        self.section_starts = {}
+        self.chapter = ""
 
 
-def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
-    text = md_path.read_text(encoding="utf-8")
-    doc = SimpleDocTemplate(
-        str(out_path),
-        pagesize=A4,
-        leftMargin=1.5 * cm,
-        rightMargin=1.5 * cm,
-        topMargin=1.5 * cm,
-        bottomMargin=1.5 * cm,
-    )
+_pdf_state = _PdfState()
 
-    styles = getSampleStyleSheet()
-    h1 = ParagraphStyle(
-        "H1",
-        parent=styles["Heading1"],
-        fontName="Times-Bold",
-        fontSize=18,
-        leading=24,
-        spaceBefore=10,
-        spaceAfter=8,
-    )
-    h2 = ParagraphStyle(
-        "H2",
-        parent=styles["Heading2"],
-        fontName="Times-Bold",
-        fontSize=16,
-        leading=22,
-        spaceBefore=8,
-        spaceAfter=6,
-    )
-    body = ParagraphStyle(
+
+_NAVY_RGB = HexColor("#" + NAVY_HEX)
+_GOLD_RGB = HexColor("#" + GOLD_HEX)
+_INK_RGB = HexColor("#" + INK_HEX)
+
+
+class _SetChapterFlowable(Flowable):
+    """A zero-size flowable that updates the running-head state during draw."""
+
+    def __init__(self, chapter: str) -> None:
+        Flowable.__init__(self)
+        self.chapter = chapter
+
+    def wrap(self, _w, _h):
+        return 0, 0
+
+    def draw(self) -> None:
+        _pdf_state.chapter = self.chapter
+
+
+def _record_section(name: str, doc) -> None:
+    if name not in _pdf_state.section_starts:
+        _pdf_state.section_starts[name] = doc.page
+
+
+def _draw_page_border(canvas, doc) -> None:
+    pw, ph = doc.pagesize
+    inset = 0.6 * cm
+    canvas.saveState()
+    canvas.setStrokeColor(_NAVY_RGB)
+    canvas.setLineWidth(0.6)
+    canvas.rect(inset, inset, pw - 2 * inset, ph - 2 * inset)
+    canvas.restoreState()
+
+
+def _draw_page_label(canvas, doc, label: str, running_head: str = "") -> None:
+    pw, ph = doc.pagesize
+    canvas.saveState()
+    canvas.setFont("Times-Roman", 10)
+    canvas.setFillColor(_NAVY_RGB)
+    canvas.drawCentredString(pw / 2, ph - 1.0 * cm, label)
+    if running_head:
+        canvas.drawString(1.8 * cm, ph - 1.0 * cm, running_head)
+    canvas.restoreState()
+
+
+def _on_cover(canvas, doc) -> None:
+    _record_section("cover", doc)
+    # Cover page: no border, no page number.
+
+
+def _on_prelim(canvas, doc) -> None:
+    _record_section("prelim", doc)
+    _draw_page_border(canvas, doc)
+    rel = doc.page - _pdf_state.section_starts["prelim"] + 1
+    _draw_page_label(canvas, doc, _to_roman_lower(rel))
+
+
+def _on_main(canvas, doc) -> None:
+    _record_section("main", doc)
+    _draw_page_border(canvas, doc)
+    rel = doc.page - _pdf_state.section_starts["main"] + 1
+    _draw_page_label(canvas, doc, str(rel), running_head=_pdf_state.chapter)
+
+
+def _on_main_chapter(canvas, doc) -> None:
+    _record_section("main", doc)
+    _draw_page_border(canvas, doc)
+    rel = doc.page - _pdf_state.section_starts["main"] + 1
+    _draw_page_label(canvas, doc, str(rel))
+
+
+def _to_roman_lower(value: int) -> str:
+    pairs = [
+        (1000, "m"), (900, "cm"), (500, "d"), (400, "cd"),
+        (100, "c"), (90, "xc"), (50, "l"), (40, "xl"),
+        (10, "x"), (9, "ix"), (5, "v"), (4, "iv"), (1, "i"),
+    ]
+    out: list[str] = []
+    n = max(value, 1)
+    for arabic, roman in pairs:
+        while n >= arabic:
+            out.append(roman)
+            n -= arabic
+    return "".join(out)
+
+
+def _build_pdf_styles() -> dict[str, ParagraphStyle]:
+    base = getSampleStyleSheet()
+    styles: dict[str, ParagraphStyle] = {}
+    styles["body"] = ParagraphStyle(
         "Body",
-        parent=styles["BodyText"],
+        parent=base["BodyText"],
         fontName="Times-Roman",
         fontSize=14,
         leading=21,
         firstLineIndent=0.5 * 72,
         spaceBefore=2,
         spaceAfter=4,
+        textColor=_INK_RGB,
+        alignment=4,  # justify
     )
-    refs = ParagraphStyle(
+    styles["refs"] = ParagraphStyle(
         "Refs",
-        parent=body,
+        parent=styles["body"],
+        fontSize=12,
+        leading=16,
         firstLineIndent=0,
-        leftIndent=0,
+        leftIndent=0.5 * 72,
         spaceBefore=1,
         spaceAfter=8,
     )
-
-    story = []
-    started = False
-    chapter_just_emitted = False
-    in_references = False
-    chapter_num_style = ParagraphStyle(
-        "ChapterNumber",
-        parent=styles["Heading1"],
-        fontName="Times-Bold",
-        fontSize=34,
-        leading=40,
-        alignment=1,
-    )
-    chapter_name_style = ParagraphStyle(
-        "ChapterName",
-        parent=styles["Heading1"],
+    styles["h1"] = ParagraphStyle(
+        "H1",
+        parent=base["Heading1"],
         fontName="Times-Bold",
         fontSize=18,
         leading=24,
-        alignment=1,
+        spaceBefore=12,
+        spaceAfter=8,
+        textColor=_NAVY_RGB,
     )
-    front_matter_style = ParagraphStyle(
-        "FrontMatterTitle",
-        parent=styles["Heading1"],
+    styles["h2"] = ParagraphStyle(
+        "H2",
+        parent=base["Heading2"],
         fontName="Times-Bold",
-        fontSize=28,
-        leading=34,
-        alignment=1,
-    )
-    chapter_rule_style = ParagraphStyle(
-        "ChapterRule",
-        parent=styles["Heading1"],
-        fontName="Times-Bold",
-        fontSize=18,
+        fontSize=16,
         leading=22,
+        spaceBefore=8,
+        spaceAfter=6,
+        textColor=_NAVY_RGB,
+    )
+    styles["centered_big"] = ParagraphStyle(
+        "CenteredBig",
+        parent=base["Normal"],
+        fontName="Times-Bold",
+        fontSize=24,
+        leading=30,
         alignment=1,
+        textColor=_NAVY_RGB,
+    )
+    styles["centered_title_lg"] = ParagraphStyle(
+        "CenteredTitleLg",
+        parent=base["Normal"],
+        fontName="Times-Bold",
+        fontSize=20,
+        leading=26,
+        alignment=1,
+        textColor=_NAVY_RGB,
+    )
+    styles["centered_md"] = ParagraphStyle(
+        "CenteredMd",
+        parent=base["Normal"],
+        fontName="Times-Roman",
+        fontSize=14,
+        leading=20,
+        alignment=1,
+        textColor=_INK_RGB,
+    )
+    styles["centered_md_bold"] = ParagraphStyle(
+        "CenteredMdBold",
+        parent=styles["centered_md"],
+        fontName="Times-Bold",
+    )
+    styles["front_title"] = ParagraphStyle(
+        "FrontTitle",
+        parent=base["Normal"],
+        fontName="Times-Bold",
+        fontSize=22,
+        leading=28,
+        alignment=1,
+        textColor=_NAVY_RGB,
+        spaceBefore=10,
+        spaceAfter=14,
+    )
+    styles["chapter_number"] = ParagraphStyle(
+        "ChapterNumber",
+        parent=base["Normal"],
+        fontName="Times-Bold",
+        fontSize=32,
+        leading=40,
+        alignment=1,
+        textColor=_NAVY_RGB,
+    )
+    styles["chapter_name"] = ParagraphStyle(
+        "ChapterName",
+        parent=base["Normal"],
+        fontName="Times-Bold",
+        fontSize=20,
+        leading=26,
+        alignment=1,
+        textColor=_NAVY_RGB,
+    )
+    styles["chapter_rule"] = ParagraphStyle(
+        "ChapterRule",
+        parent=base["Normal"],
+        fontName="Times-Roman",
+        fontSize=12,
+        leading=14,
+        alignment=1,
+        textColor=_GOLD_RGB,
+    )
+    styles["caption"] = ParagraphStyle(
+        "FigureCaption",
+        parent=base["Normal"],
+        fontName="Times-Roman",
+        fontSize=12,
+        leading=16,
+        alignment=1,
+        spaceBefore=4,
+        spaceAfter=10,
+        textColor=_NAVY_RGB,
+    )
+    styles["abbr"] = ParagraphStyle(
+        "Abbr",
+        parent=base["Normal"],
+        fontName="Times-Roman",
+        fontSize=14,
+        leading=20,
+        textColor=_INK_RGB,
+        spaceAfter=2,
+    )
+    return styles
+
+
+def _pdf_cover_story(styles: dict[str, ParagraphStyle]) -> list:
+    story: list = []
+    logo_path = find_university_logo()
+    if logo_path is not None:
+        try:
+            reader = ImageReader(str(logo_path))
+            iw, ih = reader.getSize()
+            target_h = 2.0 * cm
+            target_w = target_h * (iw / ih if ih else 1)
+            story.append(Image(str(logo_path), width=target_w, height=target_h, hAlign="CENTER"))
+            story.append(Spacer(1, 4))
+        except Exception:
+            pass
+    for line in [
+        "Republic of Iraq",
+        "Ministry of Higher Education and Scientific Research",
+        UNIVERSITY,
+        COLLEGE,
+    ]:
+        story.append(Paragraph(line, styles["centered_md_bold"]))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph(TITLE, styles["centered_big"]))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph("A Project Submitted to", styles["centered_md"]))
+    story.append(Paragraph(
+        f"The {COLLEGE}, {UNIVERSITY}, {DEPARTMENT}, in Partial Fulfillment for the Bachelor of Pharmacy",
+        styles["centered_md"],
+    ))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph("By", styles["centered_md_bold"]))
+    for student in STUDENTS:
+        story.append(Paragraph(student, styles["centered_title_lg"]))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph("Supervised by:", styles["centered_md_bold"]))
+    story.append(Paragraph(SUPERVISOR, styles["centered_title_lg"]))
+    story.append(Paragraph(SUPERVISOR_DEGREE, styles["centered_md"]))
+    story.append(Spacer(1, 14))
+    story.append(Paragraph(MONTH_YEAR, styles["centered_md"]))
+    return story
+
+
+def _pdf_preliminary_story(styles: dict[str, ParagraphStyle]) -> list:
+    story: list = []
+    students_text = ", ".join(STUDENTS)
+
+    def front(title: str) -> Paragraph:
+        return Paragraph(title, styles["front_title"])
+
+    story.append(front("Certification of the Supervisor"))
+    story.append(Paragraph(
+        f"I certify that this project entitled \u201c{TITLE}\u201d was prepared "
+        f"by the fifth-year students {students_text} under my supervision at the "
+        f"{COLLEGE}/{UNIVERSITY} in partial fulfillment of the graduation "
+        "requirements for the Bachelor Degree in Pharmacy.",
+        styles["body"],
+    ))
+    sig_style = ParagraphStyle(
+        "Sig", parent=styles["body"],
+        firstLineIndent=0, alignment=2,
+        fontName="Times-Bold", textColor=_NAVY_RGB,
+        spaceBefore=14,
+    )
+    story.append(Paragraph(f"Supervisor's name: {SUPERVISOR}", sig_style))
+    story.append(PageBreak())
+
+    story.append(front("Dedication"))
+    story.append(Paragraph(
+        "We dedicate this work to our families, whose patience made long study "
+        "days easier, and to every Iraqi patient who deserves safe, respectful, "
+        "and evidence-based mental health care. We also dedicate it to the "
+        "teachers and pharmacists who taught us that science becomes meaningful "
+        "when it serves people with honesty and compassion.",
+        styles["body"],
+    ))
+    story.append(PageBreak())
+
+    story.append(front("Acknowledgment"))
+    story.append(Paragraph(
+        f"We thank Dr. {SUPERVISOR} for his supervision, guidance, and careful "
+        f"advice throughout this project. We are also grateful to the {COLLEGE} "
+        f"at {UNIVERSITY}, to the participants who gave their time to answer the "
+        "survey, and to our colleagues who supported the data collection and "
+        "revision process.",
+        styles["body"],
+    ))
+    story.append(PageBreak())
+
+    story.append(front("Table of Contents"))
+    story.append(Paragraph(
+        "(See the auto-generated DOCX or compiled Typst PDF for the live, "
+        "field-driven Table of Contents.)",
+        styles["body"],
+    ))
+    story.append(PageBreak())
+
+    story.append(front("List of Figures"))
+    story.append(Paragraph(
+        "(See the auto-generated DOCX or compiled Typst PDF for the live, "
+        "field-driven List of Figures.)",
+        styles["body"],
+    ))
+    story.append(PageBreak())
+
+    story.append(front("List of Tables"))
+    story.append(Paragraph(
+        "No manuscript tables are currently embedded as formal tables in this "
+        "production source. Statistical results are reported in the text and figures.",
+        styles["body"],
+    ))
+    story.append(PageBreak())
+
+    story.append(front("List of Abbreviations"))
+    for short, long in ABBREVIATIONS:
+        story.append(Paragraph(
+            f"<b><font color='#{NAVY_HEX}'>{short}:</font></b> {long}",
+            styles["abbr"],
+        ))
+    return story
+
+
+def _pdf_chapter_title_story(chapter_number: str, chapter_name: str,
+                             styles: dict[str, ParagraphStyle]) -> list:
+    rule = "\u2500" * 30
+    return [
+        Spacer(1, 220),
+        Paragraph(rule, styles["chapter_rule"]),
+        Spacer(1, 8),
+        Paragraph(chapter_number, styles["chapter_number"]),
+        Spacer(1, 6),
+        Paragraph(chapter_name, styles["chapter_name"]),
+        Spacer(1, 10),
+        Paragraph(rule, styles["chapter_rule"]),
+    ]
+
+
+def _fit_image(img_path: Path, max_width_cm: float = 16.0) -> tuple[float, float]:
+    try:
+        reader = ImageReader(str(img_path))
+        iw, ih = reader.getSize()
+        if iw <= 0 or ih <= 0:
+            return max_width_cm * cm, max_width_cm * cm * 0.6
+        ratio = ih / iw
+        width = max_width_cm * cm
+        height = width * ratio
+        if height > 20 * cm:
+            height = 20 * cm
+            width = height / ratio
+        return width, height
+    except Exception:
+        return max_width_cm * cm, max_width_cm * cm * 0.6
+
+
+def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
+    blocks = collect_thesis_blocks(md_path)
+    _pdf_state.reset()
+
+    margin = 1.5 * cm
+    pagesize = A4
+    pw, ph = pagesize
+    frame = Frame(
+        margin, margin,
+        pw - 2 * margin, ph - 2 * margin,
+        leftPadding=0, bottomPadding=0, rightPadding=0, topPadding=22,
+        id="main_frame",
     )
 
-    for kind, data in iter_markdown_blocks(text):
-        if kind == "frontmatter":
-            if started:
-                story.append(PageBreak())
-            story.append(Spacer(1, 260))
-            story.append(Paragraph(data, front_matter_style))
-            story.append(Spacer(1, 260))
-            story.append(PageBreak())
-            started = True
-            chapter_just_emitted = False
-        elif kind == "chaptertitle":
+    page_templates = [
+        PageTemplate(id="cover", frames=[frame], onPage=_on_cover),
+        PageTemplate(id="prelim", frames=[frame], onPage=_on_prelim),
+        PageTemplate(id="main_chapter", frames=[frame], onPage=_on_main_chapter),
+        PageTemplate(id="main", frames=[frame], onPage=_on_main),
+    ]
+
+    doc = BaseDocTemplate(
+        str(out_path),
+        pagesize=pagesize,
+        leftMargin=margin, rightMargin=margin,
+        topMargin=margin, bottomMargin=margin,
+        pageTemplates=page_templates,
+        title=TITLE,
+        author=", ".join(STUDENTS),
+    )
+
+    styles = _build_pdf_styles()
+    story: list = [NextPageTemplate("cover")]
+    story.extend(_pdf_cover_story(styles))
+
+    story.append(NextPageTemplate("prelim"))
+    story.append(PageBreak())
+    story.extend(_pdf_preliminary_story(styles))
+
+    story.append(NextPageTemplate("main"))
+    story.append(PageBreak())
+    story.append(_SetChapterFlowable(""))
+
+    in_references = False
+    chapter_just_emitted = False
+    started = False
+
+    for kind, data in blocks:
+        if kind == "chapter":
             chapter_number, chapter_name = (data.split("|||", 1) + [""])[:2]
-            if started:
-                story.append(PageBreak())
-            story.append(Spacer(1, 220))
-            story.append(Paragraph("────────────", chapter_rule_style))
-            story.append(Spacer(1, 6))
-            story.append(Paragraph(chapter_number, chapter_num_style))
-            story.append(Spacer(1, 4))
-            story.append(Paragraph(chapter_name, chapter_name_style))
-            story.append(Spacer(1, 8))
-            story.append(Paragraph("────────────", chapter_rule_style))
-            story.append(Spacer(1, 220))
+            story.append(_SetChapterFlowable(""))
+            story.append(NextPageTemplate("main_chapter"))
             story.append(PageBreak())
-            started = True
+            story.extend(_pdf_chapter_title_story(chapter_number, chapter_name, styles))
+            story.append(_SetChapterFlowable(chapter_name))
+            story.append(NextPageTemplate("main"))
+            story.append(PageBreak())
             chapter_just_emitted = True
-        elif kind == "h1":
+            started = True
+            continue
+        if kind == "h1":
             if started and not chapter_just_emitted:
                 story.append(PageBreak())
-            story.append(Paragraph(data, h1))
+            story.append(Paragraph(data, styles["h1"]))
             in_references = data.strip().upper() == "VIII. REFERENCES"
-            started = True
             chapter_just_emitted = False
-        elif kind == "h2":
-            story.append(Paragraph(data, h2))
             started = True
+            continue
+        if kind == "h2":
+            story.append(Paragraph(data, styles["h2"]))
             chapter_just_emitted = False
-        elif kind == "paragraph":
-            story.append(Paragraph(data, refs if in_references else body))
             started = True
+            continue
+        if kind == "paragraph":
+            target = styles["refs"] if in_references else styles["body"]
+            story.append(Paragraph(data, target))
             chapter_just_emitted = False
-        elif kind == "image":
-            _, rel_path = data.split("|||", 1)
+            started = True
+            continue
+        if kind == "image":
+            caption, rel_path = data.split("|||", 1)
             img_path = (md_path.parent / rel_path).resolve()
             if img_path.exists():
-                width = _fit_image_width(img_path)
-                img_reader = ImageReader(str(img_path))
-                iw, ih = img_reader.getSize()
-                if iw > 0:
-                    height = width * (ih / iw)
-                else:
-                    height = 8 * cm
-                img = Image(str(img_path), width=width, height=height, hAlign="CENTER")
-                story.append(Spacer(1, 8))
-                story.append(img)
-                story.append(Spacer(1, 8))
-            started = True
+                width, height = _fit_image(img_path)
+                story.append(Spacer(1, 6))
+                story.append(Image(str(img_path), width=width, height=height, hAlign="CENTER"))
+                story.append(Paragraph(caption, styles["caption"]))
             chapter_just_emitted = False
-        elif kind == "pagebreak":
+            started = True
+            continue
+        if kind == "pagebreak":
             story.append(PageBreak())
-            started = True
             chapter_just_emitted = False
+            started = True
 
     doc.build(story)
 
 
+# ---------------------------------------------------------------------------
+# Entry points
+# ---------------------------------------------------------------------------
 def run_method_a(md_path: Path) -> None:
     build_docx(md_path, METHOD_A_DIR / "research_method_a.docx")
     build_tex(md_path, METHOD_A_DIR / "research_method_a.tex")

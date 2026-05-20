@@ -15,14 +15,30 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt, RGBColor
 
 from build_production import (
+    ABBREVIATIONS,
     ASSEMBLED_DIR,
+    COLLEGE,
+    DEPARTMENT,
     FIGURES_DIR,
     METHOD_A_DIR,
+    MONTH_YEAR,
+    NAVY_HEX,
     REPO_ROOT,
+    STUDENTS,
+    SUPERVISOR,
+    SUPERVISOR_DEGREE,
+    TITLE,
+    UNIVERSITY,
+    add_field_run,
     assemble_markdown,
+    configure_section,
     copy_figure_assets,
     ensure_dirs as ensure_production_dirs,
+    find_university_logo,
     iter_markdown_blocks,
+    set_paragraph_border,
+    set_run_font,
+    setup_docx_styles,
 )
 
 TYPST_CONTENT_DIR = REPO_ROOT / "typst_content"
@@ -30,42 +46,6 @@ TYPST_OUTPUT_DIR = TYPST_CONTENT_DIR / "output"
 TYPST_SOURCE = TYPST_CONTENT_DIR / "research.typ"
 TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
-
-TITLE = "Psychiatric Medication Use and Public Acceptance in Iraq"
-STUDENTS = [
-    "Abdul Rahman Wakaa Ali",
-    "Ali Basem Hammoud",
-    "Shifa Safi Aboud",
-    "Zainab Mashal Nayef",
-]
-SUPERVISOR = "Hameed Adnan"
-UNIVERSITY = "University of Al-Maarif"
-COLLEGE = "College of Pharmacy"
-MONTH_YEAR = "May, 2026"
-LOGO_CANDIDATES = (
-    "University_logo.png",
-    "university logo.png",
-    "university_logo.png",
-    "University logo.png",
-    "University Logo.png",
-    "almaarif logo.png",
-    "al-maarif logo.png",
-)
-
-
-def find_university_logo() -> Path | None:
-    search_dirs = (REPO_ROOT, FIGURES_DIR)
-    for directory in search_dirs:
-        for filename in LOGO_CANDIDATES:
-            candidate = directory / filename
-            if candidate.exists():
-                return candidate
-    for directory in search_dirs:
-        for candidate in sorted(directory.glob("*.png")):
-            lowered = candidate.name.lower()
-            if "logo" in lowered or "university" in lowered or "maarif" in lowered:
-                return candidate
-    return None
 
 
 def typst_string(value: str) -> str:
