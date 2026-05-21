@@ -34,10 +34,6 @@ Figure 5. Donut infographic view for safety, acceptability, and recommendation r
 
 Figure 6. Within-gender distribution of Yes/Not sure/No responses for recommendation.
 
-## List of Tables
-
-No manuscript tables are currently embedded as markdown tables in the production source files.
-
 ## List of Abbreviations
 
 AOR: Adjusted Odds Ratio
@@ -54,6 +50,6 @@ PTSD: Post-Traumatic Stress Disorder
 
 RRR: Relative Risk Ratio
 
-Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting
+Q6/Q7/Q8/Q9/Q11/Q12/Q13/Q31: Survey question item codes used in analysis and reporting
 
 R²: Coefficient of determination (reported as pseudo R² in logistic model fit summaries)

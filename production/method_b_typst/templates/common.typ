@@ -11,9 +11,6 @@
   align(center)[#text(size: 28pt, weight: "bold", fill: accent)[List of Figures]]
   outline(title: none, target: figure.where(kind: image))
   pagebreak()
-  align(center)[#text(size: 28pt, weight: "bold", fill: accent)[List of Tables]]
-  outline(title: none, target: figure.where(kind: table))
-  pagebreak()
 }
 
 #let render-block(block, accent, light-accent, chapter-frame, frontmatter-frame, in-references) = {

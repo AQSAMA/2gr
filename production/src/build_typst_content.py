@@ -52,6 +52,63 @@ def typst_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
+_CITATION_PAREN_RE = re.compile(r"\([^()]*?\b(?:19|20)\d{2}[a-z]?[^()]*?\)")
+_CITATION_NARRATIVE_RE = re.compile(
+    r"\b[A-Z][\w'\u2019\u00C0-\u017F-]+"
+    r"(?:\s+(?:et\s+al\.|(?:&|and)\s+[A-Z][\w'\u2019\u00C0-\u017F-]+))?"
+    r"\s+\((?:19|20)\d{2}[a-z]?\)"
+)
+
+_TYPST_MARKUP_ESCAPES = str.maketrans({
+    "\\": r"\\",
+    "#": r"\#",
+    "*": r"\*",
+    "_": r"\_",
+    "<": r"\<",
+    ">": r"\>",
+    "[": r"\[",
+    "]": r"\]",
+    "@": r"\@",
+    "`": r"\`",
+    "~": r"\~",
+    "$": r"\$",
+})
+
+
+def _escape_typst_markup(value: str) -> str:
+    """Escape characters that have meaning in Typst markup mode."""
+    return value.translate(_TYPST_MARKUP_ESCAPES)
+
+
+def bold_citations(value: str) -> str:
+    """Wrap parenthetical and narrative citations in Typst bold markup.
+
+    The cleaned text is intended for ``eval(s, mode: "markup")`` inside the
+    ``p`` paragraph helper. Non-citation characters that have meaning in
+    Typst markup (``<``, ``>``, ``[``, ``]``, ``*``, ``_``, ``#``, etc.) are
+    escaped so that only the bold wrappers we inject are interpreted as
+    markup. Citation text itself (parens, letters, ampersand, comma) does
+    not contain any of these markup characters in this manuscript.
+    """
+    placeholders: list[str] = []
+
+    def stash(match: re.Match[str]) -> str:
+        placeholders.append(match.group(0))
+        return f"\x00{len(placeholders) - 1}\x00"
+
+    # Narrative form is matched first so that "Author et al. (YYYY)" is
+    # captured as a single citation; otherwise the parenthetical regex
+    # would consume just "(YYYY)" and leave the author run unbolded.
+    staged = _CITATION_NARRATIVE_RE.sub(stash, value)
+    staged = _CITATION_PAREN_RE.sub(stash, staged)
+    escaped = _escape_typst_markup(staged)
+
+    def restore(match: re.Match[str]) -> str:
+        return f"#strong[{placeholders[int(match.group(1))]}]"
+
+    return re.sub(r"\x00(\d+)\x00", restore, escaped)
+
+
 def clean_text(value: str) -> str:
     value = value.replace("\u00a0", " ")
     value = re.sub(r"\*\*([^*]+)\*\*", r"\1", value)
@@ -127,8 +184,10 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             text = clean_text(data)
             if not text:
                 continue
-            fn = "refp" if in_references else "p"
-            target.append(f"#{fn}({typst_string(text)})")
+            if in_references:
+                target.append(f"#refp({typst_string(text)})")
+            else:
+                target.append(f"#p({typst_string(bold_citations(text))})")
             continue
 
         if kind == "image":
@@ -207,7 +266,10 @@ def render_typst_source(md_path: Path) -> str:
 #show figure: it => block(above: 10pt, below: 12pt, inset: 6pt, stroke: 0.35pt + rgb("#c9d4e5"))[#align(center)[#it]]
 
 #let center-line(s, size: 14pt, weight: "regular", fill: ink) = align(center)[#text(size: size, weight: weight, fill: fill)[#s]]
-#let p(s) = par(first-line-indent: 1.27cm, justify: true)[#s]
+// Body paragraph helper: evaluates the string as Typst markup so that
+// citation runs wrapped in ``#strong[...]`` by the build script render in
+// bold while the surrounding text stays normal weight.
+#let p(s) = par(first-line-indent: 1.27cm, justify: true)[#eval(s, mode: "markup")]
 // Reference paragraph: a normal first-line indent (no hanging indent)
 // with comfortable spacing between entries so the bibliography reads as a
 // list of paragraphs instead of a dense merged block.
@@ -299,9 +361,6 @@ def render_typst_source(md_path: Path) -> str:
 #front-title[List of Figures]
 #outline(title: none, target: figure.where(kind: image))
 #v(0.4cm)
-#front-title[List of Tables]
-#p("No manuscript tables are currently embedded as formal Typst tables in this editable source. Statistical results are reported in the text and figures.")
-#v(0.4cm)
 #front-title[List of Abbreviations]
 #par(first-line-indent: 0pt)[AOR: Adjusted Odds Ratio \\
 CI: Confidence Interval \\
@@ -310,7 +369,7 @@ MLE: Maximum Likelihood Estimation \\
 OR: Odds Ratio \\
 PTSD: Post-Traumatic Stress Disorder \\
 RRR: Relative Risk Ratio \\
-Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting \\
+Q6/Q7/Q8/Q9/Q11/Q12/Q13/Q31: Survey question item codes used in analysis and reporting \\
 R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries]
 
 '''
@@ -643,8 +702,6 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     for caption in figure_captions:
         paragraph = doc.add_paragraph(caption)
         paragraph.paragraph_format.first_line_indent = Inches(0)
-    _front_title(doc, "List of Tables")
-    _add_body_paragraph(doc, "No manuscript tables are currently embedded as formal tables in this editable source. Statistical results are reported in the text and figures.")
     _front_title(doc, "List of Abbreviations")
     abbreviations = [
         "AOR: Adjusted Odds Ratio",
@@ -654,7 +711,7 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
         "OR: Odds Ratio",
         "PTSD: Post-Traumatic Stress Disorder",
         "RRR: Relative Risk Ratio",
-        "Q6/Q7/Q8/Q9/Q11/Q12/Q13: Survey question item codes used in analysis and reporting",
+        "Q6/Q7/Q8/Q9/Q11/Q12/Q13/Q31: Survey question item codes used in analysis and reporting",
         "R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries",
     ]
     for item in abbreviations:
@@ -696,9 +753,9 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     _add_cover_page(doc)
 
     # Section 1: remaining preliminary pages (Dedication, Acknowledgment,
-    # Table of Contents, List of Figures, List of Tables, List of
-    # Abbreviations). ``start=None`` lets numbering continue from the
-    # cover, so this section starts at page ii.
+    # Table of Contents, List of Figures, List of Abbreviations).
+    # ``start=None`` lets numbering continue from the cover, so this
+    # section starts at page ii.
     front_section = doc.add_section(WD_SECTION.NEW_PAGE)
     _configure_section(
         front_section,
