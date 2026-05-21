@@ -40,12 +40,20 @@ from build_production import (
     set_run_font,
     setup_docx_styles,
 )
+import build_survey_appendix
 
 TYPST_CONTENT_DIR = REPO_ROOT / "typst_content"
 TYPST_OUTPUT_DIR = TYPST_CONTENT_DIR / "output"
 TYPST_SOURCE = TYPST_CONTENT_DIR / "research.typ"
 TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
+
+SURVEY_RESULTS_FILE = (
+    REPO_ROOT
+    / "analysis_pipeline"
+    / "output"
+    / "survey_data_results_comprehensive.md"
+)
 
 
 def typst_string(value: str) -> str:
@@ -283,7 +291,41 @@ def render_typst_source(md_path: Path) -> str:
   #h1(s)
 ]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
+#let h3(s) = heading(level: 3, outlined: false)[#s]
 #let fig(path, caption-text) = figure(image(path, width: 90%), caption: [#caption-text])
+
+// Appendix helpers used by the statistical-analysis output appendix.
+// ``para`` mirrors ``p`` but evaluates the inner string as Typst markup
+// so ``#strong[...]`` runs inserted by the appendix parser render in
+// bold while the rest of the paragraph stays normal weight.
+#let para(s) = par(first-line-indent: 1.27cm, justify: true)[#eval(s, mode: "markup")]
+#let bullets(items) = block(above: 4pt, below: 8pt)[
+  #list(..items.map(it => eval(it, mode: "markup")))
+]
+#let appendix-subtitle(s) = block(above: 0pt, below: 14pt)[
+  #align(center)[
+    #text(size: 12pt, style: "italic", fill: navy)[#s]
+  ]
+]
+// Compact, journal-style data table for the appendix: navy header band,
+// alternating row fill, thin gray dividers, body text 11pt for dense
+// numerical output. ``aligns`` is an array of Typst alignment values
+// (``left``, ``right``, ``center``); ``rows`` is a tuple of row tuples.
+#let datatable(headers, aligns, rows) = block(above: 8pt, below: 14pt, breakable: true)[
+  #set text(size: 11pt)
+  #table(
+    columns: headers.len(),
+    align: (col, row) => if row == 0 {{ center }} else {{ aligns.at(col) }},
+    stroke: 0.25pt + rgb("#c9d4e5"),
+    fill: (col, row) => {{
+      if row == 0 {{ navy }}
+      else if calc.odd(row) {{ rgb("#f7f9fc") }}
+      else {{ white }}
+    }},
+    ..headers.map(h => text(weight: "bold", fill: white)[#h]),
+    ..rows.flatten(),
+  )
+]
 
 #let front-title(s) = [
   #align(center)[
@@ -373,7 +415,23 @@ Q6/Q7/Q8/Q9/Q11/Q12/Q13/Q31: Survey question item codes used in analysis and rep
 R²: Coefficient of determination, reported as pseudo R² in logistic model fit summaries]
 
 '''
-    return preamble + "\n".join(front_calls) + "\n\n" + "\n".join(main_calls) + "\n"
+    appendix_calls: list[str] = []
+    if SURVEY_RESULTS_FILE.exists():
+        appendix_calls = build_survey_appendix.render_appendix_calls(SURVEY_RESULTS_FILE)
+    else:
+        print(
+            f"WARNING: {SURVEY_RESULTS_FILE} was not found; "
+            "the statistical-analysis appendix was skipped."
+        )
+
+    body_parts = [
+        "\n".join(front_calls),
+        "\n".join(main_calls),
+    ]
+    if appendix_calls:
+        body_parts.append("\n".join(appendix_calls))
+
+    return preamble + "\n\n".join(body_parts) + "\n"
 
 
 def write_typst_source(md_path: Path) -> Path:
