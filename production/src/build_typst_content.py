@@ -46,6 +46,8 @@ TYPST_OUTPUT_DIR = TYPST_CONTENT_DIR / "output"
 TYPST_SOURCE = TYPST_CONTENT_DIR / "research.typ"
 TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
+SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
+SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
 
 
 def typst_string(value: str) -> str:
@@ -410,6 +412,32 @@ def compile_typst_pdf() -> bool:
         _print_process_output(result.stderr)
         return False
     print(f"Typst content PDF: {TYPST_PDF}")
+    return True
+
+
+def compile_survey_results_pdf() -> bool:
+    """Compile the standalone survey results Typst source to PDF."""
+    typst = shutil.which("typst")
+    if typst is None:
+        print("WARNING: typst is not installed; survey_results PDF compilation was skipped.")
+        return False
+    if not SURVEY_RESULTS_SOURCE.exists():
+        print("WARNING: survey_results.typ not found; skipping survey results PDF.")
+        return False
+    result = subprocess.run(
+        [typst, "compile", "--root", str(REPO_ROOT), str(SURVEY_RESULTS_SOURCE), str(SURVEY_RESULTS_PDF)],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        print("WARNING: Typst failed for typst_content/survey_results.typ; continuing with other outputs.")
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
+        return False
+    print(f"Survey results PDF: {SURVEY_RESULTS_PDF}")
     return True
 
 
@@ -876,6 +904,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
     source_path = write_typst_source(md_path)
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
+    compile_survey_results_pdf()
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
