@@ -28,6 +28,7 @@
 
 #show table: set text(size: 9.5pt)
 #set table(stroke: 0.4pt + rgb("#c9d4e5"), inset: 5pt)
+#show figure: set block(breakable: true)
 
 // ===== Title Page =====
 #align(center + horizon)[
