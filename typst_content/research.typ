@@ -120,8 +120,7 @@ Shifa Safi Aboud\
 Zainab Mashal Nayef]
   #v(0.25cm)
   #text(size: 14pt, weight: "bold")[Supervised by:] \
-  #text(size: 20pt, weight: "bold", fill: navy)[Hameed Adnan] \
-  #text(size: 16pt)[Supervisor's Degree]
+  #text(size: 20pt, weight: "bold", fill: navy)[Dr. Hameed Adnan] \
   #v(0.18cm)
   #text(size: 14pt)[May, 2026]
 ]

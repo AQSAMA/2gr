@@ -99,7 +99,6 @@ STUDENTS = [
     "Zainab Mashal Nayef",
 ]
 SUPERVISOR = "Hameed Adnan"
-SUPERVISOR_DEGREE = "Supervisor's Degree"
 UNIVERSITY = "University of Al-Maarif"
 COLLEGE = "College of Pharmacy"
 DEPARTMENT = "Department of Clinical Pharmacy"
@@ -652,8 +651,7 @@ def _add_cover_page(doc: Document) -> None:
         _add_centered_paragraph(doc, student, size=18, bold=True)
 
     _add_centered_paragraph(doc, "Supervised by:", size=14, bold=True, space_before=12)
-    _add_centered_paragraph(doc, SUPERVISOR, size=18, bold=True)
-    _add_centered_paragraph(doc, SUPERVISOR_DEGREE, size=14)
+    _add_centered_paragraph(doc, f"Dr. {SUPERVISOR}", size=18, bold=True)
     _add_centered_paragraph(doc, MONTH_YEAR, size=14, space_before=14)
 
 
@@ -931,8 +929,7 @@ def _latex_cover_block() -> list[str]:
         "{\\bfseries By}\\\\[6pt]",
         f"{{\\Large\\bfseries {students_block}}}\\\\[14pt]",
         "{\\bfseries Supervised by:}\\\\[4pt]",
-        f"{{\\Large\\bfseries {escape_latex(SUPERVISOR)}}}\\\\",
-        f"{{\\large {escape_latex(SUPERVISOR_DEGREE)}}}\\\\[14pt]",
+        f"{{\\Large\\bfseries {escape_latex(f'Dr. {SUPERVISOR}')}}}\\\\",
         f"{{{escape_latex(MONTH_YEAR)}}}",
         "\\end{center}",
         "\\end{titlepage}",
@@ -1316,8 +1313,7 @@ def _pdf_cover_story(styles: dict[str, ParagraphStyle]) -> list:
         story.append(Paragraph(student, styles["centered_lg"]))
     story.append(Spacer(1, 12))
     story.append(Paragraph("Supervised by:", styles["centered_md_bold"]))
-    story.append(Paragraph(SUPERVISOR, styles["centered_lg"]))
-    story.append(Paragraph(SUPERVISOR_DEGREE, styles["centered_md"]))
+    story.append(Paragraph(f"Dr. {SUPERVISOR}", styles["centered_lg"]))
     story.append(Spacer(1, 14))
     story.append(Paragraph(MONTH_YEAR, styles["centered_md"]))
     return story

@@ -26,7 +26,6 @@ from build_production import (
     REPO_ROOT,
     STUDENTS,
     SUPERVISOR,
-    SUPERVISOR_DEGREE,
     TITLE,
     UNIVERSITY,
     add_field_run,
@@ -338,8 +337,7 @@ def render_typst_source(md_path: Path) -> str:
   #text(size: 20pt, weight: "bold", fill: navy)[{student_lines}]
   #v(0.25cm)
   #text(size: 14pt, weight: "bold")[Supervised by:] \\
-  #text(size: 20pt, weight: "bold", fill: navy)[{SUPERVISOR}] \\
-  #text(size: 16pt)[Supervisor's Degree]
+  #text(size: 20pt, weight: "bold", fill: navy)[Dr. {SUPERVISOR}] \\
   #v(0.18cm)
   #text(size: 14pt)[{MONTH_YEAR}]
 ]
@@ -699,8 +697,7 @@ def _add_cover_page(doc: Document) -> None:
         _center_paragraph(doc, student, size=20, bold=True, color="102A43")
     doc.add_paragraph()
     _center_paragraph(doc, "Supervised by:", size=14, bold=True)
-    _center_paragraph(doc, SUPERVISOR, size=20, bold=True, color="102A43")
-    _center_paragraph(doc, "Supervisor's Degree", size=16)
+    _center_paragraph(doc, f"Dr. {SUPERVISOR}", size=20, bold=True, color="102A43")
     doc.add_paragraph()
     _center_paragraph(doc, MONTH_YEAR, size=14)
 
