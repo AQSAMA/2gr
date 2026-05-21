@@ -50,6 +50,7 @@ jobs:
             production/method_a_python/*
             production/method_b_typst/output/*
             typst_content/research.typ
+            typst_content/survey_results.typ
             typst_content/output/*
 
   publish-release-assets:
@@ -92,4 +93,5 @@ jobs:
             production/method_a_python/*
             production/method_b_typst/output/*
             typst_content/research.typ
+            typst_content/survey_results.typ
             typst_content/output/*
