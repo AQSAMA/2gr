@@ -23,6 +23,7 @@ the document structure mirrors the Typst pipeline:
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -31,11 +32,13 @@ from urllib.parse import unquote
 
 from docx import Document
 from docx.enum.section import WD_SECTION
+from docx.enum.table import WD_ALIGN_VERTICAL, WD_ROW_HEIGHT_RULE, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt
 
+from reportlab.lib import colors as rl_colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -50,6 +53,8 @@ from reportlab.platypus import (
     PageTemplate,
     Paragraph,
     Spacer,
+    Table as RLTable,
+    TableStyle,
 )
 
 
@@ -274,37 +279,104 @@ def assemble_markdown() -> Path:
     return out_path
 
 
+_TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$")
+_TABLE_SEP_RE = re.compile(
+    r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$"
+)
+
+
+def _parse_alignment(separator_cell: str) -> str:
+    cell = separator_cell.strip()
+    starts = cell.startswith(":")
+    ends = cell.endswith(":")
+    if starts and ends:
+        return "center"
+    if ends:
+        return "right"
+    return "left"
+
+
+def _split_table_row(line: str) -> list[str]:
+    stripped = line.strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+    return [cell.strip() for cell in stripped.split("|")]
+
+
 def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
     paragraph_lines: list[str] = []
-    for raw in text.splitlines():
+    lines = text.splitlines()
+    n = len(lines)
+    i = 0
+
+    while i < n:
+        raw = lines[i]
         line = raw.rstrip()
+        stripped = line.strip()
+
+        # GitHub-Flavored Markdown table (header line followed by separator line).
+        if (
+            _TABLE_ROW_RE.match(line)
+            and i + 1 < n
+            and _TABLE_SEP_RE.match(lines[i + 1].rstrip())
+        ):
+            if paragraph_lines:
+                yield ("paragraph", " ".join(paragraph_lines).strip())
+                paragraph_lines = []
+
+            header_cells = _split_table_row(line)
+            sep_cells = _split_table_row(lines[i + 1].rstrip())
+            alignments = [_parse_alignment(cell) for cell in sep_cells]
+            # Pad alignment list to header length if separator was malformed.
+            while len(alignments) < len(header_cells):
+                alignments.append("left")
+
+            rows: list[list[str]] = []
+            j = i + 2
+            while j < n and _TABLE_ROW_RE.match(lines[j].rstrip()) and not _TABLE_SEP_RE.match(lines[j].rstrip()):
+                rows.append(_split_table_row(lines[j].rstrip()))
+                j += 1
+
+            payload = json.dumps({
+                "headers": header_cells,
+                "alignments": alignments,
+                "rows": rows,
+            }, ensure_ascii=False)
+            yield ("table", payload)
+            i = j
+            continue
 
         if line.strip() == '<div class="page-break"></div>':
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("pagebreak", "")
+            i += 1
             continue
 
-        front_matter = re.match(r"^\[\[FRONT_MATTER:(.+)\]\]$", line.strip())
+        front_matter = re.match(r"^\[\[FRONT_MATTER:(.+)\]\]$", stripped)
         if front_matter:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("frontmatter", front_matter.group(1).strip())
+            i += 1
             continue
 
-        chapter_title = re.match(r"^\[\[CHAPTER_TITLE:(.+)\]\]$", line.strip())
+        chapter_title = re.match(r"^\[\[CHAPTER_TITLE:(.+)\]\]$", stripped)
         if chapter_title:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("chaptertitle", chapter_title.group(1).strip())
+            i += 1
             continue
 
         h1 = re.match(r"^#\s+(.+)$", line)
         h2 = re.match(r"^##\s+(.+)$", line)
-        img = re.match(r"^!\[([^\]]*)\]\(([^\)]+)\)", line.strip())
+        img = re.match(r"^!\[([^\]]*)\]\(([^\)]+)\)", stripped)
         ordered_item = re.match(r"^\s*\d+\.\s+.+$", line)
 
         if h1:
@@ -312,33 +384,39 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("h1", h1.group(1).strip())
+            i += 1
             continue
         if h2:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("h2", h2.group(1).strip())
+            i += 1
             continue
         if img:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("image", f"{img.group(1)}|||{img.group(2)}")
+            i += 1
             continue
         if ordered_item:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
-            yield ("paragraph", line.strip())
+            yield ("paragraph", stripped)
+            i += 1
             continue
 
-        if not line.strip():
+        if not stripped:
             if paragraph_lines:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
+            i += 1
             continue
 
         paragraph_lines.append(line)
+        i += 1
 
     if paragraph_lines:
         yield ("paragraph", " ".join(paragraph_lines).strip())
@@ -389,6 +467,9 @@ def collect_thesis_blocks(md_path: Path) -> list[tuple[str, str]]:
         if kind == "image":
             caption, rel_path = data.split("|||", 1)
             blocks.append(("image", f"{clean_inline_markdown(caption)}|||{rel_path}"))
+            continue
+        if kind == "table":
+            blocks.append(("table", data))
             continue
         if kind == "pagebreak":
             blocks.append(("pagebreak", ""))
@@ -612,6 +693,90 @@ def _add_figure_caption(doc: Document, caption_text: str) -> None:
     add_field_run(p, r"SEQ Figure \* ARABIC", default_text="0")
     tail = p.add_run(f". {cleaned}")
     set_run_font(tail, size=12)
+
+
+_DOCX_ALIGN_MAP = {
+    "left": WD_ALIGN_PARAGRAPH.LEFT,
+    "right": WD_ALIGN_PARAGRAPH.RIGHT,
+    "center": WD_ALIGN_PARAGRAPH.CENTER,
+}
+
+
+def add_markdown_table(
+    doc: Document,
+    payload: str,
+    *,
+    body_size: float = 11,
+    header_size: float = 11,
+) -> None:
+    """Render a parsed markdown table as a Word table.
+
+    The table style follows manuscript formatting: Times New Roman, 1.0 line
+    spacing inside cells, bold header row, single-line cell borders, header
+    row repeats on each page, and column alignment driven by the source
+    separator (``---:`` -> right, ``:---:`` -> center, otherwise left).
+    """
+    data = json.loads(payload)
+    headers = data.get("headers", []) or []
+    alignments = data.get("alignments", []) or []
+    rows = data.get("rows", []) or []
+    if not headers:
+        return
+
+    # Pad alignment list to the header length for safety.
+    while len(alignments) < len(headers):
+        alignments.append("left")
+    aligns = [_DOCX_ALIGN_MAP.get(a, WD_ALIGN_PARAGRAPH.LEFT) for a in alignments]
+
+    table = doc.add_table(rows=1 + len(rows), cols=len(headers))
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.style = doc.styles["Table Grid"] if "Table Grid" in [s.name for s in doc.styles] else None
+    table.autofit = True
+
+    def style_cell(cell, text: str, alignment, *, bold: bool, size: float, header: bool = False) -> None:
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        cell_paragraph = cell.paragraphs[0]
+        cell_paragraph.alignment = alignment
+        cell_paragraph.paragraph_format.first_line_indent = Inches(0)
+        cell_paragraph.paragraph_format.space_before = Pt(0)
+        cell_paragraph.paragraph_format.space_after = Pt(0)
+        cell_paragraph.paragraph_format.line_spacing = 1.0
+        run = cell_paragraph.add_run(clean_inline_markdown(text))
+        set_run_font(run, size=size, bold=bold)
+        if header:
+            tc_pr = cell._tc.get_or_add_tcPr()
+            shd = OxmlElement("w:shd")
+            shd.set(qn("w:val"), "clear")
+            shd.set(qn("w:color"), "auto")
+            shd.set(qn("w:fill"), "EAEFF5")
+            tc_pr.append(shd)
+
+    header_row = table.rows[0]
+    for idx, cell_text in enumerate(headers):
+        style_cell(
+            header_row.cells[idx], cell_text, aligns[idx],
+            bold=True, size=header_size, header=True,
+        )
+    # Ensure the header row repeats on every page.
+    tr_pr = header_row._tr.get_or_add_trPr()
+    th_repeat = OxmlElement("w:tblHeader")
+    th_repeat.set(qn("w:val"), "true")
+    tr_pr.append(th_repeat)
+
+    for r_idx, row in enumerate(rows, start=1):
+        word_row = table.rows[r_idx]
+        for c_idx, cell_text in enumerate(row[:len(headers)]):
+            style_cell(
+                word_row.cells[c_idx], cell_text, aligns[c_idx],
+                bold=False, size=body_size,
+            )
+
+    # Add a small spacer paragraph after the table so following body text
+    # does not visually merge into the table border.
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_before = Pt(0)
+    spacer.paragraph_format.space_after = Pt(6)
 
 
 def _add_cover_page(doc: Document) -> None:
@@ -876,6 +1041,12 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             started = True
             continue
 
+        if kind == "table":
+            add_markdown_table(doc, data)
+            chapter_just_emitted = False
+            started = True
+            continue
+
         if kind == "pagebreak":
             doc.add_page_break()
             chapter_just_emitted = False
@@ -981,6 +1152,39 @@ def _latex_preliminary_block() -> list[str]:
     ]
 
 
+def _latex_table_block(payload: str) -> list[str]:
+    """Render a parsed markdown table as a LaTeX longtable so it survives page
+    breaks. Column alignment follows the source separator."""
+    data = json.loads(payload)
+    headers = data.get("headers", []) or []
+    alignments = data.get("alignments", []) or []
+    rows = data.get("rows", []) or []
+    if not headers:
+        return []
+
+    while len(alignments) < len(headers):
+        alignments.append("left")
+    align_map = {"left": "l", "right": "r", "center": "c"}
+    spec = "".join(align_map.get(a, "l") for a in alignments)
+
+    def cells(row: list[str]) -> str:
+        return " & ".join(escape_latex(c) for c in row[:len(headers)])
+
+    out = [
+        "{\\small",
+        f"\\begin{{tabular}}{{{spec}}}",
+        "\\hline",
+        cells(headers) + " \\\\",
+        "\\hline",
+    ]
+    for row in rows:
+        out.append(cells(row) + " \\\\")
+    out.append("\\hline")
+    out.append("\\end{tabular}}")
+    out.append("")  # blank line after the table block
+    return out
+
+
 def build_tex(md_path: Path, out_path: Path) -> None:
     blocks = collect_thesis_blocks(md_path)
 
@@ -1038,6 +1242,13 @@ def build_tex(md_path: Path, out_path: Path) -> None:
                 f"\\caption{{{escape_latex(alt)}}}\n"
                 "\\end{figure}"
             )
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "table":
+            body.append("\\begin{center}")
+            body.extend(_latex_table_block(data))
+            body.append("\\end{center}")
             chapter_just_emitted = False
             started = True
             continue
@@ -1406,6 +1617,71 @@ def _pdf_chapter_title_story(chapter_number: str, chapter_name: str,
     ]
 
 
+def _build_reportlab_table(payload: str, styles: dict[str, ParagraphStyle]):
+    """Render a parsed markdown table as a reportlab Table flowable.
+
+    Long cells flow as paragraphs so they wrap rather than overrun the page;
+    column alignments follow the source separator (left/right/center).
+    """
+    data = json.loads(payload)
+    headers = data.get("headers", []) or []
+    alignments = data.get("alignments", []) or []
+    rows = data.get("rows", []) or []
+    if not headers:
+        return None
+
+    while len(alignments) < len(headers):
+        alignments.append("left")
+
+    cell_styles = {
+        "left": ParagraphStyle(
+            "TblLeft", parent=styles["body"],
+            fontSize=10, leading=12, firstLineIndent=0, alignment=0,
+            spaceBefore=0, spaceAfter=0,
+        ),
+        "right": ParagraphStyle(
+            "TblRight", parent=styles["body"],
+            fontSize=10, leading=12, firstLineIndent=0, alignment=2,
+            spaceBefore=0, spaceAfter=0,
+        ),
+        "center": ParagraphStyle(
+            "TblCenter", parent=styles["body"],
+            fontSize=10, leading=12, firstLineIndent=0, alignment=1,
+            spaceBefore=0, spaceAfter=0,
+        ),
+    }
+    header_styles = {
+        key: ParagraphStyle(
+            f"TblHead{key}", parent=value, fontName="Times-Bold",
+        )
+        for key, value in cell_styles.items()
+    }
+
+    table_rows: list[list[Paragraph]] = []
+    table_rows.append([
+        Paragraph(headers[i], header_styles[alignments[i]])
+        for i in range(len(headers))
+    ])
+    for row in rows:
+        cells = []
+        for i in range(len(headers)):
+            text = row[i] if i < len(row) else ""
+            cells.append(Paragraph(text, cell_styles[alignments[i]]))
+        table_rows.append(cells)
+
+    table = RLTable(table_rows, repeatRows=1, hAlign="CENTER")
+    table.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.4, rl_colors.HexColor("#94a3b8")),
+        ("BACKGROUND", (0, 0), (-1, 0), rl_colors.HexColor("#eaeff5")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    return table
+
+
 def _fit_image(img_path: Path, max_width_cm: float = 16.0) -> tuple[float, float]:
     try:
         reader = ImageReader(str(img_path))
@@ -1510,6 +1786,15 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
                 story.append(Spacer(1, 6))
                 story.append(Image(str(img_path), width=width, height=height, hAlign="CENTER"))
                 story.append(Paragraph(caption, styles["caption"]))
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "table":
+            tbl = _build_reportlab_table(data, styles)
+            if tbl is not None:
+                story.append(Spacer(1, 6))
+                story.append(tbl)
+                story.append(Spacer(1, 8))
             chapter_just_emitted = False
             started = True
             continue

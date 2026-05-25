@@ -30,6 +30,7 @@ from build_production import (
     TITLE,
     UNIVERSITY,
     add_field_run,
+    add_markdown_table,
     assemble_markdown,
     configure_section,
     copy_figure_assets,
@@ -126,6 +127,51 @@ def ensure_dirs() -> None:
     TYPST_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+_TYPST_ALIGN = {
+    "left": "left",
+    "right": "right",
+    "center": "center",
+}
+
+
+def _render_typst_table_call(payload: str) -> str:
+    """Render a parsed markdown table payload as a Typst ``#tbl(...)`` call.
+
+    Cell content is escaped for Typst markup mode so symbols like ``<`` and
+    ``%`` render as plain text. Header alignment matches body alignment.
+    """
+    data = json.loads(payload)
+    headers = data.get("headers", []) or []
+    alignments = data.get("alignments", []) or []
+    rows = data.get("rows", []) or []
+    if not headers:
+        return ""
+    while len(alignments) < len(headers):
+        alignments.append("left")
+    cols = len(headers)
+
+    align_list = ", ".join(_TYPST_ALIGN.get(a, "left") for a in alignments)
+    columns_arg = ", ".join(["auto"] * cols)
+
+    header_cells = ", ".join(typst_string(clean_text(h)) for h in headers)
+    body_cells_parts: list[str] = []
+    for row in rows:
+        for i in range(cols):
+            cell = row[i] if i < len(row) else ""
+            body_cells_parts.append(typst_string(clean_text(cell)))
+    body_cells = ",\n    ".join(body_cells_parts)
+    body_cells_block = f"\n    {body_cells}\n  " if body_cells_parts else ""
+
+    return (
+        "#tbl(\n"
+        f"  columns: ({columns_arg}),\n"
+        f"  align: ({align_list}),\n"
+        f"  headers: ({header_cells}),\n"
+        f"  cells: ({body_cells_block}),\n"
+        ")"
+    )
+
+
 
 def _split_references(md_text: str) -> tuple[str, list[str]]:
     marker = "\n# VIII. REFERENCES\n"
@@ -196,6 +242,10 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             caption, rel_path = data.split("|||", 1)
             filename = Path(rel_path).name
             target.append(f"#fig({typst_string('../figures/' + filename)}, {typst_string(clean_text(caption))})")
+            continue
+
+        if kind == "table":
+            target.append(_render_typst_table_call(data))
             continue
 
         if kind == "pagebreak":
@@ -286,6 +336,33 @@ def render_typst_source(md_path: Path) -> str:
 ]
 #let h2(s) = heading(level: 2, outlined: true)[#s]
 #let fig(path, caption-text) = figure(image(path, width: 90%), caption: [#caption-text])
+
+// Markdown-table renderer used by tabular survey-result blocks. Headers are
+// bolded with a navy fill and body cells inherit the manuscript font; column
+// alignments come from the source markdown separator.
+#let tbl(columns: (), align: (), headers: (), cells: ()) = {{
+  let header-cells = ()
+  for (i, h) in headers.enumerate() {{
+    let a = if i < align.len() {{ align.at(i) }} else {{ left }}
+    header-cells.push(table.cell(align: a + horizon, fill: rgb("#eaeff5"))[#text(weight: "bold", size: 11pt, fill: navy)[#h]])
+  }}
+  let body-cells = ()
+  for (i, c) in cells.enumerate() {{
+    let col = calc.rem(i, columns.len())
+    let a = if col < align.len() {{ align.at(col) }} else {{ left }}
+    body-cells.push(table.cell(align: a + horizon)[#text(size: 11pt)[#c]])
+  }}
+  block(above: 8pt, below: 12pt, breakable: true)[
+    #set text(size: 11pt)
+    #table(
+      columns: columns,
+      stroke: 0.4pt + rgb("#94a3b8"),
+      inset: 5pt,
+      table.header(..header-cells),
+      ..body-cells,
+    )
+  ]
+}}
 
 #let front-title(s) = [
   #align(center)[
@@ -481,6 +558,10 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
         if kind == "image":
             caption, rel_path = data.split("|||", 1)
             blocks.append(("image", f"{clean_text(caption)}|||{Path(rel_path).name}"))
+            continue
+
+        if kind == "table":
+            blocks.append(("table", data))
             continue
 
         if kind == "pagebreak":
@@ -872,6 +953,10 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
             cap.paragraph_format.first_line_indent = Inches(0)
             for run in cap.runs:
                 _set_run_font(run, size=12, bold=True)
+            continue
+
+        if kind == "table":
+            add_markdown_table(doc, data)
             continue
 
         if kind == "pagebreak":

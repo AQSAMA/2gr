@@ -83,6 +83,48 @@
       image(block.path, width: 90%),
       caption: [#block.caption],
     )
+  } else if block.kind == "table" {
+    let data = json(bytes(block.data))
+    let columns = ()
+    for _ in data.headers { columns.push(auto) }
+    let align-map = ("left": left, "right": right, "center": center)
+    let aligns = ()
+    for a in data.alignments {
+      aligns.push(align-map.at(a, default: left))
+    }
+    while aligns.len() < data.headers.len() { aligns.push(left) }
+    let header-cells = ()
+    let hi = 0
+    for h in data.headers {
+      let a = aligns.at(hi)
+      header-cells.push(table.cell(align: a + horizon, fill: rgb("#eaeff5"))[#text(weight: "bold", size: 11pt, fill: accent)[#h]])
+      hi = hi + 1
+    }
+    let body-cells = ()
+    for row in data.rows {
+      let ci = 0
+      for cell in row {
+        if ci < data.headers.len() {
+          let a = aligns.at(ci)
+          body-cells.push(table.cell(align: a + horizon)[#text(size: 11pt)[#cell]])
+        }
+        ci = ci + 1
+      }
+      while ci < data.headers.len() {
+        body-cells.push(table.cell()[])
+        ci = ci + 1
+      }
+    }
+    v(6pt)
+    set text(size: 11pt)
+    table(
+      columns: columns,
+      stroke: 0.4pt + rgb("#94a3b8"),
+      inset: 5pt,
+      table.header(..header-cells),
+      ..body-cells,
+    )
+    v(8pt)
   }
 }
 
