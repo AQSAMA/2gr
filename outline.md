@@ -143,36 +143,40 @@ It does **not** report the new survey as literature.
 
 **Scope Rule:** Numeric results in this chapter come only from `survey_data_results.md`.
 
-### A. Sample Profile and Descriptive Statistics
+### A. Survey Results
+**Data Source:** `survey_data_results.md`  
+**Purpose:** Present the survey results in their original tabular form (sample composition, core outcome distributions, core belief items, correlation matrix, recommendation by prior use, hierarchical and multinomial regression tables, contact-hypothesis comparison, and exploratory k-means phenotype tables) with minimal narrative. Subsequent subsections IV.B through IV.H read these values in narrative form.
+
+### B. Sample Profile and Descriptive Statistics
 **Data Source:** `survey_data_results.md`  
 **Figure Support (if cited):**
 - `figures/27_donut_main_questions.png`
 - `figures/31_gender_recommendation_breakdown.png`
 - `figures/19_likert_diverging_q11_q13.png`
 
-### B. Main Outcome Distributions
+### C. Main Outcome Distributions
 **Data Source:** `survey_data_results.md`
 
-### C. Hierarchical Logistic Regression (Primary Model)
+### D. Hierarchical Logistic Regression (Primary Model)
 **Data Source:** `survey_data_results.md`  
 **Figure Support:**
 - `figures/03_primary_adjusted_or_forest.png`
 
-### D. Multinomial Logistic Regression (No/Yes/Not Sure Structure)
+### E. Multinomial Logistic Regression (No/Yes/Not Sure Structure)
 **Data Source:** `survey_data_results.md`  
 **Figure Support:**
 - `figures/08_multinomial_key_predictor_comparison.png`
 
-### E. The Contact Hypothesis (Users vs Non-Users)
+### F. The Contact Hypothesis (Users vs Non-Users)
 **Data Source:** `survey_data_results.md`
 **Analysis Focus:** Mann-Whitney U tests and Cliff's Delta effect sizes across core belief items.
 
-### F. Exploratory Stigma Phenotypes (Clearly Labeled)
+### G. Exploratory Stigma Phenotypes (Clearly Labeled)
 **Data Source:** `survey_data_results.md`  
 **Figure Support:**
 - `figures/14_profile_means_heatmap.png`
 
-### G. Results Summary
+### H. Results Summary
 **Purpose:** Summarize main statistically supported findings without interpretation drift.
 
 ---

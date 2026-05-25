@@ -47,13 +47,14 @@
 2.  **Source Scoping:** Use *only* the specific sources mapped to each section in `outline.md`.
 3.  **File Name Canonical Form:** The instruction file in this repository is `AGENTS.md` (uppercase). Treat references to `agents.md` as referring to this same file.
 4.  **Canonical Results Sequence:** Use this exact order and lettering for `IV. RESULTS` everywhere it is referenced:
-    - IV.A Sample Profile and Descriptive Statistics
-    - IV.B Main Outcome Distributions
-    - IV.C Hierarchical Logistic Regression (Primary Model)
-    - IV.D Multinomial Logistic Regression (No/Yes/Not Sure Structure)
-    - IV.E The Contact Hypothesis (Users vs Non-Users)
-    - IV.F Exploratory Stigma Phenotypes (Clearly Labeled)
-    - IV.G Results Summary
+    - IV.A Survey Results (raw tabular presentation, minimal narrative)
+    - IV.B Sample Profile and Descriptive Statistics
+    - IV.C Main Outcome Distributions
+    - IV.D Hierarchical Logistic Regression (Primary Model)
+    - IV.E Multinomial Logistic Regression (No/Yes/Not Sure Structure)
+    - IV.F The Contact Hypothesis (Users vs Non-Users)
+    - IV.G Exploratory Stigma Phenotypes (Clearly Labeled)
+    - IV.H Results Summary
 5.  **Contact Hypothesis Label Rule:** Match category wording to `survey_data_results.md` exactly: **Users vs Non-Users**.
 
 ## B. Section-Level Evidence Hierarchy (MANDATORY)

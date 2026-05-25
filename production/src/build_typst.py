@@ -100,6 +100,9 @@ def generate_body(md_path: Path) -> Path:
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
             )
+        elif kind == "table":
+            in_cover = False
+            blocks.append(f"  (kind: \"table\", data: {typst_string(data)}),")
         elif kind == "pagebreak":
             blocks.append("  (kind: \"pagebreak\"),")
 
