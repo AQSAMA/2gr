@@ -105,7 +105,7 @@
         #set text(size: 10pt)
         #if header-cells.len() > 0 [
           #table(
-            columns: col-count,
+            columns: range(col-count).map(_ => 1fr),
             align: aligns-tuple,
             stroke: 0.4pt + rgb("#c9d4e5"),
             inset: 5pt,
@@ -114,7 +114,7 @@
           )
         ] else [
           #table(
-            columns: col-count,
+            columns: range(col-count).map(_ => 1fr),
             align: aligns-tuple,
             stroke: 0.4pt + rgb("#c9d4e5"),
             inset: 5pt,

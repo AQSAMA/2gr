@@ -238,10 +238,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #section-title("IV. RESULTS")
 #p("The survey enrolled 877 respondents and produced the data summarized in the tables below. The full standalone survey report is available as a companion DOCX (survey\\_results.docx). Section IV.A onwards interprets these results in detail.")
 #h2("Sample Demographics")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 4,
+    columns: range(4).map(_ => 1fr),
     align: (left, left, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -264,10 +264,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
   )
 ]
 #h2("Main Attitudes and Beliefs")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 4,
+    columns: range(4).map(_ => 1fr),
     align: (left, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -278,10 +278,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
     "Q9 — Social concern", "37.77", "13.09", "49.14",
   )
 ]
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 4,
+    columns: range(4).map(_ => 1fr),
     align: (left, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -292,10 +292,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
   )
 ]
 #h2("Hierarchical Logistic Regression — Final Block (n = 647)")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 3,
+    columns: range(3).map(_ => 1fr),
     align: (left, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -313,10 +313,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 ]
 #p("Hierarchical model fit improved across blocks: McFadden pseudo R² rose from 0.0040 in Block 1 (demographics only) to 0.0116 in Block 2 (adding prior use) and 0.0686 in Block 3 (adding belief items and fear), with the Block 3 likelihood-ratio p-value reaching \\< 0.0001.")
 #h2("Multinomial Logistic Regression (n = 837)")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 5,
+    columns: range(5).map(_ => 1fr),
     align: (left, right, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -332,10 +332,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
   )
 ]
 #h2("Contact Hypothesis: Users vs Non-Users on Core Beliefs")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 5,
+    columns: range(5).map(_ => 1fr),
     align: (left, right, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
@@ -347,10 +347,10 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 ]
 #p("Users (Q31 = yes): n = 127. Non-users: n = 716.")
 #h2("Exploratory Stigma Phenotypes (k = 4 by silhouette)")
-#block(above: 8pt, below: 10pt)[
+#block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: 5,
+    columns: range(5).map(_ => 1fr),
     align: (right, right, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,

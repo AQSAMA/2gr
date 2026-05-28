@@ -157,10 +157,10 @@ def render_typst_table(payload: str) -> str:
         return list(row) + [""] * (col_count - len(row))
 
     parts: list[str] = []
-    parts.append("#block(above: 8pt, below: 10pt)[")
+    parts.append("#block(above: 8pt, below: 10pt, width: 100%)[")
     parts.append("  #set text(size: 10pt)")
     parts.append("  #table(")
-    parts.append(f"    columns: {col_count},")
+    parts.append(f"    columns: range({col_count}).map(_ => 1fr),")
     parts.append(f"    align: {align_block},")
     parts.append("    stroke: 0.4pt + rgb(\"#c9d4e5\"),")
     parts.append("    inset: 5pt,")
@@ -935,6 +935,49 @@ def _docx_align(align: str):
     return WD_ALIGN_PARAGRAPH.LEFT
 
 
+def _set_docx_table_full_width(table) -> None:
+    """Force a python-docx table to span 100% of the text-area width."""
+    tbl = table._tbl
+    tblPr = tbl.find(qn("w:tblPr"))
+    if tblPr is None:
+        tblPr = OxmlElement("w:tblPr")
+        tbl.insert(0, tblPr)
+
+    tblW = tblPr.find(qn("w:tblW"))
+    if tblW is None:
+        tblW = OxmlElement("w:tblW")
+        tblPr.append(tblW)
+    tblW.set(qn("w:type"), "pct")
+    tblW.set(qn("w:w"), "5000")
+
+    tblLayout = tblPr.find(qn("w:tblLayout"))
+    if tblLayout is None:
+        tblLayout = OxmlElement("w:tblLayout")
+        tblPr.append(tblLayout)
+    tblLayout.set(qn("w:type"), "fixed")
+
+    table.autofit = False
+    table.allow_autofit = False
+
+    cols = len(table.columns)
+    if cols == 0:
+        return
+    per_col_pct = str(5000 // cols)
+    for row in table.rows:
+        for cell in row.cells:
+            tc = cell._tc
+            tcPr = tc.find(qn("w:tcPr"))
+            if tcPr is None:
+                tcPr = OxmlElement("w:tcPr")
+                tc.insert(0, tcPr)
+            tcW = tcPr.find(qn("w:tcW"))
+            if tcW is None:
+                tcW = OxmlElement("w:tcW")
+                tcPr.append(tcW)
+            tcW.set(qn("w:type"), "pct")
+            tcW.set(qn("w:w"), per_col_pct)
+
+
 def _add_docx_table(
     doc: Document,
     payload: str,
@@ -958,6 +1001,7 @@ def _add_docx_table(
     table = doc.add_table(rows=1 + len(rows), cols=col_count)
     table.style = "Table Grid"
     table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _set_docx_table_full_width(table)
 
     def _fill(cell, value: str, *, bold: bool, size: float, align: str, color: str | None = None) -> None:
         cell.text = ""
