@@ -23,6 +23,7 @@ the document structure mirrors the Typst pipeline:
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -40,16 +41,19 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors as rl_colors
 from reportlab.platypus import (
     BaseDocTemplate,
     Flowable,
     Frame,
     Image,
+    LongTable,
     NextPageTemplate,
     PageBreak,
     PageTemplate,
     Paragraph,
     Spacer,
+    TableStyle,
 )
 
 
@@ -274,7 +278,87 @@ def assemble_markdown() -> Path:
     return out_path
 
 
+# ---------------------------------------------------------------------------
+# Markdown table parsing helpers (shared by all renderers).
+# ---------------------------------------------------------------------------
+_TABLE_LINE_RE = re.compile(r"^\s*\|.*\|\s*$")
+
+
+def _split_table_row(line: str) -> list[str]:
+    """Split a markdown table row into stripped cell values."""
+    inner = line.strip()
+    if inner.startswith("|"):
+        inner = inner[1:]
+    if inner.endswith("|"):
+        inner = inner[:-1]
+    return [cell.strip() for cell in inner.split("|")]
+
+
+def _is_table_separator_cells(cells: list[str]) -> bool:
+    """A separator row contains only dashes (with optional leading/trailing colons)."""
+    if not cells:
+        return False
+    pattern = re.compile(r"^:?-{3,}:?$")
+    return all(pattern.fullmatch(cell.strip()) for cell in cells if cell.strip() != "")
+
+
+def _table_alignments(separator_cells: list[str]) -> list[str]:
+    """Return one of 'left', 'center', 'right' per separator cell."""
+    out: list[str] = []
+    for cell in separator_cells:
+        c = cell.strip()
+        left = c.startswith(":")
+        right = c.endswith(":")
+        if left and right:
+            out.append("center")
+        elif right:
+            out.append("right")
+        else:
+            out.append("left")
+    return out
+
+
+def _extract_markdown_tables(text: str) -> tuple[str, list[str]]:
+    """Replace markdown tables in ``text`` with placeholders.
+
+    Returns the rewritten text plus a list of JSON-encoded table payloads.
+    Each payload contains ``headers``, ``rows`` and ``aligns`` so renderers
+    can reproduce the table without re-parsing markdown.
+    """
+    lines = text.splitlines()
+    tables: list[str] = []
+    out_lines: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if _TABLE_LINE_RE.match(line) and i + 1 < len(lines) and _TABLE_LINE_RE.match(lines[i + 1]):
+            sep_cells = _split_table_row(lines[i + 1])
+            if _is_table_separator_cells(sep_cells):
+                headers = _split_table_row(line)
+                aligns = _table_alignments(sep_cells)
+                # Pad alignments to header length if separator was shorter.
+                while len(aligns) < len(headers):
+                    aligns.append("left")
+                rows: list[list[str]] = []
+                j = i + 2
+                while j < len(lines) and _TABLE_LINE_RE.match(lines[j]):
+                    rows.append(_split_table_row(lines[j]))
+                    j += 1
+                payload = json.dumps(
+                    {"headers": headers, "rows": rows, "aligns": aligns},
+                    ensure_ascii=False,
+                )
+                tables.append(payload)
+                out_lines.append(f"<<<MD_TABLE_{len(tables) - 1}>>>")
+                i = j
+                continue
+        out_lines.append(line)
+        i += 1
+    return "\n".join(out_lines), tables
+
+
 def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
+    text, tables = _extract_markdown_tables(text)
     paragraph_lines: list[str] = []
     for raw in text.splitlines():
         line = raw.rstrip()
@@ -284,6 +368,16 @@ def iter_markdown_blocks(text: str) -> Iterable[tuple[str, str]]:
                 yield ("paragraph", " ".join(paragraph_lines).strip())
                 paragraph_lines = []
             yield ("pagebreak", "")
+            continue
+
+        table_marker = re.match(r"^<<<MD_TABLE_(\d+)>>>$", line.strip())
+        if table_marker:
+            if paragraph_lines:
+                yield ("paragraph", " ".join(paragraph_lines).strip())
+                paragraph_lines = []
+            idx = int(table_marker.group(1))
+            if 0 <= idx < len(tables):
+                yield ("table", tables[idx])
             continue
 
         front_matter = re.match(r"^\[\[FRONT_MATTER:(.+)\]\]$", line.strip())
@@ -389,6 +483,9 @@ def collect_thesis_blocks(md_path: Path) -> list[tuple[str, str]]:
         if kind == "image":
             caption, rel_path = data.split("|||", 1)
             blocks.append(("image", f"{clean_inline_markdown(caption)}|||{rel_path}"))
+            continue
+        if kind == "table":
+            blocks.append(("table", data))
             continue
         if kind == "pagebreak":
             blocks.append(("pagebreak", ""))
@@ -598,6 +695,73 @@ def _add_reference_paragraph(doc: Document, text: str) -> None:
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for run in paragraph.runs:
         set_run_font(run, size=12)
+
+
+def _docx_alignment_for(align: str):
+    if align == "right":
+        return WD_ALIGN_PARAGRAPH.RIGHT
+    if align == "center":
+        return WD_ALIGN_PARAGRAPH.CENTER
+    return WD_ALIGN_PARAGRAPH.LEFT
+
+
+def _add_markdown_table(
+    doc: Document,
+    payload: str,
+    *,
+    body_size: float = 10.0,
+    header_size: float = 10.0,
+) -> None:
+    """Render a markdown-table JSON payload as a Word table.
+
+    Cells use Times New Roman with sensible defaults for academic tables
+    (10pt body, bold headers, alignment carried from the markdown spec).
+    """
+    try:
+        data = json.loads(payload)
+    except (TypeError, ValueError):
+        return
+    headers: list[str] = data.get("headers", [])
+    rows: list[list[str]] = data.get("rows", [])
+    aligns: list[str] = data.get("aligns", [])
+    if not headers and not rows:
+        return
+    col_count = max(len(headers), max((len(r) for r in rows), default=0))
+    if col_count == 0:
+        return
+
+    table = doc.add_table(rows=1 + len(rows), cols=col_count)
+    table.style = "Table Grid"
+    table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    def _set_cell(cell, value: str, *, bold: bool, size: float, align: str) -> None:
+        cell.text = ""
+        paragraph = cell.paragraphs[0]
+        paragraph.alignment = _docx_alignment_for(align)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+        paragraph.paragraph_format.line_spacing = 1.15
+        run = paragraph.add_run(clean_inline_markdown(value))
+        set_run_font(run, size=size, bold=bold)
+
+    header_row = table.rows[0]
+    for col in range(col_count):
+        value = headers[col] if col < len(headers) else ""
+        align = aligns[col] if col < len(aligns) else "left"
+        _set_cell(header_row.cells[col], value, bold=True, size=header_size, align=align)
+
+    for r_idx, row in enumerate(rows, start=1):
+        for col in range(col_count):
+            value = row[col] if col < len(row) else ""
+            align = aligns[col] if col < len(aligns) else "left"
+            _set_cell(table.rows[r_idx].cells[col], value, bold=False, size=body_size, align=align)
+
+    # A short trailing paragraph keeps tables visually separated from the
+    # next block without forcing a page break.
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_after = Pt(6)
 
 
 def _add_figure_caption(doc: Document, caption_text: str) -> None:
@@ -876,6 +1040,12 @@ def build_docx(md_path: Path, out_path: Path) -> None:
             started = True
             continue
 
+        if kind == "table":
+            _add_markdown_table(doc, data)
+            chapter_just_emitted = False
+            started = True
+            continue
+
         if kind == "pagebreak":
             doc.add_page_break()
             chapter_just_emitted = False
@@ -901,6 +1071,44 @@ def escape_latex(text: str) -> str:
         "^": r"\textasciicircum{}",
     }
     return "".join(table.get(ch, ch) for ch in text)
+
+
+def _latex_table_block(payload: str) -> str:
+    """Render a markdown-table JSON payload as a LaTeX longtable."""
+    try:
+        data = json.loads(payload)
+    except (TypeError, ValueError):
+        return ""
+    headers: list[str] = data.get("headers", [])
+    rows: list[list[str]] = data.get("rows", [])
+    aligns: list[str] = data.get("aligns", [])
+    col_count = max(len(headers), max((len(r) for r in rows), default=0))
+    if col_count == 0:
+        return ""
+    align_map = {"left": "l", "center": "c", "right": "r"}
+    spec = "".join(align_map.get(aligns[i] if i < len(aligns) else "left", "l") for i in range(col_count))
+
+    def cells(row: list[str]) -> str:
+        padded = row + [""] * (col_count - len(row))
+        return " & ".join(escape_latex(clean_inline_markdown(c)) for c in padded[:col_count])
+
+    lines: list[str] = []
+    lines.append("\\begin{center}")
+    lines.append("\\small")
+    lines.append("\\begin{tabular}{" + spec + "}")
+    lines.append("\\hline")
+    if headers:
+        header_cells = [f"\\textbf{{{escape_latex(clean_inline_markdown(h))}}}" for h in headers]
+        while len(header_cells) < col_count:
+            header_cells.append("")
+        lines.append(" & ".join(header_cells) + " \\\\")
+        lines.append("\\hline")
+    for row in rows:
+        lines.append(cells(row) + " \\\\")
+    lines.append("\\hline")
+    lines.append("\\end{tabular}")
+    lines.append("\\end{center}")
+    return "\n".join(lines)
 
 
 def _latex_cover_block() -> list[str]:
@@ -1038,6 +1246,13 @@ def build_tex(md_path: Path, out_path: Path) -> None:
                 f"\\caption{{{escape_latex(alt)}}}\n"
                 "\\end{figure}"
             )
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "table":
+            block = _latex_table_block(data)
+            if block:
+                body.append(block)
             chapter_just_emitted = False
             started = True
             continue
@@ -1406,6 +1621,62 @@ def _pdf_chapter_title_story(chapter_number: str, chapter_name: str,
     ]
 
 
+def _pdf_table_flowable(payload: str, *, max_width_cm: float = 17.0):
+    """Build a ReportLab LongTable flowable from a markdown-table payload."""
+    try:
+        data = json.loads(payload)
+    except (TypeError, ValueError):
+        return None
+    headers: list[str] = data.get("headers", [])
+    rows: list[list[str]] = data.get("rows", [])
+    aligns: list[str] = data.get("aligns", [])
+    col_count = max(len(headers), max((len(r) for r in rows), default=0))
+    if col_count == 0:
+        return None
+
+    base = getSampleStyleSheet()
+    cell_style = ParagraphStyle(
+        "TableCell",
+        parent=base["Normal"],
+        fontName="Times-Roman",
+        fontSize=9,
+        leading=11,
+    )
+    head_style = ParagraphStyle(
+        "TableHead",
+        parent=cell_style,
+        fontName="Times-Bold",
+    )
+
+    def pad(row: list[str]) -> list[str]:
+        return list(row) + [""] * (col_count - len(row))
+
+    table_data: list[list] = []
+    if headers:
+        table_data.append([Paragraph(clean_inline_markdown(c), head_style) for c in pad(headers)])
+    for row in rows:
+        table_data.append([Paragraph(clean_inline_markdown(c), cell_style) for c in pad(row)])
+
+    col_width = (max_width_cm * cm) / col_count
+    table = LongTable(table_data, colWidths=[col_width] * col_count, repeatRows=1 if headers else 0)
+    style_cmds = [
+        ("GRID", (0, 0), (-1, -1), 0.4, rl_colors.Color(0.78, 0.83, 0.90)),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+    ]
+    if headers:
+        style_cmds.append(("BACKGROUND", (0, 0), (-1, 0), rl_colors.Color(0.95, 0.96, 0.99)))
+    for col in range(col_count):
+        align = aligns[col] if col < len(aligns) else "left"
+        rl_align = {"left": "LEFT", "center": "CENTER", "right": "RIGHT"}.get(align, "LEFT")
+        style_cmds.append(("ALIGN", (col, 0), (col, -1), rl_align))
+    table.setStyle(TableStyle(style_cmds))
+    return table
+
+
 def _fit_image(img_path: Path, max_width_cm: float = 16.0) -> tuple[float, float]:
     try:
         reader = ImageReader(str(img_path))
@@ -1510,6 +1781,15 @@ def build_pdf_reportlab(md_path: Path, out_path: Path) -> None:
                 story.append(Spacer(1, 6))
                 story.append(Image(str(img_path), width=width, height=height, hAlign="CENTER"))
                 story.append(Paragraph(caption, styles["caption"]))
+            chapter_just_emitted = False
+            started = True
+            continue
+        if kind == "table":
+            tbl = _pdf_table_flowable(data)
+            if tbl is not None:
+                story.append(Spacer(1, 4))
+                story.append(tbl)
+                story.append(Spacer(1, 4))
             chapter_just_emitted = False
             started = True
             continue

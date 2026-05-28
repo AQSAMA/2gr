@@ -1,5 +1,92 @@
 # IV. RESULTS
 
+The survey enrolled 877 respondents and produced the data summarized in the tables below. The full standalone survey report is available as a companion DOCX (`survey_results.docx`). Section IV.A onwards interprets these results in detail.
+
+## Sample Demographics
+
+| Variable | Category | Count | % |
+|---|---|---:|---:|
+| Gender | Female | 626 | 71.95 |
+| Gender | Male | 244 | 28.05 |
+| Age | 18–25 | 651 | 74.57 |
+| Age | 26–35 | 153 | 17.53 |
+| Age | 36–45 | 44 | 5.04 |
+| Age | 46–60 | 24 | 2.75 |
+| Age | > 60 | 1 | 0.11 |
+| Education | University | 689 | 78.92 |
+| Education | Postgraduate | 118 | 13.52 |
+| Education | High School | 61 | 6.99 |
+| Education | Primary | 5 | 0.57 |
+| Marital status | Single | 684 | 78.44 |
+| Marital status | Married | 183 | 20.99 |
+| Marital status | Divorced | 3 | 0.34 |
+| Marital status | Widowed | 2 | 0.23 |
+
+## Main Attitudes and Beliefs
+
+| Item | Yes (%) | Not sure (%) | No (%) |
+|---|---:|---:|---:|
+| Q6 — Safety perception | 23.65 | 31.23 | 45.12 |
+| Q7 — Acceptability | 30.80 | 17.70 | 51.49 |
+| Q8 — Recommendation willingness | 57.65 | 11.62 | 30.72 |
+| Q9 — Social concern | 37.77 | 13.09 | 49.14 |
+
+| Belief item (5-point Likert) | Disagree (%) | Neutral (%) | Agree (%) |
+|---|---:|---:|---:|
+| Q11 — Doctors prescribe medications more than necessary | 13.78 | 34.67 | 51.55 |
+| Q12 — Most medications cause psychological or physical dependence | 4.95 | 27.65 | 67.40 |
+| Q13 — Modern medications are safer than older ones | 12.18 | 35.86 | 51.95 |
+
+## Hierarchical Logistic Regression — Final Block (n = 647)
+
+| Predictor | Adjusted OR (95% CI) | p-value |
+|---|---:|---:|
+| Gender (female) | 1.516 (1.043–2.205) | 0.0294 |
+| Age (18–25) | 0.961 (0.583–1.582) | 0.8752 |
+| Education (university or postgraduate) | 1.381 (0.750–2.542) | 0.3005 |
+| Marital status (married or previously married) | 1.075 (0.632–1.827) | 0.7904 |
+| Prior psychiatric medication use | 1.342 (0.800–2.252) | 0.2645 |
+| Q11 — Overprescription belief | 0.830 (0.696–0.991) | 0.0396 |
+| Q12 — Dependence belief | 0.869 (0.701–1.078) | 0.2008 |
+| Q13 — Modern safety belief | 1.507 (1.248–1.820) | < 0.0001 |
+| Fear of psychiatric medication | 0.504 (0.358–0.711) | < 0.0001 |
+
+Hierarchical model fit improved across blocks: McFadden pseudo R² rose from 0.0040 in Block 1 (demographics only) to 0.0116 in Block 2 (adding prior use) and 0.0686 in Block 3 (adding belief items and fear), with the Block 3 likelihood-ratio p-value reaching < 0.0001.
+
+## Multinomial Logistic Regression (n = 837)
+
+| Predictor | RRR Yes vs No (95% CI) | p (Yes) | RRR Not sure vs No (95% CI) | p (Not sure) |
+|---|---:|---:|---:|---:|
+| Gender (female) | 1.558 (1.097–2.214) | 0.0133 | 2.171 (1.211–3.894) | 0.0093 |
+| Age (18–25) | 0.947 (0.599–1.496) | 0.8139 | 1.094 (0.549–2.180) | 0.7983 |
+| Education (university or postgraduate) | 1.177 (0.661–2.095) | 0.5797 | 1.300 (0.526–3.211) | 0.5692 |
+| Marital status (married or previously married) | 0.967 (0.598–1.563) | 0.8903 | 1.713 (0.863–3.399) | 0.1237 |
+| Prior psychiatric medication use | 1.387 (0.863–2.229) | 0.1763 | 1.401 (0.704–2.789) | 0.3373 |
+| Q11 — Overprescription belief | 0.873 (0.742–1.028) | 0.1028 | 0.846 (0.662–1.080) | 0.1799 |
+| Q12 — Dependence belief | 0.794 (0.651–0.970) | 0.0239 | 0.890 (0.660–1.199) | 0.4438 |
+| Q13 — Modern safety belief | 1.585 (1.328–1.892) | < 0.0001 | 1.064 (0.820–1.381) | 0.6404 |
+
+## Contact Hypothesis: Users vs Non-Users on Core Beliefs
+
+| Belief item | User median | Non-user median | Mann-Whitney U p | Cliff's delta |
+|---|---:|---:|---:|---:|
+| Q11 — Overprescription | 3.00 | 4.00 | 0.0428 | −0.108 |
+| Q12 — Dependence | 4.00 | 4.00 | 0.0317 | −0.112 |
+| Q13 — Modern safety | 4.00 | 3.00 | 0.0002 | 0.198 |
+
+Users (Q31 = yes): n = 127. Non-users: n = 716.
+
+## Exploratory Stigma Phenotypes (k = 4 by silhouette)
+
+| Profile | n | Q11 mean | Q12 mean | Q13 mean |
+|---:|---:|---:|---:|---:|
+| 0 | 183 | 4.404 | 4.115 | 4.311 |
+| 1 | 230 | 2.961 | 2.804 | 3.578 |
+| 2 | 232 | 2.694 | 4.250 | 3.720 |
+| 3 | 223 | 4.359 | 4.291 | 2.610 |
+
+Silhouette scores favored k = 4 (silhouette 0.303) over k = 2 (0.274) and k = 3 (0.272). These profiles are exploratory groupings, not confirmed latent classes.
+
 ## IV.A Sample Profile and Descriptive Statistics
 
 The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.
