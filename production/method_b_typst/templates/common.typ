@@ -83,6 +83,47 @@
       image(block.path, width: 90%),
       caption: [#block.caption],
     )
+  } else if block.kind == "table" {
+    let col-count = if block.headers.len() > 0 {
+      block.headers.len()
+    } else if block.rows.len() > 0 {
+      block.rows.at(0).len()
+    } else {
+      0
+    }
+    if col-count > 0 {
+      let aligns-tuple = range(col-count).map(i => {
+        let key = if i < block.aligns.len() { block.aligns.at(i) } else { "left" }
+        if key == "right" { right }
+        else if key == "center" { center }
+        else { left }
+      })
+      let header-cells = block.headers.map(h => text(weight: "bold")[#h])
+      let body-cells = block.rows.flatten()
+      v(8pt, weak: true)
+      [
+        #set text(size: 10pt)
+        #if header-cells.len() > 0 [
+          #table(
+            columns: range(col-count).map(_ => 1fr),
+            align: aligns-tuple,
+            stroke: 0.4pt + rgb("#c9d4e5"),
+            inset: 5pt,
+            table.header(..header-cells),
+            ..body-cells,
+          )
+        ] else [
+          #table(
+            columns: range(col-count).map(_ => 1fr),
+            align: aligns-tuple,
+            stroke: 0.4pt + rgb("#c9d4e5"),
+            inset: 5pt,
+            ..body-cells,
+          )
+        ]
+      ]
+      v(10pt, weak: true)
+    }
   }
 }
 

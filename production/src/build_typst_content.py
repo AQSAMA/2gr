@@ -48,6 +48,8 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+SURVEY_RESULTS_DOCX = TYPST_OUTPUT_DIR / "survey_results.docx"
+SURVEY_RESULTS_MD = REPO_ROOT / "survey_data_results.md"
 
 
 def typst_string(value: str) -> str:
@@ -119,6 +121,58 @@ def clean_text(value: str) -> str:
     value = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", value)
     value = re.sub(r"\s+", " ", value).strip()
     return value
+
+
+def _typst_align_marker(align: str) -> str:
+    if align == "right":
+        return "right"
+    if align == "center":
+        return "center"
+    return "left"
+
+
+def render_typst_table(payload: str) -> str:
+    """Render a markdown-table JSON payload as Typst figure(table()) markup."""
+    try:
+        data = json.loads(payload)
+    except (TypeError, ValueError):
+        return ""
+    headers: list[str] = data.get("headers", [])
+    rows: list[list[str]] = data.get("rows", [])
+    aligns: list[str] = data.get("aligns", [])
+    col_count = max(len(headers), max((len(r) for r in rows), default=0))
+    if col_count == 0:
+        return ""
+
+    align_specs = [_typst_align_marker(aligns[i] if i < len(aligns) else "left") for i in range(col_count)]
+    align_block = "(" + ", ".join(align_specs) + ("," if col_count == 1 else "") + ")"
+
+    def fmt_cell(value: str) -> str:
+        return typst_string(clean_text(value))
+
+    def fmt_header_cell(value: str) -> str:
+        return f"text(weight: \"bold\")[{typst_string(clean_text(value))}]"
+
+    def pad(row: list[str]) -> list[str]:
+        return list(row) + [""] * (col_count - len(row))
+
+    parts: list[str] = []
+    parts.append("#block(above: 8pt, below: 10pt, width: 100%)[")
+    parts.append("  #set text(size: 10pt)")
+    parts.append("  #table(")
+    parts.append(f"    columns: range({col_count}).map(_ => 1fr),")
+    parts.append(f"    align: {align_block},")
+    parts.append("    stroke: 0.4pt + rgb(\"#c9d4e5\"),")
+    parts.append("    inset: 5pt,")
+    if headers:
+        header_line = ", ".join(fmt_header_cell(h) for h in pad(headers))
+        parts.append(f"    table.header({header_line}),")
+    for row in rows:
+        row_line = ", ".join(fmt_cell(c) for c in pad(row))
+        parts.append(f"    {row_line},")
+    parts.append("  )")
+    parts.append("]")
+    return "\n".join(parts)
 
 
 def ensure_dirs() -> None:
@@ -196,6 +250,12 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             caption, rel_path = data.split("|||", 1)
             filename = Path(rel_path).name
             target.append(f"#fig({typst_string('../figures/' + filename)}, {typst_string(clean_text(caption))})")
+            continue
+
+        if kind == "table":
+            block = render_typst_table(data)
+            if block:
+                target.append(block)
             continue
 
         if kind == "pagebreak":
@@ -441,6 +501,196 @@ def compile_survey_results_pdf() -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# Standalone survey_results.docx builder.
+# ---------------------------------------------------------------------------
+def _set_page_border_navy(section, color: str = NAVY_HEX) -> None:
+    sect_pr = section._sectPr
+    borders = sect_pr.find(qn("w:pgBorders"))
+    if borders is None:
+        borders = OxmlElement("w:pgBorders")
+        borders.set(qn("w:offsetFrom"), "page")
+        sect_pr.append(borders)
+    for edge in ("top", "left", "bottom", "right"):
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), "8")
+        element.set(qn("w:space"), "18")
+        element.set(qn("w:color"), color)
+        borders.append(element)
+
+
+def _survey_set_section(
+    section,
+    *,
+    numbered: bool,
+    start: int | None = 1,
+    suppress_first_page: bool = False,
+) -> None:
+    """Apply 1.5cm margins, navy page border, decimal numbering and the
+    same centered PAGE field used by the main typst_content DOCX."""
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    _set_page_border_navy(section)
+
+    section.header.is_linked_to_previous = False
+    section.footer.is_linked_to_previous = False
+    section.different_first_page_header_footer = suppress_first_page
+    for paragraph in section.header.paragraphs:
+        paragraph.clear()
+    for paragraph in section.first_page_header.paragraphs:
+        paragraph.clear()
+
+    if not numbered:
+        return
+
+    sect_pr = section._sectPr
+    pg_num = sect_pr.find(qn("w:pgNumType"))
+    if pg_num is None:
+        pg_num = OxmlElement("w:pgNumType")
+        sect_pr.append(pg_num)
+    pg_num.set(qn("w:fmt"), "decimal")
+    if start is not None:
+        pg_num.set(qn("w:start"), str(start))
+    elif pg_num.get(qn("w:start")) is not None:
+        del pg_num.attrib[qn("w:start")]
+
+    page_para = section.header.paragraphs[0]
+    page_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    page_para.paragraph_format.first_line_indent = Inches(0)
+    add_field_run(page_para, "PAGE")
+
+
+def _survey_setup_styles(doc: Document) -> None:
+    normal = doc.styles["Normal"]
+    normal.font.name = "Times New Roman"
+    normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    normal.font.size = Pt(14)
+    normal.paragraph_format.line_spacing = 1.5
+    normal.paragraph_format.first_line_indent = Inches(0.5)
+    for style_name, size in (("Heading 1", 18), ("Heading 2", 16)):
+        style = doc.styles[style_name]
+        style.font.name = "Times New Roman"
+        style._element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        style.font.size = Pt(size)
+        style.font.bold = True
+        style.font.color.rgb = RGBColor.from_string(NAVY_HEX)
+
+
+def _survey_centered(doc: Document, text: str, *, size: float, bold: bool = False, color: str | None = None) -> None:
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    if text:
+        run = paragraph.add_run(text)
+        set_run_font(run, size=size, bold=bold, color=color)
+
+
+def _survey_body_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.line_spacing = 1.5
+    paragraph.paragraph_format.first_line_indent = Inches(0.5)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for run in paragraph.runs:
+        set_run_font(run, size=14)
+
+
+def _survey_cover(doc: Document) -> None:
+    """A title block matching the styled cover used by the main typst PDF."""
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_before = Inches(2.0)
+
+    border = doc.add_paragraph()
+    border.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    border.paragraph_format.first_line_indent = Inches(0)
+    set_paragraph_border(border)
+    border.paragraph_format.space_before = Pt(20)
+    border.paragraph_format.space_after = Pt(20)
+    title_run = border.add_run("Survey Data Results")
+    set_run_font(title_run, size=24, bold=True, color=NAVY_HEX)
+
+    _survey_centered(
+        doc,
+        "Psychiatric Medication Use and Public Acceptance in Iraq",
+        size=16,
+    )
+    _survey_centered(doc, "Unified Analysis (N = 877)", size=13)
+    _survey_centered(doc, ", ".join(STUDENTS), size=12)
+    _survey_centered(doc, MONTH_YEAR, size=12)
+
+
+def build_survey_results_docx(out_path: Path = SURVEY_RESULTS_DOCX) -> Path:
+    """Generate the standalone survey_results.docx companion file.
+
+    The DOCX is generated directly from ``survey_data_results.md`` (the same
+    canonical source used by the typst survey_results.typ), so PDF and DOCX
+    stay in sync. Formatting follows AGENTS.md: Times New Roman, 14pt body,
+    1.5 line spacing, 1.5 cm margins on all sides, first-line paragraph
+    indentation, navy page borders, and 10pt tables for fit.
+    """
+    if not SURVEY_RESULTS_MD.exists():
+        print(f"WARNING: {SURVEY_RESULTS_MD.name} not found; skipping survey_results.docx.")
+        return out_path
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    doc = Document()
+    _survey_setup_styles(doc)
+
+    # Section 0: cover/title page (no number).
+    _survey_set_section(doc.sections[0], numbered=False)
+    _survey_cover(doc)
+
+    # Section 1: main matter, decimal numbering starting at 1.
+    main = doc.add_section(WD_SECTION.NEW_PAGE)
+    _survey_set_section(main, numbered=True, start=1)
+
+    md_text = SURVEY_RESULTS_MD.read_text(encoding="utf-8")
+    seen_h1 = False
+
+    for kind, data in iter_markdown_blocks(md_text):
+        if kind == "h1":
+            text = clean_text(data)
+            # Skip duplicating the title we already rendered on the cover.
+            if not seen_h1:
+                seen_h1 = True
+                continue
+            paragraph = doc.add_paragraph(text)
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_before = Pt(12)
+            paragraph.paragraph_format.space_after = Pt(8)
+            continue
+
+        if kind == "h2":
+            paragraph = doc.add_paragraph(clean_text(data))
+            paragraph.style = doc.styles["Heading 2"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_before = Pt(10)
+            paragraph.paragraph_format.space_after = Pt(6)
+            continue
+
+        if kind == "paragraph":
+            text = clean_text(data)
+            if text:
+                _survey_body_paragraph(doc, text)
+            continue
+
+        if kind == "table":
+            _add_docx_table(doc, data)
+            continue
+
+        if kind == "pagebreak":
+            doc.add_page_break()
+            continue
+
+    doc.save(out_path)
+    print(f"Survey results DOCX: {out_path}")
+    return out_path
+
+
 def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
     """Collect the same manuscript structure used by the editable Typst source."""
     blocks: list[tuple[str, str]] = []
@@ -481,6 +731,10 @@ def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
         if kind == "image":
             caption, rel_path = data.split("|||", 1)
             blocks.append(("image", f"{clean_text(caption)}|||{Path(rel_path).name}"))
+            continue
+
+        if kind == "table":
+            blocks.append(("table", data))
             continue
 
         if kind == "pagebreak":
@@ -671,6 +925,110 @@ def _add_reference_paragraph(doc: Document, text: str) -> None:
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for run in paragraph.runs:
         _set_run_font(run, size=12)
+
+
+def _docx_align(align: str):
+    if align == "right":
+        return WD_ALIGN_PARAGRAPH.RIGHT
+    if align == "center":
+        return WD_ALIGN_PARAGRAPH.CENTER
+    return WD_ALIGN_PARAGRAPH.LEFT
+
+
+def _set_docx_table_full_width(table) -> None:
+    """Force a python-docx table to span 100% of the text-area width."""
+    tbl = table._tbl
+    tblPr = tbl.find(qn("w:tblPr"))
+    if tblPr is None:
+        tblPr = OxmlElement("w:tblPr")
+        tbl.insert(0, tblPr)
+
+    tblW = tblPr.find(qn("w:tblW"))
+    if tblW is None:
+        tblW = OxmlElement("w:tblW")
+        tblPr.append(tblW)
+    tblW.set(qn("w:type"), "pct")
+    tblW.set(qn("w:w"), "5000")
+
+    tblLayout = tblPr.find(qn("w:tblLayout"))
+    if tblLayout is None:
+        tblLayout = OxmlElement("w:tblLayout")
+        tblPr.append(tblLayout)
+    tblLayout.set(qn("w:type"), "fixed")
+
+    table.autofit = False
+    table.allow_autofit = False
+
+    cols = len(table.columns)
+    if cols == 0:
+        return
+    per_col_pct = str(5000 // cols)
+    for row in table.rows:
+        for cell in row.cells:
+            tc = cell._tc
+            tcPr = tc.find(qn("w:tcPr"))
+            if tcPr is None:
+                tcPr = OxmlElement("w:tcPr")
+                tc.insert(0, tcPr)
+            tcW = tcPr.find(qn("w:tcW"))
+            if tcW is None:
+                tcW = OxmlElement("w:tcW")
+                tcPr.append(tcW)
+            tcW.set(qn("w:type"), "pct")
+            tcW.set(qn("w:w"), per_col_pct)
+
+
+def _add_docx_table(
+    doc: Document,
+    payload: str,
+    *,
+    body_size: float = 10.0,
+    header_size: float = 10.0,
+    header_color: str = NAVY_HEX,
+) -> None:
+    """Render a markdown-table JSON payload into a styled python-docx table."""
+    try:
+        data = json.loads(payload)
+    except (TypeError, ValueError):
+        return
+    headers: list[str] = data.get("headers", [])
+    rows: list[list[str]] = data.get("rows", [])
+    aligns: list[str] = data.get("aligns", [])
+    col_count = max(len(headers), max((len(r) for r in rows), default=0))
+    if col_count == 0:
+        return
+
+    table = doc.add_table(rows=1 + len(rows), cols=col_count)
+    table.style = "Table Grid"
+    table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _set_docx_table_full_width(table)
+
+    def _fill(cell, value: str, *, bold: bool, size: float, align: str, color: str | None = None) -> None:
+        cell.text = ""
+        paragraph = cell.paragraphs[0]
+        paragraph.alignment = _docx_align(align)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+        paragraph.paragraph_format.line_spacing = 1.15
+        run = paragraph.add_run(clean_text(value))
+        _set_run_font(run, size=size, bold=bold, color=color)
+
+    header_row = table.rows[0]
+    for col in range(col_count):
+        value = headers[col] if col < len(headers) else ""
+        align = aligns[col] if col < len(aligns) else "left"
+        _fill(header_row.cells[col], value, bold=True, size=header_size, align=align, color=header_color)
+
+    for r_idx, row in enumerate(rows, start=1):
+        for col in range(col_count):
+            value = row[col] if col < len(row) else ""
+            align = aligns[col] if col < len(aligns) else "left"
+            _fill(table.rows[r_idx].cells[col], value, bold=False, size=body_size, align=align)
+
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_after = Pt(6)
 
 
 def _add_cover_page(doc: Document) -> None:
@@ -874,6 +1232,10 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
                 _set_run_font(run, size=12, bold=True)
             continue
 
+        if kind == "table":
+            _add_docx_table(doc, data)
+            continue
+
         if kind == "pagebreak":
             doc.add_page_break()
             chapter_just_added = False
@@ -905,6 +1267,10 @@ def run_typst_content(md_path: Path | None = None) -> None:
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
     compile_survey_results_pdf()
+    try:
+        build_survey_results_docx()
+    except Exception as exc:
+        print(f"WARNING: survey_results.docx generation failed ({exc}).")
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:

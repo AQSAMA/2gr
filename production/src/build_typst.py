@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -99,6 +100,27 @@ def generate_body(md_path: Path) -> Path:
             blocks.append(
                 f"  (kind: \"image\", caption: {typst_string(caption)}, "
                 f"path: {typst_string(typst_path)}),"
+            )
+        elif kind == "table":
+            in_cover = False
+            try:
+                payload = json.loads(data)
+            except (TypeError, ValueError):
+                continue
+            headers = [typst_string(h) for h in payload.get("headers", [])]
+            rows = payload.get("rows", [])
+            aligns = payload.get("aligns", [])
+            row_literals = []
+            for row in rows:
+                row_literals.append(
+                    "(" + ", ".join(typst_string(c) for c in row) + ")"
+                )
+            blocks.append(
+                "  (kind: \"table\", "
+                + "headers: (" + ", ".join(headers) + ("," if len(headers) == 1 else "") + "), "
+                + "rows: (" + ", ".join(row_literals) + ("," if len(row_literals) == 1 else "") + "), "
+                + "aligns: (" + ", ".join(typst_string(a) for a in aligns)
+                + ("," if len(aligns) == 1 else "") + ")),"
             )
         elif kind == "pagebreak":
             blocks.append("  (kind: \"pagebreak\"),")
