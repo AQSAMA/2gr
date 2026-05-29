@@ -236,8 +236,11 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #chapter-page("Chapter Three", "Results")
 #set-running-head("Results")
 #section-title("IV. RESULTS")
-#p("The survey enrolled 877 respondents and produced the data summarized in the tables below. The full standalone survey report is available as a companion DOCX (survey\\_results.docx). Section IV.A onwards interprets these results in detail.")
-#h2("Sample Demographics")
+#h2("Psychiatric Medication Use and Public Acceptance in Iraq — Unified Survey Analysis (N=877)")
+#p("This script now provides a single unified output with main/clean models and clearly labeled exploratory analyses.")
+#h2("Main/Clean Analysis (Publication-Ready)")
+#h2("1) Hierarchical Block Logistic Regression (Outcome: Q8 Yes vs No)")
+#p("- Complete-case n (primary hierarchical models): 647")
 #block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
@@ -245,53 +248,13 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
     align: (left, left, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
-    table.header(text(weight: "bold")["Variable"], text(weight: "bold")["Category"], text(weight: "bold")["Count"], text(weight: "bold")["%"]),
-    "Gender", "Female", "626", "71.95",
-    "Gender", "Male", "244", "28.05",
-    "Age", "18–25", "651", "74.57",
-    "Age", "26–35", "153", "17.53",
-    "Age", "36–45", "44", "5.04",
-    "Age", "46–60", "24", "2.75",
-    "Age", "> 60", "1", "0.11",
-    "Education", "University", "689", "78.92",
-    "Education", "Postgraduate", "118", "13.52",
-    "Education", "High School", "61", "6.99",
-    "Education", "Primary", "5", "0.57",
-    "Marital status", "Single", "684", "78.44",
-    "Marital status", "Married", "183", "20.99",
-    "Marital status", "Divorced", "3", "0.34",
-    "Marital status", "Widowed", "2", "0.23",
+    table.header(text(weight: "bold")["Model block"], text(weight: "bold")["Formula summary"], text(weight: "bold")["McFadden pseudo R²"], text(weight: "bold")["LLR p-value"]),
+    "Block 1 (mle)", "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary", "0.0040", "0.5037",
+    "Block 2 (mle)", "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary", "0.0116", "0.0847",
+    "Block 3 (mle)", "Recommend_Binary ~ Age_Binary + Gender_Binary + Edu_Binary + Married_Binary + PriorUse_Binary + Q11 + Q12 + Q13 + Fear_Binary", "0.0686", "<0.0001",
   )
 ]
-#h2("Main Attitudes and Beliefs")
-#block(above: 8pt, below: 10pt, width: 100%)[
-  #set text(size: 10pt)
-  #table(
-    columns: range(4).map(_ => 1fr),
-    align: (left, right, right, right),
-    stroke: 0.4pt + rgb("#c9d4e5"),
-    inset: 5pt,
-    table.header(text(weight: "bold")["Item"], text(weight: "bold")["Yes (%)"], text(weight: "bold")["Not sure (%)"], text(weight: "bold")["No (%)"]),
-    "Q6 — Safety perception", "23.65", "31.23", "45.12",
-    "Q7 — Acceptability", "30.80", "17.70", "51.49",
-    "Q8 — Recommendation willingness", "57.65", "11.62", "30.72",
-    "Q9 — Social concern", "37.77", "13.09", "49.14",
-  )
-]
-#block(above: 8pt, below: 10pt, width: 100%)[
-  #set text(size: 10pt)
-  #table(
-    columns: range(4).map(_ => 1fr),
-    align: (left, right, right, right),
-    stroke: 0.4pt + rgb("#c9d4e5"),
-    inset: 5pt,
-    table.header(text(weight: "bold")["Belief item (5-point Likert)"], text(weight: "bold")["Disagree (%)"], text(weight: "bold")["Neutral (%)"], text(weight: "bold")["Agree (%)"]),
-    "Q11 — Doctors prescribe medications more than necessary", "13.78", "34.67", "51.55",
-    "Q12 — Most medications cause psychological or physical dependence", "4.95", "27.65", "67.40",
-    "Q13 — Modern medications are safer than older ones", "12.18", "35.86", "51.95",
-  )
-]
-#h2("Hierarchical Logistic Regression — Final Block (n = 647)")
+#p("\\#\\#\\# Final Primary Block (Block 3) — Adjusted Odds Ratios")
 #block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
@@ -300,53 +263,82 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
     table.header(text(weight: "bold")["Predictor"], text(weight: "bold")["Adjusted OR (95% CI)"], text(weight: "bold")["p-value"]),
-    "Gender (female)", "1.516 (1.043–2.205)", "0.0294",
-    "Age (18–25)", "0.961 (0.583–1.582)", "0.8752",
-    "Education (university or postgraduate)", "1.381 (0.750–2.542)", "0.3005",
-    "Marital status (married or previously married)", "1.075 (0.632–1.827)", "0.7904",
-    "Prior psychiatric medication use", "1.342 (0.800–2.252)", "0.2645",
-    "Q11 — Overprescription belief", "0.830 (0.696–0.991)", "0.0396",
-    "Q12 — Dependence belief", "0.869 (0.701–1.078)", "0.2008",
-    "Q13 — Modern safety belief", "1.507 (1.248–1.820)", "< 0.0001",
-    "Fear of psychiatric medication", "0.504 (0.358–0.711)", "< 0.0001",
+    "Intercept", "1.128 (0.298 to 4.273)", "0.8597",
+    "Age_Binary", "0.961 (0.583 to 1.582)", "0.8752",
+    "Gender_Binary", "1.516 (1.043 to 2.205)", "0.0294",
+    "Edu_Binary", "1.381 (0.750 to 2.542)", "0.3005",
+    "Married_Binary", "1.075 (0.632 to 1.827)", "0.7904",
+    "PriorUse_Binary", "1.342 (0.800 to 2.252)", "0.2645",
+    "Q11", "0.830 (0.696 to 0.991)", "0.0396",
+    "Q12", "0.869 (0.701 to 1.078)", "0.2008",
+    "Q13", "1.507 (1.248 to 1.820)", "<0.0001",
+    "Fear_Binary", "0.504 (0.358 to 0.711)", "<0.0001",
   )
 ]
-#p("Hierarchical model fit improved across blocks: McFadden pseudo R² rose from 0.0040 in Block 1 (demographics only) to 0.0116 in Block 2 (adding prior use) and 0.0686 in Block 3 (adding belief items and fear), with the Block 3 likelihood-ratio p-value reaching \\< 0.0001.")
-#h2("Multinomial Logistic Regression (n = 837)")
+#p("\\#\\#\\# Sensitivity Model Adding Proximal Beliefs (Q6/Q7)")
+#p("- Complete-case n (sensitivity model): 406 - McFadden pseudo R²: 0.2440 - Fit type: mle - This sensitivity model is reported separately because Q6 and Q7 are conceptually close to Q8 and can dominate explanatory variance.")
+#h2("2) Multinomial Logistic Regression Preserving Hesitation (Q8 = No / Yes / Not sure)")
+#p("- Complete-case n: 837 - Model log-likelihood: -748.910 - Fit type: mle")
+#p("Reference outcome in statsmodels is the lowest coded category; coefficients are shown for non-reference outcome equations.")
 #block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: range(5).map(_ => 1fr),
-    align: (left, right, right, right, right),
+    columns: range(4).map(_ => 1fr),
+    align: (left, left, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
-    table.header(text(weight: "bold")["Predictor"], text(weight: "bold")["RRR Yes vs No (95% CI)"], text(weight: "bold")["p (Yes)"], text(weight: "bold")["RRR Not sure vs No (95% CI)"], text(weight: "bold")["p (Not sure)"]),
-    "Gender (female)", "1.558 (1.097–2.214)", "0.0133", "2.171 (1.211–3.894)", "0.0093",
-    "Age (18–25)", "0.947 (0.599–1.496)", "0.8139", "1.094 (0.549–2.180)", "0.7983",
-    "Education (university or postgraduate)", "1.177 (0.661–2.095)", "0.5797", "1.300 (0.526–3.211)", "0.5692",
-    "Marital status (married or previously married)", "0.967 (0.598–1.563)", "0.8903", "1.713 (0.863–3.399)", "0.1237",
-    "Prior psychiatric medication use", "1.387 (0.863–2.229)", "0.1763", "1.401 (0.704–2.789)", "0.3373",
-    "Q11 — Overprescription belief", "0.873 (0.742–1.028)", "0.1028", "0.846 (0.662–1.080)", "0.1799",
-    "Q12 — Dependence belief", "0.794 (0.651–0.970)", "0.0239", "0.890 (0.660–1.199)", "0.4438",
-    "Q13 — Modern safety belief", "1.585 (1.328–1.892)", "< 0.0001", "1.064 (0.820–1.381)", "0.6404",
+    table.header(text(weight: "bold")["Outcome equation"], text(weight: "bold")["Predictor"], text(weight: "bold")["Relative risk ratio (95% CI)"], text(weight: "bold")["p-value"]),
+    "Q8=1 vs ref", "const", "0.936 (0.264 to 3.317)", "0.9189",
+    "Q8=1 vs ref", "Age_Binary", "0.947 (0.599 to 1.496)", "0.8139",
+    "Q8=1 vs ref", "Gender_Binary", "1.558 (1.097 to 2.214)", "0.0133",
+    "Q8=1 vs ref", "Edu_Binary", "1.177 (0.661 to 2.095)", "0.5797",
+    "Q8=1 vs ref", "Married_Binary", "0.967 (0.598 to 1.563)", "0.8903",
+    "Q8=1 vs ref", "PriorUse_Binary", "1.387 (0.863 to 2.229)", "0.1763",
+    "Q8=1 vs ref", "Q11", "0.873 (0.742 to 1.028)", "0.1028",
+    "Q8=1 vs ref", "Q12", "0.794 (0.651 to 0.970)", "0.0239",
+    "Q8=1 vs ref", "Q13", "1.585 (1.328 to 1.892)", "<0.0001",
+    "Q8=2 vs ref", "const", "0.304 (0.046 to 2.013)", "0.2170",
+    "Q8=2 vs ref", "Age_Binary", "1.094 (0.549 to 2.180)", "0.7983",
+    "Q8=2 vs ref", "Gender_Binary", "2.171 (1.211 to 3.894)", "0.0093",
+    "Q8=2 vs ref", "Edu_Binary", "1.300 (0.526 to 3.211)", "0.5692",
+    "Q8=2 vs ref", "Married_Binary", "1.713 (0.863 to 3.399)", "0.1237",
+    "Q8=2 vs ref", "PriorUse_Binary", "1.401 (0.704 to 2.789)", "0.3373",
+    "Q8=2 vs ref", "Q11", "0.846 (0.662 to 1.080)", "0.1799",
+    "Q8=2 vs ref", "Q12", "0.890 (0.660 to 1.199)", "0.4438",
+    "Q8=2 vs ref", "Q13", "1.064 (0.820 to 1.381)", "0.6404",
   )
 ]
-#h2("Contact Hypothesis: Users vs Non-Users on Core Beliefs")
+#h2("Exploratory Analysis (Clearly Labeled)")
+#h2("3) Contact Hypothesis: Users vs Non-Users on Core Beliefs (Q11-Q13)")
+#p("- Users (Q31=1): 127 - Non-users (Q31=0): 716")
 #block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
-    columns: range(5).map(_ => 1fr),
-    align: (left, right, right, right, right),
+    columns: range(8).map(_ => 1fr),
+    align: (left, right, right, right, right, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
-    table.header(text(weight: "bold")["Belief item"], text(weight: "bold")["User median"], text(weight: "bold")["Non-user median"], text(weight: "bold")["Mann-Whitney U p"], text(weight: "bold")["Cliff's delta"]),
-    "Q11 — Overprescription", "3.00", "4.00", "0.0428", "−0.108",
-    "Q12 — Dependence", "4.00", "4.00", "0.0317", "−0.112",
-    "Q13 — Modern safety", "4.00", "3.00", "0.0002", "0.198",
+    table.header(text(weight: "bold")["Item"], text(weight: "bold")["User median"], text(weight: "bold")["Non-user median"], text(weight: "bold")["Mann-Whitney U p-value"], text(weight: "bold")["Cliff's delta"], text(weight: "bold")["Chi-square p-value"], text(weight: "bold")["Cramer's V"], text(weight: "bold")["N used"]),
+    "Q11 (Doctors prescribe medications more than necessary)", "3.00", "4.00", "0.0428", "-0.108", "0.1170", "0.094", "843",
+    "Q12 (Most medications cause psychological or physical dependence)", "4.00", "4.00", "0.0317", "-0.112", "0.0428", "0.108", "840",
+    "Q13 (Modern medications are safer than older ones)", "4.00", "3.00", "0.0002", "0.198", "0.0027", "0.139", "842",
   )
 ]
-#p("Users (Q31 = yes): n = 127. Non-users: n = 716.")
-#h2("Exploratory Stigma Phenotypes (k = 4 by silhouette)")
+#h2("4) Exploratory Stigma Phenotypes (K-Means on Standardized Q11-Q13)")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(2).map(_ => 1fr),
+    align: (right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["k"], text(weight: "bold")["Silhouette score"]),
+    "2", "0.274",
+    "3", "0.272",
+    "4", "0.303",
+  )
+]
+#p("- Selected k by maximum silhouette: 4")
 #block(above: 8pt, below: 10pt, width: 100%)[
   #set text(size: 10pt)
   #table(
@@ -354,14 +346,104 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
     align: (right, right, right, right, right),
     stroke: 0.4pt + rgb("#c9d4e5"),
     inset: 5pt,
-    table.header(text(weight: "bold")["Profile"], text(weight: "bold")["n"], text(weight: "bold")["Q11 mean"], text(weight: "bold")["Q12 mean"], text(weight: "bold")["Q13 mean"]),
+    table.header(text(weight: "bold")["Profile"], text(weight: "bold")["Size n"], text(weight: "bold")["Q11 mean"], text(weight: "bold")["Q12 mean"], text(weight: "bold")["Q13 mean"]),
     "0", "183", "4.404", "4.115", "4.311",
     "1", "230", "2.961", "2.804", "3.578",
     "2", "232", "2.694", "4.250", "3.720",
     "3", "223", "4.359", "4.291", "2.610",
   )
 ]
-#p("Silhouette scores favored k = 4 (silhouette 0.303) over k = 2 (0.274) and k = 3 (0.272). These profiles are exploratory groupings, not confirmed latent classes.")
+#h2("5) Notes for Manuscript Positioning")
+#p("- Hierarchical and multinomial modeling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value. - K-means profiling should be presented as an exploratory secondary analysis. - For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.")
+#pagebreak()
+#h2("Demographics Summary")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(4).map(_ => 1fr),
+    align: (left, left, right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["Variable"], text(weight: "bold")["Category"], text(weight: "bold")["Count"], text(weight: "bold")["Percentage"]),
+    "Gender", "Male", "244", "28.05%",
+    "Gender", "Female", "626", "71.95%",
+    "Age", "18-25", "651", "74.57%",
+    "Age", "26-35", "153", "17.53%",
+    "Age", "36-45", "44", "5.04%",
+    "Age", "46-60", "24", "2.75%",
+    "Age", ">60", "1", "0.11%",
+    "Educational level", "Primary", "5", "0.57%",
+    "Educational level", "Middle School", "0", "0.00%",
+    "Educational level", "High School", "61", "6.99%",
+    "Educational level", "Institute/Diploma", "0", "0.00%",
+    "Educational level", "University", "689", "78.92%",
+    "Educational level", "Postgraduate", "118", "13.52%",
+    "Marital status", "Single", "684", "78.44%",
+    "Marital status", "Married", "183", "20.99%",
+    "Marital status", "Divorced", "3", "0.34%",
+    "Marital status", "Widowed", "2", "0.23%",
+  )
+]
+#h2("Core Beliefs Likert Distribution")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(4).map(_ => 1fr),
+    align: (left, right, right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["Question"], text(weight: "bold")["Disagree %"], text(weight: "bold")["Neutral %"], text(weight: "bold")["Agree %"]),
+    "Q11", "13.78%", "34.67%", "51.55%",
+    "Q12", "4.95%", "27.65%", "67.40%",
+    "Q13", "12.18%", "35.86%", "51.95%",
+  )
+]
+#h2("Correlation Matrix: Primary Beliefs")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(7).map(_ => 1fr),
+    align: (left, right, right, right, right, right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["Variable"], text(weight: "bold")["Q11"], text(weight: "bold")["Q12"], text(weight: "bold")["Q13"], text(weight: "bold")["Concern"], text(weight: "bold")["Acceptance"], text(weight: "bold")["Recommend"]),
+    "Q11", "1.000", "0.269", "-0.066", "0.059", "-0.085", "-0.086",
+    "Q12", "0.269", "1.000", "-0.038", "0.058", "-0.163", "-0.087",
+    "Q13", "-0.066", "-0.038", "1.000", "-0.105", "0.026", "0.077",
+    "Concern", "0.059", "0.058", "-0.105", "1.000", "-0.040", "-0.042",
+    "Acceptance", "-0.085", "-0.163", "0.026", "-0.040", "1.000", "0.232",
+    "Recommend", "-0.086", "-0.087", "0.077", "-0.042", "0.232", "1.000",
+  )
+]
+#h2("Acceptance by Prior Use")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(3).map(_ => 1fr),
+    align: (left, right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["Prior Use"], text(weight: "bold")["Recommend Yes %"], text(weight: "bold")["Sample n"]),
+    "Yes", "65.08%", "126",
+    "No", "55.80%", "715",
+  )
+]
+#h2("General Attitudes Distribution")
+#block(above: 8pt, below: 10pt, width: 100%)[
+  #set text(size: 10pt)
+  #table(
+    columns: range(4).map(_ => 1fr),
+    align: (left, right, right, right),
+    stroke: 0.4pt + rgb("#c9d4e5"),
+    inset: 5pt,
+    table.header(text(weight: "bold")["Question"], text(weight: "bold")["Yes %"], text(weight: "bold")["Not sure %"], text(weight: "bold")["No %"]),
+    "Safety perception", "23.65%", "31.23%", "45.12%",
+    "Acceptability", "30.80%", "17.70%", "51.49%",
+    "Recommendation willingness", "57.65%", "11.62%", "30.72%",
+    "Social concerns", "37.77%", "13.09%", "49.14%",
+  )
+]
+#pagebreak()
 #h2("IV.A Sample Profile and Descriptive Statistics")
 #p("The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.")
 #p("To keep model reporting readable, this chapter repeats each questionnaire code with a brief definition when it appears. Q6 refers to safety perception of psychiatric medication, Q7 refers to acceptability of psychiatric medication, Q8 refers to willingness to recommend psychiatric medication, and Q9 refers to social concern about interacting with a person who uses psychiatric medication. Q11 refers to the belief that doctors prescribe psychiatric medications more than necessary, Q12 refers to the belief that most psychiatric medications cause psychological or physical dependence, Q13 refers to the belief that modern psychiatric medications are safer than older ones, and Q31 refers to prior psychiatric medication use status.")
