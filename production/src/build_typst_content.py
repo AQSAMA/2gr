@@ -45,13 +45,177 @@ TYPST_CONTENT_DIR = REPO_ROOT / "typst_content"
 TYPST_OUTPUT_DIR = TYPST_CONTENT_DIR / "output"
 TYPST_SOURCE = TYPST_CONTENT_DIR / "research.typ"
 TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
-TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
+TYPST_DOCX = TYPST_OUTPUT_DIR / "survey_results.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+
+SURVEY_TABLES: list[dict[str, object]] = [
+    {
+        "caption": "Table 1. Hierarchical model fit statistics across sequential blocks.",
+        "columns": ["Block", "Predictors", "McFadden R²", "LLR p-value"],
+        "rows": [
+            ["Block 1 (Demographics)", "Age, Gender, Education, Marital status", "0.0040", "0.5037"],
+            ["Block 2 (+ Prior Use)", "Block 1 + Prior medication use", "0.0116", "0.0847"],
+            ["Block 3 (+ Beliefs & Fear)", "Block 2 + Q11, Q12, Q13, Fear", "0.0686", "< 0.0001"],
+        ],
+    },
+    {
+        "caption": "Table 2. Adjusted odds ratios from the final hierarchical logistic regression (Block 3).",
+        "columns": ["Predictor", "Adjusted OR (95% CI)", "p-value"],
+        "rows": [
+            ["Intercept", "1.128 (0.298–4.273)", "0.8597"],
+            ["Age (binary)", "0.961 (0.583–1.582)", "0.8752"],
+            ["Gender (binary)", "1.516 (1.043–2.205)", "0.0294"],
+            ["Education (binary)", "1.381 (0.750–2.542)", "0.3005"],
+            ["Marital status (binary)", "1.075 (0.632–1.827)", "0.7904"],
+            ["Prior use (binary)", "1.342 (0.800–2.252)", "0.2645"],
+            ["Q11 — Overprescription belief", "0.830 (0.696–0.991)", "0.0396"],
+            ["Q12 — Dependence belief", "0.869 (0.701–1.078)", "0.2008"],
+            ["Q13 — Modern safety belief", "1.507 (1.248–1.820)", "< 0.0001"],
+            ["Fear (binary)", "0.504 (0.358–0.711)", "< 0.0001"],
+        ],
+    },
+    {
+        "caption": "Table 3. Multinomial logistic regression preserving the Q8 No/Yes/Not sure structure.",
+        "columns": ["Outcome equation", "Predictor", "Relative risk ratio (95% CI)", "p-value"],
+        "rows": [
+            ["Q8 = Yes vs No", "Intercept", "0.936 (0.264–3.317)", "0.9189"],
+            ["Q8 = Yes vs No", "Age (binary)", "0.947 (0.599–1.496)", "0.8139"],
+            ["Q8 = Yes vs No", "Gender (binary)", "1.558 (1.097–2.214)", "0.0133"],
+            ["Q8 = Yes vs No", "Education (binary)", "1.177 (0.661–2.095)", "0.5797"],
+            ["Q8 = Yes vs No", "Marital status (binary)", "0.967 (0.598–1.563)", "0.8903"],
+            ["Q8 = Yes vs No", "Prior use (binary)", "1.387 (0.863–2.229)", "0.1763"],
+            ["Q8 = Yes vs No", "Q11", "0.873 (0.742–1.028)", "0.1028"],
+            ["Q8 = Yes vs No", "Q12", "0.794 (0.651–0.970)", "0.0239"],
+            ["Q8 = Yes vs No", "Q13", "1.585 (1.328–1.892)", "< 0.0001"],
+            ["Q8 = Not sure vs No", "Intercept", "0.304 (0.046–2.013)", "0.2170"],
+            ["Q8 = Not sure vs No", "Age (binary)", "1.094 (0.549–2.180)", "0.7983"],
+            ["Q8 = Not sure vs No", "Gender (binary)", "2.171 (1.211–3.894)", "0.0093"],
+            ["Q8 = Not sure vs No", "Education (binary)", "1.300 (0.526–3.211)", "0.5692"],
+            ["Q8 = Not sure vs No", "Marital status (binary)", "1.713 (0.863–3.399)", "0.1237"],
+            ["Q8 = Not sure vs No", "Prior use (binary)", "1.401 (0.704–2.789)", "0.3373"],
+            ["Q8 = Not sure vs No", "Q11", "0.846 (0.662–1.080)", "0.1799"],
+            ["Q8 = Not sure vs No", "Q12", "0.890 (0.660–1.199)", "0.4438"],
+            ["Q8 = Not sure vs No", "Q13", "1.064 (0.820–1.381)", "0.6404"],
+        ],
+    },
+    {
+        "caption": "Table 4. Users vs Non-Users comparison on core belief items.",
+        "columns": ["Item", "User median", "Non-user median", "M-W p", "Cliff's d", "χ² p", "Cramér's V", "N used"],
+        "rows": [
+            ["Q11 — Overprescription", "3.00", "4.00", "0.0428", "−0.108", "0.1170", "0.094", "843"],
+            ["Q12 — Dependence", "4.00", "4.00", "0.0317", "−0.112", "0.0428", "0.108", "840"],
+            ["Q13 — Modern safety", "4.00", "3.00", "0.0002", "0.198", "0.0027", "0.139", "842"],
+        ],
+    },
+    {
+        "caption": "Table 5. Silhouette scores for candidate stigma-phenotype cluster solutions.",
+        "columns": ["k", "Silhouette score"],
+        "rows": [["2", "0.274"], ["3", "0.272"], ["4", "0.303"]],
+    },
+    {
+        "caption": "Table 6. Mean belief scores by exploratory cluster profile (k = 4).",
+        "columns": ["Profile", "Size n", "Q11 mean", "Q12 mean", "Q13 mean"],
+        "rows": [
+            ["0", "183", "4.404", "4.115", "4.311"],
+            ["1", "230", "2.961", "2.804", "3.578"],
+            ["2", "232", "2.694", "4.250", "3.720"],
+            ["3", "223", "4.359", "4.291", "2.610"],
+        ],
+    },
+    {
+        "caption": "Table 7. Demographics summary of valid survey responses.",
+        "columns": ["Variable", "Category", "Count", "Percentage"],
+        "rows": [
+            ["Gender", "Male", "244", "28.05%"], ["Gender", "Female", "626", "71.95%"],
+            ["Age", "18–25", "651", "74.57%"], ["Age", "26–35", "153", "17.53%"],
+            ["Age", "36–45", "44", "5.04%"], ["Age", "46–60", "24", "2.75%"], ["Age", ">60", "1", "0.11%"],
+            ["Educational level", "Primary", "5", "0.57%"], ["Educational level", "Middle School", "0", "0.00%"],
+            ["Educational level", "High School", "61", "6.99%"], ["Educational level", "Institute/Diploma", "0", "0.00%"],
+            ["Educational level", "University", "689", "78.92%"], ["Educational level", "Postgraduate", "118", "13.52%"],
+            ["Marital status", "Single", "684", "78.44%"], ["Marital status", "Married", "183", "20.99%"],
+            ["Marital status", "Divorced", "3", "0.34%"], ["Marital status", "Widowed", "2", "0.23%"],
+        ],
+    },
+    {
+        "caption": "Table 8. Core beliefs Likert distribution.",
+        "columns": ["Question", "Disagree %", "Neutral %", "Agree %"],
+        "rows": [["Q11", "13.78%", "34.67%", "51.55%"], ["Q12", "4.95%", "27.65%", "67.40%"], ["Q13", "12.18%", "35.86%", "51.95%"]],
+    },
+    {
+        "caption": "Table 9. Correlation matrix for primary beliefs and attitude outcomes.",
+        "columns": ["Variable", "Q11", "Q12", "Q13", "Concern", "Acceptance", "Recommend"],
+        "rows": [
+            ["Q11", "1.000", "0.269", "−0.066", "0.059", "−0.085", "−0.086"],
+            ["Q12", "0.269", "1.000", "−0.038", "0.058", "−0.163", "−0.087"],
+            ["Q13", "−0.066", "−0.038", "1.000", "−0.105", "0.026", "0.077"],
+            ["Concern", "0.059", "0.058", "−0.105", "1.000", "−0.040", "−0.042"],
+            ["Acceptance", "−0.085", "−0.163", "0.026", "−0.040", "1.000", "0.232"],
+            ["Recommend", "−0.086", "−0.087", "0.077", "−0.042", "0.232", "1.000"],
+        ],
+    },
+    {
+        "caption": "Table 10. Recommendation willingness by prior psychiatric medication use.",
+        "columns": ["Prior use", "Recommend Yes %", "Sample n"],
+        "rows": [["Yes", "65.08%", "126"], ["No", "55.80%", "715"]],
+    },
+    {
+        "caption": "Table 11. Response distribution for general attitude items.",
+        "columns": ["Question", "Yes %", "Not sure %", "No %"],
+        "rows": [
+            ["Safety perception (Q6)", "23.65%", "31.23%", "45.12%"],
+            ["Acceptability (Q7)", "30.80%", "17.70%", "51.49%"],
+            ["Recommendation willingness (Q8)", "57.65%", "11.62%", "30.72%"],
+            ["Social concerns (Q9)", "37.77%", "13.09%", "49.14%"],
+        ],
+    },
+]
 
 
 def typst_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
+
+
+def _typst_cell(value: str) -> str:
+    escaped = _escape_typst_markup(value)
+    return f"[#eval({typst_string(escaped)}, mode: \"markup\")]"
+
+
+def _typst_table_columns(column_count: int) -> str:
+    return "(" + ", ".join(["1fr"] * column_count) + ")"
+
+
+def render_survey_results_tables_typst() -> str:
+    """Render survey output tables for immediate insertion under Results."""
+    parts = [
+        "#block(above: 0pt, below: 8pt)[#text(size: 12pt, fill: ink)[Raw survey results are presented first so the following Results text can be read as direct analysis of these data.]]",
+    ]
+    for table_data in SURVEY_TABLES:
+        columns = table_data["columns"]
+        rows = table_data["rows"]
+        assert isinstance(columns, list)
+        assert isinstance(rows, list)
+        header_cells = ", ".join(f"[*{_escape_typst_markup(str(col))}*]" for col in columns)
+        body: list[str] = [f"    table.header({header_cells}),"]
+        for row in rows:
+            assert isinstance(row, list)
+            body.append("    " + ", ".join(_typst_cell(str(cell)) for cell in row) + ",")
+        parts.append(
+            "#figure(\n"
+            "  {\n"
+            "    set text(size: 8.4pt)\n"
+            "    table(\n"
+            f"      columns: {_typst_table_columns(len(columns))},\n"
+            "      align: (left,) * " + str(len(columns)) + ",\n"
+            "      inset: 3.5pt,\n"
+            "      stroke: 0.35pt + rgb(\"#c9d4e5\"),\n"
+            + "\n".join(body)
+            + "\n    )\n"
+            "  },\n"
+            f"  caption: [{_escape_typst_markup(str(table_data['caption']))}],\n"
+            ")"
+        )
+    return "\n\n".join(parts)
 
 
 _CITATION_PAREN_RE = re.compile(r"\([^()]*?\b(?:19|20)\d{2}[a-z]?[^()]*?\)")
@@ -176,6 +340,8 @@ def collect_manuscript_calls(md_path: Path) -> tuple[list[str], list[str]]:
             if text.upper() == "VIII. REFERENCES":
                 in_references = True
             target.append(f"#section-title({typst_string(text)})")
+            if text.upper() == "IV. RESULTS":
+                target.append(render_survey_results_tables_typst())
             continue
 
         if kind == "h2":
@@ -362,6 +528,12 @@ def render_typst_source(md_path: Path) -> str:
 #pagebreak()
 #front-title[List of Figures]
 #outline(title: none, target: figure.where(kind: image))
+
+#pagebreak()
+#front-title[List of Tables]
+#outline(title: none, target: figure.where(kind: table))
+
+#pagebreak()
 #v(0.4cm)
 #front-title[List of Abbreviations]
 #par(first-line-indent: 0pt)[AOR: Adjusted Odds Ratio \\
@@ -673,6 +845,58 @@ def _add_reference_paragraph(doc: Document, text: str) -> None:
         _set_run_font(run, size=12)
 
 
+def _set_cell_text(cell, text: str, *, bold: bool = False) -> None:
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.space_after = Pt(0)
+    run = paragraph.add_run(text)
+    _set_run_font(run, size=9, bold=bold)
+
+
+def _prevent_row_split(row) -> None:
+    tr_pr = row._tr.get_or_add_trPr()
+    cant_split = OxmlElement("w:cantSplit")
+    tr_pr.append(cant_split)
+
+
+def _add_survey_results_tables_docx(doc: Document) -> None:
+    intro = doc.add_paragraph(
+        "Raw survey results are presented first so the following Results text can be read as direct analysis of these data."
+    )
+    intro.paragraph_format.first_line_indent = Inches(0)
+    intro.paragraph_format.line_spacing = 1.5
+
+    for table_data in SURVEY_TABLES:
+        columns = table_data["columns"]
+        rows = table_data["rows"]
+        assert isinstance(columns, list)
+        assert isinstance(rows, list)
+        table = doc.add_table(rows=1, cols=len(columns))
+        table.style = "Table Grid"
+        table.autofit = True
+        try:
+            table.allow_autofit = True
+        except AttributeError:
+            pass
+        _prevent_row_split(table.rows[0])
+        for index, column in enumerate(columns):
+            _set_cell_text(table.rows[0].cells[index], str(column), bold=True)
+        for row_data in rows:
+            assert isinstance(row_data, list)
+            row = table.add_row()
+            _prevent_row_split(row)
+            for index, value in enumerate(row_data):
+                _set_cell_text(row.cells[index], str(value))
+
+        caption = doc.add_paragraph(str(table_data["caption"]))
+        caption.paragraph_format.first_line_indent = Inches(0)
+        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        caption.paragraph_format.space_after = Pt(8)
+        for run in caption.runs:
+            _set_run_font(run, size=12, bold=True)
+
+
 def _add_cover_page(doc: Document) -> None:
     logo_path = find_university_logo()
     if logo_path is not None:
@@ -705,7 +929,7 @@ def _add_cover_page(doc: Document) -> None:
     _center_paragraph(doc, MONTH_YEAR, size=14)
 
 
-def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
+def _add_preliminary_pages(doc: Document, figure_captions: list[str], table_captions: list[str]) -> None:
     _front_title(doc, "Dedication")
     _add_body_paragraph(
         doc,
@@ -730,6 +954,14 @@ def _add_preliminary_pages(doc: Document, figure_captions: list[str]) -> None:
     for caption in figure_captions:
         paragraph = doc.add_paragraph(caption)
         paragraph.paragraph_format.first_line_indent = Inches(0)
+
+    doc.add_page_break()
+    _front_title(doc, "List of Tables")
+    for caption in table_captions:
+        paragraph = doc.add_paragraph(caption)
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+
+    doc.add_page_break()
     _front_title(doc, "List of Abbreviations")
     abbreviations = [
         "AOR: Adjusted Odds Ratio",
@@ -764,6 +996,7 @@ def _set_update_fields_on_open(doc: Document) -> None:
 def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
     blocks = collect_docx_blocks(md_path)
     figure_captions = [data.split("|||", 1)[0] for kind, data in blocks if kind == "image"]
+    table_captions = [str(table_data["caption"]) for table_data in SURVEY_TABLES]
 
     doc = Document()
     _setup_docx_styles(doc)
@@ -791,7 +1024,7 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
         number_format="lowerRoman",
         start=None,
     )
-    _add_preliminary_pages(doc, figure_captions)
+    _add_preliminary_pages(doc, figure_captions, table_captions)
 
     main_started = False
     in_references = False
@@ -842,6 +1075,8 @@ def build_typst_content_docx(md_path: Path, out_path: Path) -> None:
             paragraph.paragraph_format.first_line_indent = Inches(0)
             paragraph.paragraph_format.space_after = Pt(8)
             in_references = data.upper() == "VIII. REFERENCES"
+            if data.upper() == "IV. RESULTS":
+                _add_survey_results_tables_docx(doc)
             continue
 
         if kind == "h2":

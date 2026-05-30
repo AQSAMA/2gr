@@ -144,6 +144,12 @@ Zainab Mashal Nayef]
 #pagebreak()
 #front-title[List of Figures]
 #outline(title: none, target: figure.where(kind: image))
+
+#pagebreak()
+#front-title[List of Tables]
+#outline(title: none, target: figure.where(kind: table))
+
+#pagebreak()
 #v(0.4cm)
 #front-title[List of Abbreviations]
 #par(first-line-indent: 0pt)[AOR: Adjusted Odds Ratio \
@@ -236,6 +242,234 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #chapter-page("Chapter Three", "Results")
 #set-running-head("Results")
 #section-title("IV. RESULTS")
+#block(above: 0pt, below: 8pt)[#text(size: 12pt, fill: ink)[Raw survey results are presented first so the following Results text can be read as direct analysis of these data.]]
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 4,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Block*], [*Predictors*], [*McFadden R²*], [*LLR p-value*]),
+    [#eval("Block 1 (Demographics)", mode: "markup")], [#eval("Age, Gender, Education, Marital status", mode: "markup")], [#eval("0.0040", mode: "markup")], [#eval("0.5037", mode: "markup")],
+    [#eval("Block 2 (+ Prior Use)", mode: "markup")], [#eval("Block 1 + Prior medication use", mode: "markup")], [#eval("0.0116", mode: "markup")], [#eval("0.0847", mode: "markup")],
+    [#eval("Block 3 (+ Beliefs & Fear)", mode: "markup")], [#eval("Block 2 + Q11, Q12, Q13, Fear", mode: "markup")], [#eval("0.0686", mode: "markup")], [#eval("\\< 0.0001", mode: "markup")],
+    )
+  },
+  caption: [Table 1. Hierarchical model fit statistics across sequential blocks.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr),
+      align: (left,) * 3,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Predictor*], [*Adjusted OR (95% CI)*], [*p-value*]),
+    [#eval("Intercept", mode: "markup")], [#eval("1.128 (0.298–4.273)", mode: "markup")], [#eval("0.8597", mode: "markup")],
+    [#eval("Age (binary)", mode: "markup")], [#eval("0.961 (0.583–1.582)", mode: "markup")], [#eval("0.8752", mode: "markup")],
+    [#eval("Gender (binary)", mode: "markup")], [#eval("1.516 (1.043–2.205)", mode: "markup")], [#eval("0.0294", mode: "markup")],
+    [#eval("Education (binary)", mode: "markup")], [#eval("1.381 (0.750–2.542)", mode: "markup")], [#eval("0.3005", mode: "markup")],
+    [#eval("Marital status (binary)", mode: "markup")], [#eval("1.075 (0.632–1.827)", mode: "markup")], [#eval("0.7904", mode: "markup")],
+    [#eval("Prior use (binary)", mode: "markup")], [#eval("1.342 (0.800–2.252)", mode: "markup")], [#eval("0.2645", mode: "markup")],
+    [#eval("Q11 — Overprescription belief", mode: "markup")], [#eval("0.830 (0.696–0.991)", mode: "markup")], [#eval("0.0396", mode: "markup")],
+    [#eval("Q12 — Dependence belief", mode: "markup")], [#eval("0.869 (0.701–1.078)", mode: "markup")], [#eval("0.2008", mode: "markup")],
+    [#eval("Q13 — Modern safety belief", mode: "markup")], [#eval("1.507 (1.248–1.820)", mode: "markup")], [#eval("\\< 0.0001", mode: "markup")],
+    [#eval("Fear (binary)", mode: "markup")], [#eval("0.504 (0.358–0.711)", mode: "markup")], [#eval("\\< 0.0001", mode: "markup")],
+    )
+  },
+  caption: [Table 2. Adjusted odds ratios from the final hierarchical logistic regression (Block 3).],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 4,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Outcome equation*], [*Predictor*], [*Relative risk ratio (95% CI)*], [*p-value*]),
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Intercept", mode: "markup")], [#eval("0.936 (0.264–3.317)", mode: "markup")], [#eval("0.9189", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Age (binary)", mode: "markup")], [#eval("0.947 (0.599–1.496)", mode: "markup")], [#eval("0.8139", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Gender (binary)", mode: "markup")], [#eval("1.558 (1.097–2.214)", mode: "markup")], [#eval("0.0133", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Education (binary)", mode: "markup")], [#eval("1.177 (0.661–2.095)", mode: "markup")], [#eval("0.5797", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Marital status (binary)", mode: "markup")], [#eval("0.967 (0.598–1.563)", mode: "markup")], [#eval("0.8903", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Prior use (binary)", mode: "markup")], [#eval("1.387 (0.863–2.229)", mode: "markup")], [#eval("0.1763", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Q11", mode: "markup")], [#eval("0.873 (0.742–1.028)", mode: "markup")], [#eval("0.1028", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Q12", mode: "markup")], [#eval("0.794 (0.651–0.970)", mode: "markup")], [#eval("0.0239", mode: "markup")],
+    [#eval("Q8 = Yes vs No", mode: "markup")], [#eval("Q13", mode: "markup")], [#eval("1.585 (1.328–1.892)", mode: "markup")], [#eval("\\< 0.0001", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Intercept", mode: "markup")], [#eval("0.304 (0.046–2.013)", mode: "markup")], [#eval("0.2170", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Age (binary)", mode: "markup")], [#eval("1.094 (0.549–2.180)", mode: "markup")], [#eval("0.7983", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Gender (binary)", mode: "markup")], [#eval("2.171 (1.211–3.894)", mode: "markup")], [#eval("0.0093", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Education (binary)", mode: "markup")], [#eval("1.300 (0.526–3.211)", mode: "markup")], [#eval("0.5692", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Marital status (binary)", mode: "markup")], [#eval("1.713 (0.863–3.399)", mode: "markup")], [#eval("0.1237", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Prior use (binary)", mode: "markup")], [#eval("1.401 (0.704–2.789)", mode: "markup")], [#eval("0.3373", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Q11", mode: "markup")], [#eval("0.846 (0.662–1.080)", mode: "markup")], [#eval("0.1799", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Q12", mode: "markup")], [#eval("0.890 (0.660–1.199)", mode: "markup")], [#eval("0.4438", mode: "markup")],
+    [#eval("Q8 = Not sure vs No", mode: "markup")], [#eval("Q13", mode: "markup")], [#eval("1.064 (0.820–1.381)", mode: "markup")], [#eval("0.6404", mode: "markup")],
+    )
+  },
+  caption: [Table 3. Multinomial logistic regression preserving the Q8 No/Yes/Not sure structure.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 8,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Item*], [*User median*], [*Non-user median*], [*M-W p*], [*Cliff's d*], [*χ² p*], [*Cramér's V*], [*N used*]),
+    [#eval("Q11 — Overprescription", mode: "markup")], [#eval("3.00", mode: "markup")], [#eval("4.00", mode: "markup")], [#eval("0.0428", mode: "markup")], [#eval("−0.108", mode: "markup")], [#eval("0.1170", mode: "markup")], [#eval("0.094", mode: "markup")], [#eval("843", mode: "markup")],
+    [#eval("Q12 — Dependence", mode: "markup")], [#eval("4.00", mode: "markup")], [#eval("4.00", mode: "markup")], [#eval("0.0317", mode: "markup")], [#eval("−0.112", mode: "markup")], [#eval("0.0428", mode: "markup")], [#eval("0.108", mode: "markup")], [#eval("840", mode: "markup")],
+    [#eval("Q13 — Modern safety", mode: "markup")], [#eval("4.00", mode: "markup")], [#eval("3.00", mode: "markup")], [#eval("0.0002", mode: "markup")], [#eval("0.198", mode: "markup")], [#eval("0.0027", mode: "markup")], [#eval("0.139", mode: "markup")], [#eval("842", mode: "markup")],
+    )
+  },
+  caption: [Table 4. Users vs Non-Users comparison on core belief items.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr),
+      align: (left,) * 2,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*k*], [*Silhouette score*]),
+    [#eval("2", mode: "markup")], [#eval("0.274", mode: "markup")],
+    [#eval("3", mode: "markup")], [#eval("0.272", mode: "markup")],
+    [#eval("4", mode: "markup")], [#eval("0.303", mode: "markup")],
+    )
+  },
+  caption: [Table 5. Silhouette scores for candidate stigma-phenotype cluster solutions.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 5,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Profile*], [*Size n*], [*Q11 mean*], [*Q12 mean*], [*Q13 mean*]),
+    [#eval("0", mode: "markup")], [#eval("183", mode: "markup")], [#eval("4.404", mode: "markup")], [#eval("4.115", mode: "markup")], [#eval("4.311", mode: "markup")],
+    [#eval("1", mode: "markup")], [#eval("230", mode: "markup")], [#eval("2.961", mode: "markup")], [#eval("2.804", mode: "markup")], [#eval("3.578", mode: "markup")],
+    [#eval("2", mode: "markup")], [#eval("232", mode: "markup")], [#eval("2.694", mode: "markup")], [#eval("4.250", mode: "markup")], [#eval("3.720", mode: "markup")],
+    [#eval("3", mode: "markup")], [#eval("223", mode: "markup")], [#eval("4.359", mode: "markup")], [#eval("4.291", mode: "markup")], [#eval("2.610", mode: "markup")],
+    )
+  },
+  caption: [Table 6. Mean belief scores by exploratory cluster profile (k = 4).],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 4,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Variable*], [*Category*], [*Count*], [*Percentage*]),
+    [#eval("Gender", mode: "markup")], [#eval("Male", mode: "markup")], [#eval("244", mode: "markup")], [#eval("28.05%", mode: "markup")],
+    [#eval("Gender", mode: "markup")], [#eval("Female", mode: "markup")], [#eval("626", mode: "markup")], [#eval("71.95%", mode: "markup")],
+    [#eval("Age", mode: "markup")], [#eval("18–25", mode: "markup")], [#eval("651", mode: "markup")], [#eval("74.57%", mode: "markup")],
+    [#eval("Age", mode: "markup")], [#eval("26–35", mode: "markup")], [#eval("153", mode: "markup")], [#eval("17.53%", mode: "markup")],
+    [#eval("Age", mode: "markup")], [#eval("36–45", mode: "markup")], [#eval("44", mode: "markup")], [#eval("5.04%", mode: "markup")],
+    [#eval("Age", mode: "markup")], [#eval("46–60", mode: "markup")], [#eval("24", mode: "markup")], [#eval("2.75%", mode: "markup")],
+    [#eval("Age", mode: "markup")], [#eval("\\>60", mode: "markup")], [#eval("1", mode: "markup")], [#eval("0.11%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("Primary", mode: "markup")], [#eval("5", mode: "markup")], [#eval("0.57%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("Middle School", mode: "markup")], [#eval("0", mode: "markup")], [#eval("0.00%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("High School", mode: "markup")], [#eval("61", mode: "markup")], [#eval("6.99%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("Institute/Diploma", mode: "markup")], [#eval("0", mode: "markup")], [#eval("0.00%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("University", mode: "markup")], [#eval("689", mode: "markup")], [#eval("78.92%", mode: "markup")],
+    [#eval("Educational level", mode: "markup")], [#eval("Postgraduate", mode: "markup")], [#eval("118", mode: "markup")], [#eval("13.52%", mode: "markup")],
+    [#eval("Marital status", mode: "markup")], [#eval("Single", mode: "markup")], [#eval("684", mode: "markup")], [#eval("78.44%", mode: "markup")],
+    [#eval("Marital status", mode: "markup")], [#eval("Married", mode: "markup")], [#eval("183", mode: "markup")], [#eval("20.99%", mode: "markup")],
+    [#eval("Marital status", mode: "markup")], [#eval("Divorced", mode: "markup")], [#eval("3", mode: "markup")], [#eval("0.34%", mode: "markup")],
+    [#eval("Marital status", mode: "markup")], [#eval("Widowed", mode: "markup")], [#eval("2", mode: "markup")], [#eval("0.23%", mode: "markup")],
+    )
+  },
+  caption: [Table 7. Demographics summary of valid survey responses.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 4,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Question*], [*Disagree %*], [*Neutral %*], [*Agree %*]),
+    [#eval("Q11", mode: "markup")], [#eval("13.78%", mode: "markup")], [#eval("34.67%", mode: "markup")], [#eval("51.55%", mode: "markup")],
+    [#eval("Q12", mode: "markup")], [#eval("4.95%", mode: "markup")], [#eval("27.65%", mode: "markup")], [#eval("67.40%", mode: "markup")],
+    [#eval("Q13", mode: "markup")], [#eval("12.18%", mode: "markup")], [#eval("35.86%", mode: "markup")], [#eval("51.95%", mode: "markup")],
+    )
+  },
+  caption: [Table 8. Core beliefs Likert distribution.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 7,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Variable*], [*Q11*], [*Q12*], [*Q13*], [*Concern*], [*Acceptance*], [*Recommend*]),
+    [#eval("Q11", mode: "markup")], [#eval("1.000", mode: "markup")], [#eval("0.269", mode: "markup")], [#eval("−0.066", mode: "markup")], [#eval("0.059", mode: "markup")], [#eval("−0.085", mode: "markup")], [#eval("−0.086", mode: "markup")],
+    [#eval("Q12", mode: "markup")], [#eval("0.269", mode: "markup")], [#eval("1.000", mode: "markup")], [#eval("−0.038", mode: "markup")], [#eval("0.058", mode: "markup")], [#eval("−0.163", mode: "markup")], [#eval("−0.087", mode: "markup")],
+    [#eval("Q13", mode: "markup")], [#eval("−0.066", mode: "markup")], [#eval("−0.038", mode: "markup")], [#eval("1.000", mode: "markup")], [#eval("−0.105", mode: "markup")], [#eval("0.026", mode: "markup")], [#eval("0.077", mode: "markup")],
+    [#eval("Concern", mode: "markup")], [#eval("0.059", mode: "markup")], [#eval("0.058", mode: "markup")], [#eval("−0.105", mode: "markup")], [#eval("1.000", mode: "markup")], [#eval("−0.040", mode: "markup")], [#eval("−0.042", mode: "markup")],
+    [#eval("Acceptance", mode: "markup")], [#eval("−0.085", mode: "markup")], [#eval("−0.163", mode: "markup")], [#eval("0.026", mode: "markup")], [#eval("−0.040", mode: "markup")], [#eval("1.000", mode: "markup")], [#eval("0.232", mode: "markup")],
+    [#eval("Recommend", mode: "markup")], [#eval("−0.086", mode: "markup")], [#eval("−0.087", mode: "markup")], [#eval("0.077", mode: "markup")], [#eval("−0.042", mode: "markup")], [#eval("0.232", mode: "markup")], [#eval("1.000", mode: "markup")],
+    )
+  },
+  caption: [Table 9. Correlation matrix for primary beliefs and attitude outcomes.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr),
+      align: (left,) * 3,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Prior use*], [*Recommend Yes %*], [*Sample n*]),
+    [#eval("Yes", mode: "markup")], [#eval("65.08%", mode: "markup")], [#eval("126", mode: "markup")],
+    [#eval("No", mode: "markup")], [#eval("55.80%", mode: "markup")], [#eval("715", mode: "markup")],
+    )
+  },
+  caption: [Table 10. Recommendation willingness by prior psychiatric medication use.],
+)
+
+#figure(
+  {
+    set text(size: 8.4pt)
+    table(
+      columns: (1fr, 1fr, 1fr, 1fr),
+      align: (left,) * 4,
+      inset: 3.5pt,
+      stroke: 0.35pt + rgb("#c9d4e5"),
+    table.header([*Question*], [*Yes %*], [*Not sure %*], [*No %*]),
+    [#eval("Safety perception (Q6)", mode: "markup")], [#eval("23.65%", mode: "markup")], [#eval("31.23%", mode: "markup")], [#eval("45.12%", mode: "markup")],
+    [#eval("Acceptability (Q7)", mode: "markup")], [#eval("30.80%", mode: "markup")], [#eval("17.70%", mode: "markup")], [#eval("51.49%", mode: "markup")],
+    [#eval("Recommendation willingness (Q8)", mode: "markup")], [#eval("57.65%", mode: "markup")], [#eval("11.62%", mode: "markup")], [#eval("30.72%", mode: "markup")],
+    [#eval("Social concerns (Q9)", mode: "markup")], [#eval("37.77%", mode: "markup")], [#eval("13.09%", mode: "markup")], [#eval("49.14%", mode: "markup")],
+    )
+  },
+  caption: [Table 11. Response distribution for general attitude items.],
+)
 #h2("IV.A Sample Profile and Descriptive Statistics")
 #p("The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.")
 #p("To keep model reporting readable, this chapter repeats each questionnaire code with a brief definition when it appears. Q6 refers to safety perception of psychiatric medication, Q7 refers to acceptability of psychiatric medication, Q8 refers to willingness to recommend psychiatric medication, and Q9 refers to social concern about interacting with a person who uses psychiatric medication. Q11 refers to the belief that doctors prescribe psychiatric medications more than necessary, Q12 refers to the belief that most psychiatric medications cause psychological or physical dependence, Q13 refers to the belief that modern psychiatric medications are safer than older ones, and Q31 refers to prior psychiatric medication use status.")
