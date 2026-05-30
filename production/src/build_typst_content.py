@@ -48,6 +48,8 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+SURVEY_RESULTS_DOCX = TYPST_OUTPUT_DIR / "survey_results.docx"
+SURVEY_RESULTS_MD = REPO_ROOT / "survey_data_results.md"
 
 
 def typst_string(value: str) -> str:
@@ -891,6 +893,287 @@ def copy_docx_output() -> bool:
     print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
 
+
+# ---------------------------------------------------------------------------
+# Standalone survey results DOCX helpers
+# ---------------------------------------------------------------------------
+def _clean_markdown_inline(value: str) -> str:
+    """Remove Markdown formatting while preserving the original values."""
+    value = value.replace("\\|", "|")
+    value = re.sub(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", "", value, flags=re.I)
+    value = re.sub(r"\*\*([^*]+)\*\*", r"\1", value)
+    value = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"\1", value)
+    value = re.sub(r"`([^`]+)`", r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", value)
+    value = value.replace(" to ", "–") if re.search(r"\d+\.\d+ to \d+\.\d+", value) else value
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _split_markdown_table_row(line: str) -> list[str]:
+    stripped = line.strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+    return [_clean_markdown_inline(cell.strip()) for cell in stripped.split("|")]
+
+
+def _is_markdown_table_separator(line: str) -> bool:
+    cells = _split_markdown_table_row(line)
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
+
+
+def _parse_table_alignment(separator: str) -> list[str]:
+    alignment: list[str] = []
+    for cell in _split_markdown_table_row(separator):
+        raw = cell.strip()
+        if raw.startswith(":") and raw.endswith(":"):
+            alignment.append("center")
+        elif raw.endswith(":"):
+            alignment.append("right")
+        else:
+            alignment.append("left")
+    return alignment
+
+
+def _collect_survey_markdown_blocks(md_text: str) -> list[tuple[str, object]]:
+    """Parse the small Markdown subset used in survey_data_results.md."""
+    blocks: list[tuple[str, object]] = []
+    lines = md_text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped:
+            i += 1
+            continue
+        if re.fullmatch(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", stripped, flags=re.I):
+            blocks.append(("pagebreak", ""))
+            i += 1
+            continue
+        if stripped.startswith("#"):
+            marker, _, heading = stripped.partition(" ")
+            level = min(len(marker), 3)
+            blocks.append((f"h{level}", _clean_markdown_inline(heading)))
+            i += 1
+            continue
+        if stripped.startswith("|") and i + 1 < len(lines) and _is_markdown_table_separator(lines[i + 1]):
+            header = _split_markdown_table_row(line)
+            align = _parse_table_alignment(lines[i + 1])
+            rows: list[list[str]] = []
+            i += 2
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                rows.append(_split_markdown_table_row(lines[i]))
+                i += 1
+            blocks.append(("table", {"header": header, "align": align, "rows": rows}))
+            continue
+        if stripped.startswith("- "):
+            items: list[str] = []
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                items.append(_clean_markdown_inline(lines[i].strip()[2:]))
+                i += 1
+            blocks.append(("bullets", items))
+            continue
+        paragraph_lines = [stripped]
+        i += 1
+        while i < len(lines):
+            nxt = lines[i].strip()
+            if not nxt or nxt.startswith("#") or nxt.startswith("|") or nxt.startswith("- ") or re.fullmatch(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", nxt, flags=re.I):
+                break
+            paragraph_lines.append(nxt)
+            i += 1
+        blocks.append(("paragraph", _clean_markdown_inline(" ".join(paragraph_lines))))
+    return blocks
+
+
+def _set_table_width_percent(table, percent: int = 100) -> None:
+    tbl_pr = table._tbl.tblPr
+    tbl_w = tbl_pr.find(qn("w:tblW"))
+    if tbl_w is None:
+        tbl_w = OxmlElement("w:tblW")
+        tbl_pr.append(tbl_w)
+    tbl_w.set(qn("w:type"), "pct")
+    tbl_w.set(qn("w:w"), str(percent * 50))
+
+
+def _shade_cell(cell, fill: str) -> None:
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shading = tc_pr.find(qn("w:shd"))
+    if shading is None:
+        shading = OxmlElement("w:shd")
+        tc_pr.append(shading)
+    shading.set(qn("w:fill"), fill)
+
+
+def _set_cell_text(cell, text: str, *, bold: bool = False, size: float = 9.5, color: str | None = None, align: str = "left") -> None:
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Pt(0)
+    paragraph.alignment = {
+        "center": WD_ALIGN_PARAGRAPH.CENTER,
+        "right": WD_ALIGN_PARAGRAPH.RIGHT,
+    }.get(align, WD_ALIGN_PARAGRAPH.LEFT)
+    run = paragraph.add_run(text)
+    _set_run_font(run, size=size, bold=bold, color=color)
+
+
+def _add_survey_table(doc: Document, table_data: dict[str, object]) -> None:
+    header = list(table_data["header"])
+    rows = list(table_data["rows"])
+    align = list(table_data["align"])
+    col_count = len(header)
+    table = doc.add_table(rows=1, cols=col_count)
+    table.style = "Table Grid"
+    table.autofit = False
+    _set_table_width_percent(table, 100)
+
+    section = doc.sections[-1]
+    usable_width = section.page_width - section.left_margin - section.right_margin
+    if col_count >= 6:
+        first_col_width = int(usable_width * 0.19)
+        other_width = int((usable_width - first_col_width) / (col_count - 1))
+        widths = [first_col_width] + [other_width] * (col_count - 1)
+    elif col_count == 5:
+        widths = [int(usable_width * 0.24)] + [int(usable_width * 0.19)] * 4
+    elif col_count == 4:
+        widths = [int(usable_width * 0.34), int(usable_width * 0.28), int(usable_width * 0.19), int(usable_width * 0.19)]
+    elif col_count == 3:
+        widths = [int(usable_width * 0.46), int(usable_width * 0.30), int(usable_width * 0.24)]
+    else:
+        widths = [int(usable_width / max(col_count, 1))] * col_count
+
+    for col_index, width in enumerate(widths):
+        for cell in table.columns[col_index].cells:
+            cell.width = width
+
+    for index, text in enumerate(header):
+        cell = table.rows[0].cells[index]
+        _shade_cell(cell, "F7F9FC")
+        _set_cell_text(cell, text, bold=True, color="102A43", align=align[index] if index < len(align) else "left")
+        cell.width = widths[index]
+
+    for row_data in rows:
+        row = table.add_row()
+        for index, text in enumerate(row_data[:col_count]):
+            cell = row.cells[index]
+            _set_cell_text(cell, text, align=align[index] if index < len(align) else "left")
+            cell.width = widths[index]
+
+    for row in table.rows:
+        row.height = Pt(18)
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.first_line_indent = Inches(0)
+    spacer.paragraph_format.space_after = Pt(6)
+
+
+def _add_survey_title_page(doc: Document) -> None:
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Inches(2.6)
+    title = paragraph.add_run("Survey Data Results")
+    _set_run_font(title, size=22, bold=True, color="102A43")
+    _set_paragraph_border(paragraph)
+
+    subtitle = _center_paragraph(doc, "Psychiatric Medication Use and Public Acceptance in Iraq", size=14, color="111827")
+    subtitle.paragraph_format.space_before = Pt(10)
+    _center_paragraph(doc, "Unified Analysis (N = 877)", size=12, color="111827")
+
+
+def _add_survey_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.line_spacing = 1.15
+    paragraph.paragraph_format.space_after = Pt(6)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for run in paragraph.runs:
+        _set_run_font(run, size=11)
+
+
+def build_survey_results_docx(md_path: Path = SURVEY_RESULTS_MD, out_path: Path = SURVEY_RESULTS_DOCX) -> None:
+    """Build an editable DOCX companion for typst_content/output/survey_results.pdf.
+
+    Direct Typst-to-DOCX conversion is not available in this pipeline, so this
+    writer uses survey_data_results.md as the single source of survey values and
+    applies the same general visual treatment as the standalone Typst PDF:
+    bordered A4 pages, navy/gold headings, compact Times New Roman text, and
+    full-page-width result tables.
+    """
+    if not md_path.exists():
+        print(f"WARNING: {md_path} was not found; survey results DOCX generation was skipped.")
+        return
+
+    blocks = _collect_survey_markdown_blocks(md_path.read_text(encoding="utf-8"))
+    doc = Document()
+    _setup_docx_styles(doc)
+    _set_update_fields_on_open(doc)
+    _configure_section(doc.sections[0], numbered=True, number_format="decimal", start=1)
+    section = doc.sections[0]
+    section.top_margin = Cm(2)
+    section.bottom_margin = Cm(2)
+    section.left_margin = Cm(1.8)
+    section.right_margin = Cm(1.8)
+
+    _add_survey_title_page(doc)
+    doc.add_page_break()
+    _front_title(doc, "Contents")
+    toc_para = doc.add_paragraph()
+    toc_para.paragraph_format.first_line_indent = Inches(0)
+    _add_field_run(toc_para, r'TOC \o "1-2" \h \z \u', dirty=True)
+    doc.add_page_break()
+
+    first_heading = True
+    for kind, data in blocks:
+        if kind == "h1":
+            # The title has already been represented on the styled title page.
+            if first_heading:
+                first_heading = False
+                continue
+            paragraph = doc.add_paragraph(str(data))
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_before = Pt(14)
+            paragraph.paragraph_format.space_after = Pt(8)
+            continue
+        if kind == "h2":
+            paragraph = doc.add_paragraph(str(data))
+            paragraph.style = doc.styles["Heading 1"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_before = Pt(14)
+            paragraph.paragraph_format.space_after = Pt(8)
+            continue
+        if kind == "h3":
+            paragraph = doc.add_paragraph(str(data))
+            paragraph.style = doc.styles["Heading 2"]
+            paragraph.paragraph_format.first_line_indent = Inches(0)
+            paragraph.paragraph_format.space_before = Pt(10)
+            paragraph.paragraph_format.space_after = Pt(5)
+            continue
+        if kind == "paragraph":
+            _add_survey_paragraph(doc, str(data))
+            continue
+        if kind == "bullets":
+            for item in data:  # type: ignore[assignment]
+                paragraph = doc.add_paragraph(style="List Bullet")
+                paragraph.paragraph_format.first_line_indent = Inches(0)
+                paragraph.paragraph_format.left_indent = Inches(0.25)
+                paragraph.paragraph_format.line_spacing = 1.15
+                run = paragraph.add_run(str(item))
+                _set_run_font(run, size=11)
+            continue
+        if kind == "table":
+            _add_survey_table(doc, data)  # type: ignore[arg-type]
+            continue
+        if kind == "pagebreak":
+            doc.add_page_break()
+            continue
+
+    doc.save(out_path)
+    print(f"Survey results DOCX: {out_path}")
+
+
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()
     if md_path is None:
@@ -905,6 +1188,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
     compile_survey_results_pdf()
+    build_survey_results_docx()
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
