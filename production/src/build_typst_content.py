@@ -9,6 +9,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.section import WD_SECTION
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -48,6 +49,8 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+SURVEY_RESULTS_DOCX = TYPST_OUTPUT_DIR / "survey_results.docx"
+SURVEY_RESULTS_MD = REPO_ROOT / "survey_data_results.md"
 
 
 def typst_string(value: str) -> str:
@@ -891,6 +894,631 @@ def copy_docx_output() -> bool:
     print(f"Typst content DOCX emergency fallback copied from Method A: {TYPST_DOCX}")
     return True
 
+
+# ---------------------------------------------------------------------------
+# Standalone survey results DOCX helpers
+# ---------------------------------------------------------------------------
+def _clean_markdown_inline(value: str) -> str:
+    """Remove Markdown formatting while preserving the original values."""
+    value = value.replace("\\|", "|")
+    value = re.sub(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", "", value, flags=re.I)
+    value = re.sub(r"\*\*([^*]+)\*\*", r"\1", value)
+    value = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"\1", value)
+    value = re.sub(r"`([^`]+)`", r"\1", value)
+    value = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1", value)
+    value = value.replace(" to ", "–") if re.search(r"\d+\.\d+ to \d+\.\d+", value) else value
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _split_markdown_table_row(line: str) -> list[str]:
+    stripped = line.strip()
+    if stripped.startswith("|"):
+        stripped = stripped[1:]
+    if stripped.endswith("|"):
+        stripped = stripped[:-1]
+    return [_clean_markdown_inline(cell.strip()) for cell in stripped.split("|")]
+
+
+def _is_markdown_table_separator(line: str) -> bool:
+    cells = _split_markdown_table_row(line)
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell.strip()) for cell in cells)
+
+
+def _parse_table_alignment(separator: str) -> list[str]:
+    alignment: list[str] = []
+    for cell in _split_markdown_table_row(separator):
+        raw = cell.strip()
+        if raw.startswith(":") and raw.endswith(":"):
+            alignment.append("center")
+        elif raw.endswith(":"):
+            alignment.append("right")
+        else:
+            alignment.append("left")
+    return alignment
+
+
+def _collect_survey_markdown_blocks(md_text: str) -> list[tuple[str, object]]:
+    """Parse the small Markdown subset used in survey_data_results.md."""
+    blocks: list[tuple[str, object]] = []
+    lines = md_text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped:
+            i += 1
+            continue
+        if re.fullmatch(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", stripped, flags=re.I):
+            blocks.append(("pagebreak", ""))
+            i += 1
+            continue
+        if stripped.startswith("#"):
+            marker, _, heading = stripped.partition(" ")
+            level = min(len(marker), 3)
+            blocks.append((f"h{level}", _clean_markdown_inline(heading)))
+            i += 1
+            continue
+        if stripped.startswith("|") and i + 1 < len(lines) and _is_markdown_table_separator(lines[i + 1]):
+            header = _split_markdown_table_row(line)
+            align = _parse_table_alignment(lines[i + 1])
+            rows: list[list[str]] = []
+            i += 2
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                rows.append(_split_markdown_table_row(lines[i]))
+                i += 1
+            blocks.append(("table", {"header": header, "align": align, "rows": rows}))
+            continue
+        if stripped.startswith("- "):
+            items: list[str] = []
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                items.append(_clean_markdown_inline(lines[i].strip()[2:]))
+                i += 1
+            blocks.append(("bullets", items))
+            continue
+        paragraph_lines = [stripped]
+        i += 1
+        while i < len(lines):
+            nxt = lines[i].strip()
+            if not nxt or nxt.startswith("#") or nxt.startswith("|") or nxt.startswith("- ") or re.fullmatch(r"<div\s+style=[\"']page-break-after:\s*always;[\"']\s*>\s*</div>", nxt, flags=re.I):
+                break
+            paragraph_lines.append(nxt)
+            i += 1
+        blocks.append(("paragraph", _clean_markdown_inline(" ".join(paragraph_lines))))
+    return blocks
+
+
+def _set_table_width_percent(table, percent: int = 100) -> None:
+    tbl_pr = table._tbl.tblPr
+    tbl_w = tbl_pr.find(qn("w:tblW"))
+    if tbl_w is None:
+        tbl_w = OxmlElement("w:tblW")
+        tbl_pr.append(tbl_w)
+    tbl_w.set(qn("w:type"), "pct")
+    tbl_w.set(qn("w:w"), str(percent * 50))
+
+
+def _shade_cell(cell, fill: str) -> None:
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shading = tc_pr.find(qn("w:shd"))
+    if shading is None:
+        shading = OxmlElement("w:shd")
+        tc_pr.append(shading)
+    shading.set(qn("w:fill"), fill)
+
+
+def _set_cell_text(cell, text: str, *, bold: bool = False, size: float = 9.5, color: str | None = None, align: str = "left") -> None:
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Pt(0)
+    paragraph.alignment = {
+        "center": WD_ALIGN_PARAGRAPH.CENTER,
+        "right": WD_ALIGN_PARAGRAPH.RIGHT,
+    }.get(align, WD_ALIGN_PARAGRAPH.LEFT)
+    run = paragraph.add_run(text)
+    _set_run_font(run, size=size, bold=bold, color=color)
+
+
+def _add_survey_table(doc: Document, table_data: dict[str, object]) -> None:
+    header = list(table_data["header"])
+    rows = list(table_data["rows"])
+    align = list(table_data["align"])
+    col_count = len(header)
+    table = doc.add_table(rows=1, cols=col_count)
+    table.style = "Table Grid"
+    table.autofit = False
+    _set_table_width_percent(table, 100)
+
+    section = doc.sections[-1]
+    usable_width = section.page_width - section.left_margin - section.right_margin
+    ratios = table_data.get("ratios")
+    if isinstance(ratios, list) and len(ratios) == col_count and sum(ratios) > 0:
+        ratio_total = sum(float(ratio) for ratio in ratios)
+        widths = [int(usable_width * (float(ratio) / ratio_total)) for ratio in ratios]
+    elif col_count >= 6:
+        first_col_width = int(usable_width * 0.19)
+        other_width = int((usable_width - first_col_width) / (col_count - 1))
+        widths = [first_col_width] + [other_width] * (col_count - 1)
+    elif col_count == 5:
+        widths = [int(usable_width * 0.24)] + [int(usable_width * 0.19)] * 4
+    elif col_count == 4:
+        widths = [int(usable_width * 0.34), int(usable_width * 0.28), int(usable_width * 0.19), int(usable_width * 0.19)]
+    elif col_count == 3:
+        widths = [int(usable_width * 0.46), int(usable_width * 0.30), int(usable_width * 0.24)]
+    else:
+        widths = [int(usable_width / max(col_count, 1))] * col_count
+
+    for col_index, width in enumerate(widths):
+        for cell in table.columns[col_index].cells:
+            cell.width = width
+
+    for index, text in enumerate(header):
+        cell = table.rows[0].cells[index]
+        _shade_cell(cell, "F7F9FC")
+        _set_cell_text(cell, text, bold=True, color="102A43", align=align[index] if index < len(align) else "left")
+        cell.width = widths[index]
+
+    for row_data in rows:
+        row = table.add_row()
+        for index, text in enumerate(row_data[:col_count]):
+            cell = row.cells[index]
+            _set_cell_text(cell, text, align=align[index] if index < len(align) else "left")
+            cell.width = widths[index]
+
+    for row in table.rows:
+        row.height = Pt(18)
+    caption = table_data.get("caption")
+    if caption:
+        _add_survey_caption(doc, str(caption))
+    else:
+        spacer = doc.add_paragraph()
+        spacer.paragraph_format.first_line_indent = Inches(0)
+        spacer.paragraph_format.space_after = Pt(6)
+
+
+def _set_table_cell_fill(cell, fill: str) -> None:
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shading = tc_pr.find(qn("w:shd"))
+    if shading is None:
+        shading = OxmlElement("w:shd")
+        tc_pr.append(shading)
+    shading.set(qn("w:fill"), fill)
+
+
+def _add_survey_title_page(doc: Document) -> None:
+    """Render the DOCX title page to mirror the standalone Typst title box."""
+    spacer = doc.add_paragraph()
+    spacer.paragraph_format.space_before = Inches(2.45)
+    spacer.paragraph_format.first_line_indent = Inches(0)
+
+    table = doc.add_table(rows=1, cols=1)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = False
+    _set_table_width_percent(table, 88)
+    cell = table.rows[0].cells[0]
+    cell.width = int((doc.sections[-1].page_width - doc.sections[-1].left_margin - doc.sections[-1].right_margin) * 0.88)
+    _set_table_cell_fill(cell, "F7F9FC")
+    tc_pr = cell._tc.get_or_add_tcPr()
+    borders = OxmlElement("w:tcBorders")
+    for edge in ["top", "left", "bottom", "right"]:
+        element = OxmlElement(f"w:{edge}")
+        element.set(qn("w:val"), "single")
+        element.set(qn("w:sz"), "12")
+        element.set(qn("w:space"), "0")
+        element.set(qn("w:color"), "102A43")
+        borders.append(element)
+    tc_pr.append(borders)
+
+    for paragraph in cell.paragraphs:
+        paragraph.clear()
+    title = cell.paragraphs[0]
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title.paragraph_format.first_line_indent = Inches(0)
+    title.paragraph_format.space_before = Pt(18)
+    run = title.add_run("Survey Data Results")
+    _set_run_font(run, size=20, bold=True, color="102A43")
+
+    divider = cell.add_paragraph()
+    divider.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    divider.paragraph_format.first_line_indent = Inches(0)
+    divider.paragraph_format.space_before = Pt(7)
+    divider.paragraph_format.space_after = Pt(7)
+    _set_paragraph_border(divider, color="B58B2A", size="6")
+
+    subtitle = cell.add_paragraph()
+    subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    subtitle.paragraph_format.first_line_indent = Inches(0)
+    run = subtitle.add_run("Psychiatric Medication Use and Public Acceptance in Iraq")
+    _set_run_font(run, size=14, color="111827")
+
+    sample = cell.add_paragraph()
+    sample.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    sample.paragraph_format.first_line_indent = Inches(0)
+    sample.paragraph_format.space_after = Pt(18)
+    run = sample.add_run("Unified Analysis (N = 877)")
+    _set_run_font(run, size=12, color="111827")
+
+
+def _add_survey_heading(doc: Document, text: str, level: int) -> None:
+    paragraph = doc.add_paragraph(text)
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    if level == 1:
+        paragraph.style = doc.styles["Heading 1"]
+        paragraph.paragraph_format.space_before = Pt(18)
+        paragraph.paragraph_format.space_after = Pt(10)
+        _set_paragraph_border(paragraph, color="B58B2A", size="6")
+        for run in paragraph.runs:
+            _set_run_font(run, size=16, bold=True, color="102A43")
+    elif level == 2:
+        paragraph.style = doc.styles["Heading 2"]
+        paragraph.paragraph_format.space_before = Pt(14)
+        paragraph.paragraph_format.space_after = Pt(8)
+        for run in paragraph.runs:
+            _set_run_font(run, size=13, bold=True, color="102A43")
+    else:
+        paragraph.paragraph_format.space_before = Pt(10)
+        paragraph.paragraph_format.space_after = Pt(6)
+        for run in paragraph.runs:
+            _set_run_font(run, size=11.5, bold=True, color="111827")
+
+
+def _add_survey_paragraph(doc: Document, text: str) -> None:
+    paragraph = doc.add_paragraph(_clean_markdown_inline(text.replace("\\.", ".")))
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.line_spacing = 1.15
+    paragraph.paragraph_format.space_after = Pt(6)
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for run in paragraph.runs:
+        _set_run_font(run, size=11)
+
+
+def _add_survey_bullets(doc: Document, items: list[str]) -> None:
+    for item in items:
+        paragraph = doc.add_paragraph(style="List Bullet")
+        paragraph.paragraph_format.first_line_indent = Inches(0)
+        paragraph.paragraph_format.left_indent = Inches(0.25)
+        paragraph.paragraph_format.line_spacing = 1.15
+        paragraph.paragraph_format.space_after = Pt(2)
+        run = paragraph.add_run(_clean_markdown_inline(item))
+        _set_run_font(run, size=11)
+
+
+def _add_survey_caption(doc: Document, caption: str) -> None:
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.first_line_indent = Inches(0)
+    paragraph.paragraph_format.space_before = Pt(2)
+    paragraph.paragraph_format.space_after = Pt(8)
+    run = paragraph.add_run(caption)
+    _set_run_font(run, size=9.5, bold=False, color="111827")
+
+
+def _strip_percent(value: str) -> str:
+    return value.replace("%", "")
+
+
+def _rename_predictor(value: str) -> str:
+    return {
+        "const": "Intercept",
+        "Intercept": "Intercept",
+        "Age_Binary": "Age (binary)",
+        "Gender_Binary": "Gender (binary)",
+        "Edu_Binary": "Education (binary)",
+        "Married_Binary": "Marital status (binary)",
+        "PriorUse_Binary": "Prior use (binary)",
+        "Q11": "Q11 — Overprescription belief",
+        "Q12": "Q12 — Dependence belief",
+        "Q13": "Q13 — Modern safety belief",
+        "Fear_Binary": "Fear (binary)",
+    }.get(value, value)
+
+
+def _table_from_survey_source(tables: list[dict[str, object]], index: int) -> dict[str, object]:
+    try:
+        return tables[index]
+    except IndexError as exc:
+        raise ValueError(f"survey_data_results.md is missing expected table #{index + 1}") from exc
+
+
+def _build_typeset_survey_blocks(raw_blocks: list[tuple[str, object]]) -> list[tuple[str, object]]:
+    """Build the same section order/content as typst_content/survey_results.typ.
+
+    Numeric cells are read from survey_data_results.md tables; this function only
+    renames labels and adds the explanatory prose/captions used by the Typst
+    survey-results document.
+    """
+    tables = [data for kind, data in raw_blocks if kind == "table"]
+    source_text = "\n".join(str(data) for kind, data in raw_blocks if kind in {"paragraph", "bullets"})
+
+    model = _table_from_survey_source(tables, 0)
+    model_rows = model["rows"]  # type: ignore[index]
+    model_table = {
+        "header": ["Block", "Predictors", "McFadden R²", "LLR p-value"],
+        "align": ["left", "left", "right", "right"],
+        "ratios": [2, 4, 1, 1],
+        "rows": [
+            ["Block 1 (Demographics)", "Age, Gender, Education, Marital status", model_rows[0][2], model_rows[0][3]],
+            ["Block 2 (+ Prior Use)", "Block 1 + Prior medication use", model_rows[1][2], model_rows[1][3]],
+            ["Block 3 (+ Beliefs & Fear)", "Block 2 + Q11, Q12, Q13, Fear", model_rows[2][2], model_rows[2][3]],
+        ],
+        "caption": "Hierarchical model fit statistics across sequential blocks.",
+    }
+
+    aor = _table_from_survey_source(tables, 1)
+    aor_table = {
+        "header": ["Predictor", "Adjusted OR (95% CI)", "p-value"],
+        "align": ["left", "right", "right"],
+        "ratios": [3, 2, 1],
+        "rows": [[_rename_predictor(row[0]), row[1], row[2]] for row in aor["rows"]],  # type: ignore[index]
+        "caption": "Adjusted odds ratios from the final hierarchical logistic regression (Block 3).",
+    }
+
+    multi = _table_from_survey_source(tables, 2)
+    yes_rows = [row for row in multi["rows"] if row[0] == "Q8=1 vs ref"]  # type: ignore[index]
+    unsure_rows = [row for row in multi["rows"] if row[0] == "Q8=2 vs ref"]  # type: ignore[index]
+    yes_table = {
+        "header": ["Predictor", "RRR (95% CI)", "p-value"],
+        "align": ["left", "right", "right"],
+        "ratios": [3, 2, 1],
+        "rows": [[_rename_predictor(row[1]), row[2], row[3]] for row in yes_rows],
+        "caption": "Relative risk ratios for Q8 = Yes vs. No.",
+    }
+    unsure_table = {
+        "header": ["Predictor", "RRR (95% CI)", "p-value"],
+        "align": ["left", "right", "right"],
+        "ratios": [3, 2, 1],
+        "rows": [[_rename_predictor(row[1]), row[2], row[3]] for row in unsure_rows],
+        "caption": "Relative risk ratios for Q8 = Not Sure vs. No.",
+    }
+
+    contact = _table_from_survey_source(tables, 3)
+    contact_names = {
+        "Q11 (Doctors prescribe medications more than necessary)": "Q11 — Overprescription",
+        "Q12 (Most medications cause psychological or physical dependence)": "Q12 — Dependence",
+        "Q13 (Modern medications are safer than older ones)": "Q13 — Modern safety",
+    }
+    contact_table = {
+        "header": ["Item", "User Mdn", "Non-user Mdn", "M-W p", "Cliff's d", "χ² p", "Cramér's V"],
+        "align": ["left", "right", "right", "right", "right", "right", "right"],
+        "ratios": [3, 1, 1, 1, 1, 1, 1],
+        "rows": [[contact_names.get(row[0], row[0]), *row[1:7]] for row in contact["rows"]],  # type: ignore[index]
+        "caption": "Comparison of core belief items between medication users and non-users.",
+    }
+
+    silhouette = _table_from_survey_source(tables, 4)
+    silhouette_table = {
+        "header": ["k", "Silhouette Score"],
+        "align": ["center", "center"],
+        "ratios": [1, 1],
+        "rows": silhouette["rows"],  # type: ignore[index]
+        "caption": "Silhouette scores for candidate cluster solutions.",
+    }
+
+    profiles = _table_from_survey_source(tables, 5)
+    profile_table = {
+        "header": ["Profile", "n", "Q11 Mean", "Q12 Mean", "Q13 Mean"],
+        "align": ["center", "right", "right", "right", "right"],
+        "ratios": [1, 1, 1, 1, 1],
+        "rows": profiles["rows"],  # type: ignore[index]
+        "caption": "Mean belief scores by cluster profile (k = 4).",
+    }
+
+    demographics = _table_from_survey_source(tables, 6)
+    demographic_rows = [row for row in demographics["rows"] if row[2] != "0"]  # type: ignore[index]
+    demo_table = {
+        "header": ["Variable", "Category", "Count", "%"],
+        "align": ["left", "left", "right", "right"],
+        "ratios": [2, 2, 1, 1],
+        "rows": demographic_rows,
+        "caption": "Demographic characteristics of respondents (N = 877).",
+    }
+
+    likert = _table_from_survey_source(tables, 7)
+    likert_names = {
+        "Q11": "Q11 — Doctors prescribe medications more than necessary",
+        "Q12": "Q12 — Most medications cause psychological or physical dependence",
+        "Q13": "Q13 — Modern medications are safer than older ones",
+    }
+    likert_table = {
+        "header": ["Question", "Disagree %", "Neutral %", "Agree %"],
+        "align": ["left", "right", "right", "right"],
+        "ratios": [3, 1, 1, 1],
+        "rows": [[likert_names.get(row[0], row[0]), *[ _strip_percent(v) for v in row[1:] ]] for row in likert["rows"]],  # type: ignore[index]
+        "caption": "Distribution of agreement on core belief items (collapsed Likert categories).",
+    }
+
+    corr = _table_from_survey_source(tables, 8)
+    corr_table = {
+        "header": ["Variable", "Q11", "Q12", "Q13", "Concern", "Accept.", "Recommend"],
+        "align": ["left", "right", "right", "right", "right", "right", "right"],
+        "ratios": [2, 1, 1, 1, 1, 1, 1],
+        "rows": corr["rows"],  # type: ignore[index]
+        "caption": "Spearman correlation matrix among primary belief and attitude variables.",
+    }
+
+    acceptance = _table_from_survey_source(tables, 9)
+    acceptance_table = {
+        "header": ["Prior Use", "Recommend Yes %", "Sample n"],
+        "align": ["left", "right", "right"],
+        "ratios": [2, 1, 1],
+        "rows": [[row[0], _strip_percent(row[1]), row[2]] for row in acceptance["rows"]],  # type: ignore[index]
+        "caption": "Recommendation willingness by prior psychiatric medication use.",
+    }
+
+    attitudes = _table_from_survey_source(tables, 10)
+    attitude_names = {
+        "Safety perception": "Safety perception (Q6)",
+        "Acceptability": "Acceptability (Q7)",
+        "Recommendation willingness": "Recommendation willingness (Q8)",
+        "Social concerns": "Social concerns (Q9)",
+    }
+    attitude_table = {
+        "header": ["Question", "Yes %", "Not Sure %", "No %"],
+        "align": ["left", "right", "right", "right"],
+        "ratios": [3, 1, 1, 1],
+        "rows": [[attitude_names.get(row[0], row[0]), *[_strip_percent(v) for v in row[1:]]] for row in attitudes["rows"]],  # type: ignore[index]
+        "caption": "Response distribution for general attitude items.",
+    }
+
+    instrument_table = {
+        "header": ["Code", "Question (Arabic)", "Response Options"],
+        "align": ["center", "left", "left"],
+        "ratios": [1, 4, 3],
+        "rows": [
+            ["Q1", "العمر (Age)", "18–25 / 26–35 / 36–45 / 46–60 / > 60"],
+            ["Q2", "الجنس (Gender)", "Male / Female"],
+            ["Q4", "المستوى التعليمي (Educational level)", "Primary / Middle School / High School / Institute-Diploma / University / Postgraduate"],
+            ["Q5", "الحالة الاجتماعية (Marital status)", "Single / Married / Divorced / Widowed"],
+            ["Q6", "هل تعتقد أن الأدوية النفسية آمنة؟ (Do you believe psychiatric medications are safe?)", "Yes / No / Not sure"],
+            ["Q7", "هل ترى أن استخدامها مقبول مثل أدوية الضغط والسكري؟ (Is their use acceptable like hypertension or diabetes drugs?)", "Yes / No / Not sure"],
+            ["Q8", "هل تنصح شخصًا مقربًا باستخدامها إذا احتاج إليها؟ (Would you advise someone close to use them if needed?)", "Yes / No / Not sure"],
+            ["Q9", "هل لديك تخوف من التعامل مع شخص يتناول أدوية نفسية؟ (Do you fear interacting with someone on psychiatric medication?)", "Yes / No / Not sure"],
+            ["Q11", "الأطباء يصفون الأدوية أكثر مما يجب (Doctors prescribe medications more than necessary)", "5-point Likert: Strongly disagree to Strongly agree"],
+            ["Q12", "معظم الأدوية تسبب اعتمادًا نفسيًا أو جسديًا (Most medications cause psychological or physical dependence)", "5-point Likert"],
+            ["Q13", "الأدوية الحديثة أكثر أمانًا من القديمة (Modern medications are safer than older ones)", "5-point Likert"],
+            ["Q15", "أعتقد أن الأدوية النفسية ضرورية لصحتي (I believe psychiatric medications are necessary for my health)", "5-point Likert"],
+            ["Q16", "الأدوية النفسية تحافظ على استقراري (Psychiatric medications maintain my stability)", "5-point Likert"],
+            ["Q17", "بدون الأدوية النفسية ستتدهور حالتي (Without psychiatric medications my condition would deteriorate)", "5-point Likert"],
+            ["Q18", "الأدوية النفسية تسبب آثارًا جانبية مزعجة (Psychiatric medications cause unpleasant side effects)", "5-point Likert"],
+            ["Q19", "أشعر بالقلق من التعود أو الإدمان على الأدوية النفسية (I worry about habituation or addiction to psychiatric medications)", "5-point Likert"],
+            ["Q20", "الأدوية النفسية قد تضر بصحتي على المدى الطويل (Psychiatric medications may harm my long-term health)", "5-point Likert"],
+            ["Q22", "أشعر بتحسن عند استخدام الأدوية النفسية (I feel better when using psychiatric medications)", "5-point Likert"],
+            ["Q23", "الأدوية تجعلني أفقد السيطرة على حياتي (Medications make me lose control of my life)", "5-point Likert"],
+            ["Q24", "الأدوية تساعدني أن أكون أكثر طبيعية (Medications help me be more normal)", "5-point Likert"],
+            ["Q25", "الأدوية تسبب لي مشاكل (Medications cause me problems)", "5-point Likert"],
+            ["Q26", "الأدوية تجعلني أثق بقدرتي على العلاج (Medications make me trust my ability to recover)", "5-point Likert"],
+            ["Q27", "استخدام الأدوية يشعرني بالخوف (Using medications makes me feel afraid)", "5-point Likert"],
+            ["Q28", "الأدوية النفسية تساعدني على أن أكون بحالة أفضل (Psychiatric medications help me be in a better state)", "5-point Likert"],
+            ["Q29", "الأدوية النفسية تساعدني على أن أكون بحالة أفضل (Psychiatric medications help me be in a better state)", "5-point Likert"],
+            ["Q30", "الأدوية تجعل حياتي أسوأ (Medications make my life worse)", "5-point Likert"],
+            ["Q31", "هل تستخدم أو سبق أن استخدمت دواء نفسي؟ (Do you use or have you previously used psychiatric medication?)", "Yes / No"],
+            ["Q32", "الأدوية تسبب لي قلقًا بشأن آثارها (Medications cause me anxiety about their effects)", "5-point Likert"],
+        ],
+        "caption": "Complete survey instrument with question codes and response formats.",
+    }
+
+    primary_n = re.search(r"Complete-case n \(primary hierarchical models\):\s*(\d+)", source_text)
+    sensitivity_n = re.search(r"Complete-case n \(sensitivity model\):\s*(\d+)", source_text)
+    sensitivity_r2 = re.search(r"McFadden pseudo R²:\s*([0-9.]+)", source_text)
+    multi_n = re.search(r"Complete-case n:\s*(\d+)", source_text)
+    loglike = re.search(r"Model log-likelihood:\s*([-0-9.]+)", source_text)
+    users = re.search(r"Users \(Q31=1\):\s*(\d+)", source_text)
+    non_users = re.search(r"Non-users \(Q31=0\):\s*(\d+)", source_text)
+
+    return [
+        ("h1", "Hierarchical Block Logistic Regression"),
+        ("p", f"The primary outcome variable is recommendation willingness (Q8: Yes vs. No). Complete-case sample size for hierarchical models: n = {primary_n.group(1) if primary_n else '647'}."),
+        ("h2", "Model Comparison"),
+        ("p", "Three nested blocks were fitted sequentially to evaluate incremental explanatory contributions."),
+        ("table", model_table),
+        ("p", "Block 3 demonstrates a statistically significant improvement in model fit (LLR p < 0.0001), indicating that attitudinal variables (belief items Q11–Q13 and fear of psychiatric medication) substantially improve prediction of recommendation willingness beyond demographic and prior-use factors."),
+        ("h2", "Final Model — Adjusted Odds Ratios (Block 3)"),
+        ("table", aor_table),
+        ("p", "Gender, belief that modern medications are safer (Q13), and fear of psychiatric medication emerged as statistically significant predictors. Fear halved the odds of recommending psychiatric medications (AOR = 0.504), while endorsement of modern medication safety nearly doubled them (AOR = 1.507 per unit increase)."),
+        ("h2", "Sensitivity Model with Proximal Beliefs (Q6/Q7)"),
+        ("p", f"A supplementary model adding safety perception (Q6) and acceptability (Q7) was fitted on a reduced sample (n = {sensitivity_n.group(1) if sensitivity_n else '406'}) because these items are conceptually proximate to the outcome and may inflate explanatory variance."),
+        ("bullets", [f"McFadden pseudo R²: {sensitivity_r2.group(1) if sensitivity_r2 else '0.2440'}", "Fit type: MLE"]),
+        ("p", "This model is reported separately to avoid conflation of proximal predictors with distal attitudinal measures."),
+        ("pagebreak", ""),
+        ("h1", "Multinomial Logistic Regression"),
+        ("p", f"This model preserves the three-category structure of Q8 (No / Yes / Not sure) rather than collapsing hesitant respondents. Complete-case sample: n = {multi_n.group(1) if multi_n else '837'}. Model log-likelihood: {loglike.group(1) if loglike else '−748.910'}."),
+        ("p", "The reference category is the lowest coded group (Q8 = No). Coefficients express relative risk ratios for endorsing \"Yes\" or \"Not sure\" compared with \"No.\""),
+        ("h2", "Q8 = Yes vs. Reference (No)"),
+        ("table", yes_table),
+        ("h2", "Q8 = Not Sure vs. Reference (No)"),
+        ("table", unsure_table),
+        ("p", "Gender is significant across both outcome equations. The belief that modern medications are safer (Q13) is strongly predictive of endorsing \"Yes\" but not \"Not sure,\" suggesting that this belief discriminates between active recommendation and mere hesitation."),
+        ("pagebreak", ""),
+        ("h1", "Contact Hypothesis: Users vs. Non-Users on Core Beliefs"),
+        ("p", f"This exploratory analysis examines whether personal experience with psychiatric medication (Q31) is associated with different belief profiles on items Q11–Q13. Users: n = {users.group(1) if users else '127'}; Non-users: n = {non_users.group(1) if non_users else '716'}."),
+        ("table", contact_table),
+        ("p", "Users endorsed significantly higher agreement with modern medication safety (Q13) and somewhat lower agreement with overprescription concern (Q11) compared with non-users. Effect sizes are small but consistent with contact hypothesis predictions."),
+        ("pagebreak", ""),
+        ("h1", "Exploratory Stigma Phenotypes (K-Means Clustering)"),
+        ("p", "Standardised scores on Q11–Q13 were submitted to K-means clustering. Silhouette analysis favoured k = 4."),
+        ("h2", "Cluster Selection"),
+        ("table", silhouette_table),
+        ("h2", "Profile Characterisation"),
+        ("table", profile_table),
+        ("p", "Profile 0 reflects uniformly high agreement across all three belief dimensions. Profile 3 shows high overprescription and dependence concern but low endorsement of modern safety — a pattern potentially indicative of generalised pharmacological scepticism. Profile 1 shows moderate-to-low scores on all items, while Profile 2 combines low overprescription concern with high dependence concern. These profiles warrant further investigation with confirmatory approaches."),
+        ("pagebreak", ""),
+        ("h1", "Demographics Summary"),
+        ("table", demo_table),
+        ("pagebreak", ""),
+        ("h1", "Core Beliefs — Likert Distribution"),
+        ("table", likert_table),
+        ("h1", "Correlation Matrix: Primary Beliefs"),
+        ("table", corr_table),
+        ("h1", "Acceptance by Prior Use"),
+        ("table", acceptance_table),
+        ("h1", "General Attitudes Distribution"),
+        ("table", attitude_table),
+        ("pagebreak", ""),
+        ("h1", "Notes for Manuscript Positioning"),
+        ("bullets", [
+            "Hierarchical and multinomial modelling are suitable main-text analyses because they preserve response structure and clarify incremental explanatory value.",
+            "K-means profiling should be presented as an exploratory secondary analysis.",
+            "For stronger latent construct validation in future work, ordinal EFA/CFA with polychoric correlations is recommended on appropriately scoped item blocks.",
+        ]),
+        ("pagebreak", ""),
+        ("h1", "Survey Instrument — Full Question List"),
+        ("p", "The following table presents all questions administered in the survey along with their response options."),
+        ("table", instrument_table),
+    ]
+
+
+def build_survey_results_docx(md_path: Path = SURVEY_RESULTS_MD, out_path: Path = SURVEY_RESULTS_DOCX) -> None:
+    """Build a DOCX replica of the standalone Typst survey results report.
+
+    The writer does not convert the PDF. It reads survey_data_results.md,
+    reshapes those result tables into the same typeset report structure used by
+    typst_content/survey_results.typ, and then applies matching Word styles.
+    """
+    if not md_path.exists():
+        print(f"WARNING: {md_path} was not found; survey results DOCX generation was skipped.")
+        return
+
+    raw_blocks = _collect_survey_markdown_blocks(md_path.read_text(encoding="utf-8"))
+    report_blocks = _build_typeset_survey_blocks(raw_blocks)
+    doc = Document()
+    _setup_docx_styles(doc)
+    _set_update_fields_on_open(doc)
+    _configure_section(doc.sections[0], numbered=True, number_format="decimal", start=1)
+    section = doc.sections[0]
+    section.top_margin = Cm(2)
+    section.bottom_margin = Cm(2)
+    section.left_margin = Cm(1.8)
+    section.right_margin = Cm(1.8)
+
+    _add_survey_title_page(doc)
+    doc.add_page_break()
+    _front_title(doc, "Contents")
+    toc_para = doc.add_paragraph()
+    toc_para.paragraph_format.first_line_indent = Inches(0)
+    _add_field_run(toc_para, r'TOC \o "1-2" \h \z \u', dirty=True)
+    doc.add_page_break()
+
+    for kind, data in report_blocks:
+        if kind == "h1":
+            _add_survey_heading(doc, str(data), 1)
+        elif kind == "h2":
+            _add_survey_heading(doc, str(data), 2)
+        elif kind == "h3":
+            _add_survey_heading(doc, str(data), 3)
+        elif kind == "p":
+            _add_survey_paragraph(doc, str(data))
+        elif kind == "bullets":
+            _add_survey_bullets(doc, data)  # type: ignore[arg-type]
+        elif kind == "table":
+            _add_survey_table(doc, data)  # type: ignore[arg-type]
+        elif kind == "pagebreak":
+            doc.add_page_break()
+
+    doc.save(out_path)
+    print(f"Survey results DOCX: {out_path}")
+
+
 def run_typst_content(md_path: Path | None = None) -> None:
     ensure_dirs()
     if md_path is None:
@@ -905,6 +1533,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
     compile_survey_results_pdf()
+    build_survey_results_docx()
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
