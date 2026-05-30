@@ -144,6 +144,10 @@ Zainab Mashal Nayef]
 #pagebreak()
 #front-title[List of Figures]
 #outline(title: none, target: figure.where(kind: image))
+
+#pagebreak()
+#front-title[List of Tables]
+#outline(title: none, target: figure.where(kind: table))
 #v(0.4cm)
 #front-title[List of Abbreviations]
 #par(first-line-indent: 0pt)[AOR: Adjusted Odds Ratio \
@@ -236,6 +240,268 @@ R²: Coefficient of determination, reported as pseudo R² in logistic model fit 
 #chapter-page("Chapter Three", "Results")
 #set-running-head("Results")
 #section-title("IV. RESULTS")
+
+#figure(
+  table(
+    columns: (1fr, 2fr, 1fr, 1fr),
+    align: (left, left, right, right),
+    table.header(
+      [*Block*], [*Predictors*], [*McFadden R²*], [*LLR _p_-value*],
+    ),
+    [Block 1 (Demographics)],
+    [Age, Gender, Education, Marital status],
+    [0.0040], [0.5037],
+
+    [Block 2 (+ Prior Use)],
+    [Block 1 + Prior medication use],
+    [0.0116], [0.0847],
+
+    [Block 3 (+ Beliefs & Fear)],
+    [Block 2 + Q11, Q12, Q13, Fear],
+    [0.0686], [< 0.0001],
+  ),
+  caption: [Hierarchical model fit statistics across sequential blocks.],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr),
+    align: (left, right, right),
+    table.header(
+      [*Predictor*], [*Adjusted OR (95% CI)*], [*_p_-value*],
+    ),
+    [Intercept], [1.128 (0.298–4.273)], [0.8597],
+    [Age (binary)], [0.961 (0.583–1.582)], [0.8752],
+    [Gender (binary)], [1.516 (1.043–2.205)], [0.0294],
+    [Education (binary)], [1.381 (0.750–2.542)], [0.3005],
+    [Marital status (binary)], [1.075 (0.632–1.827)], [0.7904],
+    [Prior use (binary)], [1.342 (0.800–2.252)], [0.2645],
+    [Q11 — Overprescription belief], [0.830 (0.696–0.991)], [0.0396],
+    [Q12 — Dependence belief], [0.869 (0.701–1.078)], [0.2008],
+    [Q13 — Modern safety belief], [1.507 (1.248–1.820)], [< 0.0001],
+    [Fear (binary)], [0.504 (0.358–0.711)], [< 0.0001],
+  ),
+  caption: [Adjusted odds ratios from the final hierarchical logistic regression (Block 3).],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr),
+    align: (left, right, right),
+    table.header(
+      [*Predictor*], [*RRR (95% CI)*], [*_p_-value*],
+    ),
+    [Intercept], [0.936 (0.264–3.317)], [0.9189],
+    [Age (binary)], [0.947 (0.599–1.496)], [0.8139],
+    [Gender (binary)], [1.558 (1.097–2.214)], [0.0133],
+    [Education (binary)], [1.177 (0.661–2.095)], [0.5797],
+    [Marital status (binary)], [0.967 (0.598–1.563)], [0.8903],
+    [Prior use (binary)], [1.387 (0.863–2.229)], [0.1763],
+    [Q11 — Overprescription belief], [0.873 (0.742–1.028)], [0.1028],
+    [Q12 — Dependence belief], [0.794 (0.651–0.970)], [0.0239],
+    [Q13 — Modern safety belief], [1.585 (1.328–1.892)], [< 0.0001],
+  ),
+  caption: [Relative risk ratios for Q8 = Yes vs.\ No.],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr),
+    align: (left, right, right),
+    table.header(
+      [*Predictor*], [*RRR (95% CI)*], [*_p_-value*],
+    ),
+    [Intercept], [0.304 (0.046–2.013)], [0.2170],
+    [Age (binary)], [1.094 (0.549–2.180)], [0.7983],
+    [Gender (binary)], [2.171 (1.211–3.894)], [0.0093],
+    [Education (binary)], [1.300 (0.526–3.211)], [0.5692],
+    [Marital status (binary)], [1.713 (0.863–3.399)], [0.1237],
+    [Prior use (binary)], [1.401 (0.704–2.789)], [0.3373],
+    [Q11 — Overprescription belief], [0.846 (0.662–1.080)], [0.1799],
+    [Q12 — Dependence belief], [0.890 (0.660–1.199)], [0.4438],
+    [Q13 — Modern safety belief], [1.064 (0.820–1.381)], [0.6404],
+  ),
+  caption: [Relative risk ratios for Q8 = Not Sure vs.\ No.],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+    align: (left, right, right, right, right, right, right),
+    table.header(
+      [*Item*], [*User Mdn*], [*Non-user Mdn*], [*M-W _p_*], [*Cliff's _d_*], [*χ² _p_*], [*Cramér's _V_*],
+    ),
+    [Q11 — Overprescription], [3.00], [4.00], [0.0428], [−0.108], [0.1170], [0.094],
+    [Q12 — Dependence], [4.00], [4.00], [0.0317], [−0.112], [0.0428], [0.108],
+    [Q13 — Modern safety], [4.00], [3.00], [0.0002], [0.198], [0.0027], [0.139],
+  ),
+  caption: [Comparison of core belief items between medication users and non-users.],
+)
+
+#figure(
+  table(
+    columns: (1fr, 1fr),
+    align: (center, center),
+    table.header(
+      [*k*], [*Silhouette Score*],
+    ),
+    [2], [0.274],
+    [3], [0.272],
+    [4], [0.303],
+  ),
+  caption: [Silhouette scores for candidate cluster solutions.],
+)
+
+#figure(
+  table(
+    columns: (1fr, 1fr, 1fr, 1fr, 1fr),
+    align: (center, right, right, right, right),
+    table.header(
+      [*Profile*], [*n*], [*Q11 Mean*], [*Q12 Mean*], [*Q13 Mean*],
+    ),
+    [0], [183], [4.404], [4.115], [4.311],
+    [1], [230], [2.961], [2.804], [3.578],
+    [2], [232], [2.694], [4.250], [3.720],
+    [3], [223], [4.359], [4.291], [2.610],
+  ),
+  caption: [Mean belief scores by cluster profile (k = 4).],
+)
+
+#figure(
+  table(
+    columns: (1fr, 1fr, 1fr, 1fr),
+    align: (left, left, right, right),
+    table.header(
+      [*Variable*], [*Category*], [*Count*], [*%*],
+    ),
+    table.cell(rowspan: 2)[Gender],
+    [Male], [244], [28.05],
+    [Female], [626], [71.95],
+    table.hline(stroke: 0.3pt + rgb("#e0e0e0")),
+    table.cell(rowspan: 5)[Age],
+    [18–25], [651], [74.57],
+    [26–35], [153], [17.53],
+    [36–45], [44], [5.04],
+    [46–60], [24], [2.75],
+    [> 60], [1], [0.11],
+    table.hline(stroke: 0.3pt + rgb("#e0e0e0")),
+    table.cell(rowspan: 4)[Education],
+    [Primary], [5], [0.57],
+    [High School], [61], [6.99],
+    [University], [689], [78.92],
+    [Postgraduate], [118], [13.52],
+    table.hline(stroke: 0.3pt + rgb("#e0e0e0")),
+    table.cell(rowspan: 4)[Marital Status],
+    [Single], [684], [78.44],
+    [Married], [183], [20.99],
+    [Divorced], [3], [0.34],
+    [Widowed], [2], [0.23],
+  ),
+  caption: [Demographic characteristics of respondents (N = 877).],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr, 1fr),
+    align: (left, right, right, right),
+    table.header(
+      [*Question*], [*Disagree %*], [*Neutral %*], [*Agree %*],
+    ),
+    [Q11 — Doctors prescribe medications more than necessary], [13.78], [34.67], [51.55],
+    [Q12 — Most medications cause psychological or physical dependence], [4.95], [27.65], [67.40],
+    [Q13 — Modern medications are safer than older ones], [12.18], [35.86], [51.95],
+  ),
+  caption: [Distribution of agreement on core belief items (collapsed Likert categories).],
+)
+
+#figure(
+  table(
+    columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
+    align: (left, right, right, right, right, right, right),
+    table.header(
+      [*Variable*], [*Q11*], [*Q12*], [*Q13*], [*Concern*], [*Accept.*], [*Recommend*],
+    ),
+    [Q11], [1.000], [0.269], [−0.066], [0.059], [−0.085], [−0.086],
+    [Q12], [0.269], [1.000], [−0.038], [0.058], [−0.163], [−0.087],
+    [Q13], [−0.066], [−0.038], [1.000], [−0.105], [0.026], [0.077],
+    [Concern], [0.059], [0.058], [−0.105], [1.000], [−0.040], [−0.042],
+    [Acceptance], [−0.085], [−0.163], [0.026], [−0.040], [1.000], [0.232],
+    [Recommend], [−0.086], [−0.087], [0.077], [−0.042], [0.232], [1.000],
+  ),
+  caption: [Spearman correlation matrix among primary belief and attitude variables.],
+)
+
+#figure(
+  table(
+    columns: (1fr, 1fr, 1fr),
+    align: (left, right, right),
+    table.header(
+      [*Prior Use*], [*Recommend Yes %*], [*Sample _n_*],
+    ),
+    [Yes], [65.08], [126],
+    [No], [55.80], [715],
+  ),
+  caption: [Recommendation willingness by prior psychiatric medication use.],
+)
+
+#figure(
+  table(
+    columns: (2fr, 1fr, 1fr, 1fr),
+    align: (left, right, right, right),
+    table.header(
+      [*Question*], [*Yes %*], [*Not Sure %*], [*No %*],
+    ),
+    [Safety perception (Q6)], [23.65], [31.23], [45.12],
+    [Acceptability (Q7)], [30.80], [17.70], [51.49],
+    [Recommendation willingness (Q8)], [57.65], [11.62], [30.72],
+    [Social concerns (Q9)], [37.77], [13.09], [49.14],
+  ),
+  caption: [Response distribution for general attitude items.],
+)
+
+#figure(
+  table(
+    columns: (1fr, 2fr, 2fr),
+    align: (center, left, left),
+    table.header(
+      [*Code*], [*Question (Arabic)*], [*Response Options*],
+    ),
+    [Q1], [العمر \ (Age)], [18–25 / 26–35 / 36–45 / 46–60 / > 60],
+    [Q2], [الجنس \ (Gender)], [Male / Female],
+    [Q4], [المستوى التعليمي \ (Educational level)], [Primary / Middle School / High School / Institute-Diploma / University / Postgraduate],
+    [Q5], [الحالة الاجتماعية \ (Marital status)], [Single / Married / Divorced / Widowed],
+    table.hline(stroke: 0.5pt + gold),
+    [Q6], [هل تعتقد أن الأدوية النفسية آمنة؟ \ (Do you believe psychiatric medications are safe?)], [Yes / No / Not sure],
+    [Q7], [هل ترى أن استخدامها مقبول مثل أدوية الضغط والسكري؟ \ (Is their use acceptable like hypertension or diabetes drugs?)], [Yes / No / Not sure],
+    [Q8], [هل تنصح شخصًا مقربًا باستخدامها إذا احتاج إليها؟ \ (Would you advise someone close to use them if needed?)], [Yes / No / Not sure],
+    [Q9], [هل لديك تخوف من التعامل مع شخص يتناول أدوية نفسية؟ \ (Do you fear interacting with someone on psychiatric medication?)], [Yes / No / Not sure],
+    table.hline(stroke: 0.5pt + gold),
+    [Q11], [الأطباء يصفون الأدوية أكثر مما يجب \ (Doctors prescribe medications more than necessary)], [5-point Likert: Strongly disagree to Strongly agree],
+    [Q12], [معظم الأدوية تسبب اعتمادًا نفسيًا أو جسديًا \ (Most medications cause psychological or physical dependence)], [5-point Likert],
+    [Q13], [الأدوية الحديثة أكثر أمانًا من القديمة \ (Modern medications are safer than older ones)], [5-point Likert],
+    table.hline(stroke: 0.5pt + gold),
+    [Q15], [أعتقد أن الأدوية النفسية ضرورية لصحتي \ (I believe psychiatric medications are necessary for my health)], [5-point Likert],
+    [Q16], [الأدوية النفسية تحافظ على استقراري \ (Psychiatric medications maintain my stability)], [5-point Likert],
+    [Q17], [بدون الأدوية النفسية ستتدهور حالتي \ (Without psychiatric medications my condition would deteriorate)], [5-point Likert],
+    [Q18], [الأدوية النفسية تسبب آثارًا جانبية مزعجة \ (Psychiatric medications cause unpleasant side effects)], [5-point Likert],
+    [Q19], [أشعر بالقلق من التعود أو الإدمان على الأدوية النفسية \ (I worry about habituation or addiction to psychiatric medications)], [5-point Likert],
+    [Q20], [الأدوية النفسية قد تضر بصحتي على المدى الطويل \ (Psychiatric medications may harm my long-term health)], [5-point Likert],
+    table.hline(stroke: 0.5pt + gold),
+    [Q22], [أشعر بتحسن عند استخدام الأدوية النفسية \ (I feel better when using psychiatric medications)], [5-point Likert],
+    [Q23], [الأدوية تجعلني أفقد السيطرة على حياتي \ (Medications make me lose control of my life)], [5-point Likert],
+    [Q24], [الأدوية تساعدني أن أكون أكثر طبيعية \ (Medications help me be more normal)], [5-point Likert],
+    [Q25], [الأدوية تسبب لي مشاكل \ (Medications cause me problems)], [5-point Likert],
+    [Q26], [الأدوية تجعلني أثق بقدرتي على العلاج \ (Medications make me trust my ability to recover)], [5-point Likert],
+    [Q27], [استخدام الأدوية يشعرني بالخوف \ (Using medications makes me feel afraid)], [5-point Likert],
+    [Q28], [الأدوية النفسية تساعدني على أن أكون بحالة أفضل \ (Psychiatric medications help me be in a better state)], [5-point Likert],
+    [Q29], [الأدوية النفسية تساعدني على أن أكون بحالة أفضل \ (Psychiatric medications help me be in a better state)], [5-point Likert],
+    [Q30], [الأدوية تجعل حياتي أسوأ \ (Medications make my life worse)], [5-point Likert],
+    table.hline(stroke: 0.5pt + gold),
+    [Q31], [هل تستخدم أو سبق أن استخدمت دواء نفسي؟ \ (Do you use or have you previously used psychiatric medication?)], [Yes / No],
+    [Q32], [الأدوية تسبب لي قلقًا بشأن آثارها \ (Medications cause me anxiety about their effects)], [5-point Likert],
+  ),
+  caption: [Complete survey instrument with question codes and response formats.],
+)
 #h2("IV.A Sample Profile and Descriptive Statistics")
 #p("The final survey dataset included 877 respondents, and all percentages in this chapter follow the denominator policy defined in Methodology: percentages are reported as the percentage of valid responses for that item for descriptives, while model findings use model-specific complete-case denominators. Demographic distributions were therefore calculated as percentage of valid responses for that item (gender n=870, age n=873, educational level n=873, marital status n=872). Gender distribution was 71.95% female (n=626) and 28.05% male (n=244), as percentage of valid responses for that item. Age distribution was concentrated in younger participants, with 74.57% aged 18–25 years (n=651), 17.53% aged 26–35 years (n=153), 5.04% aged 36–45 years (n=44), 2.75% aged 46–60 years (n=24), and 0.11% older than 60 years (n=1), as percentage of valid responses for that item. Educational level was primarily university or postgraduate, with 78.92% university (n=689) and 13.52% postgraduate (n=118), while high school represented 6.99% (n=61) and primary represented 0.57% (n=5), as percentage of valid responses for that item. Marital status was 78.44% single (n=684), 20.99% married (n=183), 0.34% divorced (n=3), and 0.23% widowed (n=2), as percentage of valid responses for that item.")
 #p("To keep model reporting readable, this chapter repeats each questionnaire code with a brief definition when it appears. Q6 refers to safety perception of psychiatric medication, Q7 refers to acceptability of psychiatric medication, Q8 refers to willingness to recommend psychiatric medication, and Q9 refers to social concern about interacting with a person who uses psychiatric medication. Q11 refers to the belief that doctors prescribe psychiatric medications more than necessary, Q12 refers to the belief that most psychiatric medications cause psychological or physical dependence, Q13 refers to the belief that modern psychiatric medications are safer than older ones, and Q31 refers to prior psychiatric medication use status.")

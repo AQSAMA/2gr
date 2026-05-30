@@ -48,6 +48,7 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+SURVEY_RESULTS_DOCX = TYPST_OUTPUT_DIR / "survey_results.docx"
 
 
 def typst_string(value: str) -> str:
@@ -440,6 +441,32 @@ def compile_survey_results_pdf() -> bool:
     print(f"Survey results PDF: {SURVEY_RESULTS_PDF}")
     return True
 
+
+
+def compile_survey_results_docx() -> bool:
+    """Compile the standalone survey results Typst source to DOCX via Pandoc."""
+    pandoc = shutil.which("pandoc")
+    if pandoc is None:
+        print("WARNING: pandoc is not installed; survey_results DOCX compilation was skipped.")
+        return False
+    if not SURVEY_RESULTS_SOURCE.exists():
+        print("WARNING: survey_results.typ not found; skipping survey results DOCX.")
+        return False
+    result = subprocess.run(
+        [pandoc, str(SURVEY_RESULTS_SOURCE), "-f", "typst", "-o", str(SURVEY_RESULTS_DOCX), f"--resource-path={REPO_ROOT}"],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        print("WARNING: Pandoc failed for typst_content/survey_results.typ; continuing with other outputs.")
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
+        return False
+    print(f"Survey results DOCX: {SURVEY_RESULTS_DOCX}")
+    return True
 
 def collect_docx_blocks(md_path: Path) -> list[tuple[str, str]]:
     """Collect the same manuscript structure used by the editable Typst source."""
@@ -905,6 +932,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
     compile_survey_results_pdf()
+    compile_survey_results_docx()
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
