@@ -29,4 +29,4 @@ To modify a design, edit the matching file in `templates/`, then rerun `python p
 
 ## Related Editable Typst Source
 
-The separate `typst_content/research.typ` file is the preferred single-file Typst source for manual editing. This Method B directory remains the multi-design production path, while `typst_content/` provides one clean thesis-style version with front matter, borders, Roman preliminary numbering, Arabic main numbering, and companion PDF/DOCX outputs in CI.
+The separate `typst_content/research.typ` file is the preferred single-file Typst source for manual editing. This Method B directory remains the multi-design production path, while `typst_content/` provides one clean thesis-style version with front matter, borders, Roman preliminary numbering, Arabic main numbering, and companion PDF/DOCX outputs in CI. The editable Typst content pipeline writes the Word export as `typst_content/output/survey_results.docx` so the survey-results manuscript has a stable DOCX artifact name.
