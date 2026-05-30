@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from docx import Document
@@ -48,6 +49,7 @@ TYPST_PDF = TYPST_OUTPUT_DIR / "research.pdf"
 TYPST_DOCX = TYPST_OUTPUT_DIR / "research.docx"
 SURVEY_RESULTS_SOURCE = TYPST_CONTENT_DIR / "survey_results.typ"
 SURVEY_RESULTS_PDF = TYPST_OUTPUT_DIR / "survey_results.pdf"
+SURVEY_RESULTS_DOCX = TYPST_OUTPUT_DIR / "surveyresults.docx"
 
 
 def typst_string(value: str) -> str:
@@ -438,6 +440,98 @@ def compile_survey_results_pdf() -> bool:
         _print_process_output(result.stderr)
         return False
     print(f"Survey results PDF: {SURVEY_RESULTS_PDF}")
+    return True
+
+
+def _compile_survey_results_png_pages(typst: str, output_dir: Path) -> list[Path]:
+    """Render each survey-results page as a PNG for visual DOCX parity."""
+    page_template = output_dir / "surveyresults-{p}.png"
+    result = subprocess.run(
+        [
+            typst,
+            "compile",
+            "--root",
+            str(REPO_ROOT),
+            "--ppi",
+            "240",
+            str(SURVEY_RESULTS_SOURCE),
+            str(page_template),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        print("WARNING: Typst failed to render survey_results.typ pages for DOCX output.")
+        _print_process_output(result.stdout)
+        _print_process_output(result.stderr)
+        return []
+
+    def page_number(path: Path) -> int:
+        match = re.search(r"-(\d+)\.png$", path.name)
+        return int(match.group(1)) if match else 0
+
+    return sorted(output_dir.glob("surveyresults-*.png"), key=page_number)
+
+
+def _build_survey_results_docx_from_pages(page_images: list[Path], out_path: Path) -> None:
+    """Create a DOCX whose pages are the rendered Typst pages.
+
+    This keeps manual DOCX-to-PDF conversion visually aligned with the
+    authoritative Typst PDF while still publishing a Word-openable artifact.
+    """
+    doc = Document()
+    section = doc.sections[0]
+    section.page_width = Cm(21.0)
+    section.page_height = Cm(29.7)
+    section.left_margin = Cm(0)
+    section.right_margin = Cm(0)
+    section.top_margin = Cm(0)
+    section.bottom_margin = Cm(0)
+    section.header_distance = Cm(0)
+    section.footer_distance = Cm(0)
+
+    normal_style = doc.styles["Normal"]
+    normal_style.font.name = "Times New Roman"
+    normal_style.font.size = Pt(1)
+    normal_style.paragraph_format.space_before = Pt(0)
+    normal_style.paragraph_format.space_after = Pt(0)
+    normal_style.paragraph_format.line_spacing = 1
+
+    for index, page_image in enumerate(page_images):
+        if index:
+            doc.add_page_break()
+        paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        paragraph.paragraph_format.space_before = Pt(0)
+        paragraph.paragraph_format.space_after = Pt(0)
+        paragraph.paragraph_format.line_spacing = 1
+        run = paragraph.add_run()
+        run.add_picture(str(page_image), width=Cm(21.0), height=Cm(29.7))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(out_path)
+
+
+def compile_survey_results_docx() -> bool:
+    """Compile survey_results.typ into a DOCX companion artifact."""
+    typst = shutil.which("typst")
+    if typst is None:
+        print("WARNING: typst is not installed; survey_results DOCX compilation was skipped.")
+        return False
+    if not SURVEY_RESULTS_SOURCE.exists():
+        print("WARNING: survey_results.typ not found; skipping survey results DOCX.")
+        return False
+
+    with tempfile.TemporaryDirectory(prefix="surveyresults-pages-") as temp_dir:
+        page_images = _compile_survey_results_png_pages(typst, Path(temp_dir))
+        if not page_images:
+            return False
+        _build_survey_results_docx_from_pages(page_images, SURVEY_RESULTS_DOCX)
+
+    print(f"Survey results DOCX: {SURVEY_RESULTS_DOCX}")
     return True
 
 
@@ -905,6 +999,7 @@ def run_typst_content(md_path: Path | None = None) -> None:
     print(f"Editable Typst source: {source_path}")
     compile_typst_pdf()
     compile_survey_results_pdf()
+    compile_survey_results_docx()
     try:
         build_typst_content_docx(md_path, TYPST_DOCX)
     except Exception as exc:
