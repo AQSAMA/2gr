@@ -65,7 +65,7 @@ Three nested blocks were fitted sequentially to evaluate incremental explanatory
 
 #figure(
   table(
-    columns: (auto, 1fr, auto, auto),
+    columns: (1.3fr, 3.3fr, 1fr, 1fr),
     align: (left, left, right, right),
     table.header(
       [*Block*], [*Predictors*], [*McFadden R²*], [*LLR _p_-value*],
@@ -91,7 +91,7 @@ Block 3 demonstrates a statistically significant improvement in model fit (LLR _
 
 #figure(
   table(
-    columns: (1fr, auto, auto),
+    columns: (3fr, 2fr, 1fr),
     align: (left, right, right),
     table.header(
       [*Predictor*], [*Adjusted OR (95% CI)*], [*_p_-value*],
@@ -133,7 +133,7 @@ The reference category is the lowest coded group (Q8 = No). Coefficients express
 
 #figure(
   table(
-    columns: (1fr, auto, auto),
+    columns: (3fr, 2fr, 1fr),
     align: (left, right, right),
     table.header(
       [*Predictor*], [*RRR (95% CI)*], [*_p_-value*],
@@ -155,7 +155,7 @@ The reference category is the lowest coded group (Q8 = No). Coefficients express
 
 #figure(
   table(
-    columns: (1fr, auto, auto),
+    columns: (3fr, 2fr, 1fr),
     align: (left, right, right),
     table.header(
       [*Predictor*], [*RRR (95% CI)*], [*_p_-value*],
@@ -183,7 +183,7 @@ This exploratory analysis examines whether personal experience with psychiatric 
 
 #figure(
   table(
-    columns: (1fr, auto, auto, auto, auto, auto, auto),
+    columns: (2.2fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
     align: (left, right, right, right, right, right, right),
     table.header(
       [*Item*], [*User Mdn*], [*Non-user Mdn*], [*M-W _p_*], [*Cliff's _d_*], [*χ² _p_*], [*Cramér's _V_*],
@@ -207,7 +207,7 @@ Standardised scores on Q11–Q13 were submitted to K-means clustering. Silhouett
 
 #figure(
   table(
-    columns: (auto, auto),
+    columns: (1fr, 1fr),
     align: (center, center),
     table.header(
       [*k*], [*Silhouette Score*],
@@ -223,7 +223,7 @@ Standardised scores on Q11–Q13 were submitted to K-means clustering. Silhouett
 
 #figure(
   table(
-    columns: (auto, auto, auto, auto, auto),
+    columns: (1.2fr, 1fr, 1fr, 1fr, 1fr),
     align: (center, right, right, right, right),
     table.header(
       [*Profile*], [*n*], [*Q11 Mean*], [*Q12 Mean*], [*Q13 Mean*],
@@ -244,7 +244,7 @@ Profile 0 reflects uniformly high agreement across all three belief dimensions. 
 
 #figure(
   table(
-    columns: (auto, auto, auto, auto),
+    columns: (1.3fr, 2fr, 1fr, 1fr),
     align: (left, left, right, right),
     table.header(
       [*Variable*], [*Category*], [*Count*], [*%*],
@@ -281,7 +281,7 @@ Profile 0 reflects uniformly high agreement across all three belief dimensions. 
 
 #figure(
   table(
-    columns: (1fr, auto, auto, auto),
+    columns: (2.5fr, 1fr, 1fr, 1fr),
     align: (left, right, right, right),
     table.header(
       [*Question*], [*Disagree %*], [*Neutral %*], [*Agree %*],
@@ -297,7 +297,7 @@ Profile 0 reflects uniformly high agreement across all three belief dimensions. 
 
 #figure(
   table(
-    columns: (auto, auto, auto, auto, auto, auto, auto),
+    columns: (1.3fr, 1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
     align: (left, right, right, right, right, right, right),
     table.header(
       [*Variable*], [*Q11*], [*Q12*], [*Q13*], [*Concern*], [*Accept.*], [*Recommend*],
@@ -316,7 +316,7 @@ Profile 0 reflects uniformly high agreement across all three belief dimensions. 
 
 #figure(
   table(
-    columns: (auto, auto, auto),
+    columns: (1fr, 1fr, 1fr),
     align: (left, right, right),
     table.header(
       [*Prior Use*], [*Recommend Yes %*], [*Sample _n_*],
@@ -331,7 +331,7 @@ Profile 0 reflects uniformly high agreement across all three belief dimensions. 
 
 #figure(
   table(
-    columns: (1fr, auto, auto, auto),
+    columns: (2.5fr, 1fr, 1fr, 1fr),
     align: (left, right, right, right),
     table.header(
       [*Question*], [*Yes %*], [*Not Sure %*], [*No %*],
@@ -360,7 +360,7 @@ The following table presents all questions administered in the survey along with
 
 #figure(
   table(
-    columns: (auto, 1fr, 1fr),
+    columns: (0.7fr, 3fr, 2fr),
     align: (center, left, left),
     table.header(
       [*Code*], [*Question (Arabic)*], [*Response Options*],
